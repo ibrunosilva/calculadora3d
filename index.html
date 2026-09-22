@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>3D Custo, Cadastro e Orçamento - Nuvem (Firebase)</title>
+  <title>3D Custo, Cadastro e Orçamento - Firebase</title>
   
-  <!-- SDK do Firebase (Firestore) -->
+  <!-- Firebase SDKs (Modular / Compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
@@ -43,13 +43,8 @@
     .card h2 { font-size: 1.1rem; margin-bottom: 1rem; color: var(--primary); border-bottom: 1px solid var(--card-border); padding-bottom: 0.5rem; }
     
     .grid-2 { display: grid; grid-template-columns: 1fr; gap: 1rem; }
-    .grid-3 { display: grid; grid-template-columns: 1fr; gap: 1rem; }
     .grid-4 { display: grid; grid-template-columns: 1fr; gap: 1rem; }
-    @media (min-width: 640px) { 
-      .grid-2 { grid-template-columns: 1fr 1fr; } 
-      .grid-3 { grid-template-columns: 2fr 1fr 1fr; } 
-      .grid-4 { grid-template-columns: 1fr 1fr 1fr 1fr; } 
-    }
+    @media (min-width: 640px) { .grid-2 { grid-template-columns: 1fr 1fr; } .grid-4 { grid-template-columns: 1fr 1fr 1fr 1fr; } }
     
     .form-group { display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 0.75rem; }
     .form-group label { font-size: 0.85rem; color: var(--text-muted); }
@@ -60,8 +55,6 @@
     .btn-danger { background: var(--danger); }
     .btn-warning { background: var(--warning); color: #fff; }
     .btn-outline { background: transparent; border: 1px solid var(--card-border); color: var(--text); }
-    .btn-whatsapp { background: #25D366; color: #fff; border: 1px solid #1ebc57; }
-    .btn-whatsapp:hover { background: #1ebc57; }
     .btn-group { display: flex; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap; }
     
     .results-panel { background: var(--input-bg); border: 1px solid var(--card-border); border-radius: 8px; padding: 1rem; margin-top: 1rem; }
@@ -71,35 +64,22 @@
     .list-container { display: flex; flex-direction: column; gap: 0.75rem; }
     .list-item { display: flex; justify-content: space-between; align-items: center; background: var(--input-bg); border: 1px solid var(--card-border); padding: 0.85rem 1rem; border-radius: 8px; gap: 1rem; flex-wrap: wrap; }
     .item-info { flex: 1; min-width: 200px; }
-    .item-info h3 { font-size: 1rem; margin-bottom: 0.2rem; display: flex; align-items: center; gap: 0.5rem;}
+    .item-info h3 { font-size: 1rem; margin-bottom: 0.2rem; }
     .item-info p { font-size: 0.8rem; color: var(--text-muted); }
-    
-    .badge { padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
-    .badge-gray { background: rgba(148, 163, 184, 0.2); color: var(--text-muted); }
-    .badge-blue { background: rgba(59, 130, 246, 0.2); color: var(--accent); }
-    .badge-green { background: rgba(16, 185, 129, 0.2); color: var(--primary); }
-    .badge-red { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
-    .badge-orange { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
-    .badge-default { background: rgba(16, 185, 129, 0.2); color: var(--primary); } 
+    .badge { padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: bold; background: rgba(16, 185, 129, 0.2); color: var(--primary); }
+    .badge-warn { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+    .badge-danger { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
 
     .kit-selector-row { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; border-bottom: 1px solid var(--card-border); }
     .kit-selector-row input { width: 60px; text-align: center; }
-    
-    .select-status { font-size: 0.85rem; padding: 0.4rem; border-radius: 6px; border: 1px solid var(--card-border); background: var(--input-bg); color: var(--text); font-weight: bold; outline: none; cursor: pointer; }
-
-    @media print { 
-      body * { visibility: hidden; } 
-      #print-area, #print-area * { visibility: visible; } 
-      #print-area { position: absolute; left: 0; top: 0; width: 100%; color: #000; background: #fff; padding: 2rem; display: block !important; } 
-    }
   </style>
 </head>
 <body>
 
   <header>
     <div>
-      <h1>3D Custo, Cadastro e Orçamento</h1>
-      <p>Calculadora, CRM & Estoque (NuviCloud Firebase)</p>
+      <h1>3D Custo 2.0</h1>
+      <p>Calculadora, CRM & Estoque (Firebase Cloud)</p>
     </div>
     <button class="theme-toggle" onclick="toggleTheme()">☀️/🌙</button>
   </header>
@@ -153,7 +133,6 @@
       </div>
       <div class="btn-group">
         <button class="btn" onclick="salvarProduto()">Salvar Produto</button>
-        <button class="btn btn-outline" onclick="gerarPDFAvulso()">🖨️ Imprimir Avulso</button>
         <button class="btn btn-outline" onclick="limparCalc()">Limpar</button>
       </div>
     </div>
@@ -179,31 +158,17 @@
   <!-- ABA CRM / PEDIDOS -->
   <div id="tab-crm" class="tab-content">
     <div class="card">
-      <h2>Novo Pedido / Orçamento</h2>
+      <h2>Novo Pedido</h2>
       <div class="grid-2">
-        <div class="form-group"><label>Nome do Cliente *</label><input type="text" id="crm-cliente" placeholder="Ex: Maria da Silva"></div>
-        <div class="form-group"><label>CPF</label><input type="text" id="crm-cpf" placeholder="Ex: 000.000.000-00"></div>
+        <div class="form-group"><label>Nome do Cliente</label><input type="text" id="crm-cliente" placeholder="Ex: Maria da Silva"></div>
+        <div class="form-group"><label>Contato (WhatsApp / Email)</label><input type="text" id="crm-contato" placeholder="Ex: (81) 99999-9999"></div>
       </div>
-      <div class="grid-2">
-        <div class="form-group"><label>Contato (WhatsApp / Email)</label><input type="text" id="crm-contato" placeholder="Ex: 81999999999"></div>
-        <div class="form-group"><label>Endereço (Rua, Número, Bairro)</label><input type="text" id="crm-endereco" placeholder="Ex: Rua das Flores, 123 - Boa Viagem"></div>
-      </div>
-      <div class="grid-3">
-        <div class="form-group"><label>Cidade</label><input type="text" id="crm-cidade" placeholder="Ex: Recife"></div>
-        <div class="form-group"><label>Estado (UF)</label><input type="text" id="crm-estado" placeholder="Ex: PE"></div>
-        <div class="form-group"><label>Produto ou Kit *</label><select id="crm-item"></select></div>
-      </div>
+      <div class="form-group"><label>Endereço de Entrega Completo</label><input type="text" id="crm-endereco" placeholder="Ex: Rua das Flores, 123 - Boa Viagem, Recife/PE"></div>
       <div class="form-group"><label>Observações (Opcional)</label><input type="text" id="crm-obs" placeholder="Ex: Entregar à tarde, embalar para presente..."></div>
+      <div class="form-group"><label>Produto ou Kit</label><select id="crm-item"></select></div>
       <button class="btn" onclick="salvarPedido()" style="margin-top: 0.5rem;">Lançar Pedido (Orçamento)</button>
     </div>
-
-    <div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
-        <h2 style="margin-bottom:0; border-bottom:none; padding-bottom:0;">Controle de Pedidos & Fluxo</h2>
-        <input type="text" id="input-busca" placeholder="🔍 Pesquisar por Nome, CPF ou Tel..." oninput="filtrarPedidos()" style="padding:0.4rem 0.6rem; font-size:0.85rem; border-radius:6px; border:1px solid var(--card-border); background:var(--input-bg); color:var(--text); width:260px;">
-      </div>
-      <div id="lista-pedidos" class="list-container"></div>
-    </div>
+    <div class="card"><h2>Controle de Pedidos & Estoque</h2><div id="lista-pedidos" class="list-container"></div></div>
   </div>
 
   <!-- ABA CONFIGURAÇÕES -->
@@ -235,46 +200,19 @@
       </div>
       <button class="btn" onclick="salvarConfig()">Salvar Custos</button>
     </div>
-    <div class="card">
-      <h2>Backup / Migração</h2>
-      <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.5rem;">Como agora usamos nuvem (Firebase), o backup serve apenas como arquivo de segurança extra.</p>
-      <div class="btn-group">
-        <button class="btn btn-outline" onclick="exportar()">Exportar Backup JSON</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ÁREA DE IMPRESSÃO (ORÇAMENTO CLIENTE) -->
-  <div id="print-area" style="display:none;">
-    <div style="font-family: sans-serif; color: #000; padding: 1rem;">
-      <h1 style="color:#10b981; border-bottom:2px solid #ccc; padding-bottom:0.5rem; margin-bottom:1rem;">Orçamento de Impressão 3D</h1>
-      <p><strong>Cliente:</strong> <span id="p-cliente"></span></p>
-      <p><strong>CPF:</strong> <span id="p-cpf"></span></p>
-      <p><strong>Contato:</strong> <span id="p-contato"></span></p>
-      <p><strong>Endereço:</strong> <span id="p-endereco"></span></p><br>
-      
-      <p><strong>Produto / Kit:</strong> <span id="p-nome"></span></p>
-      <p><strong>Tempo Estimado de Produção:</strong> <span id="p-tempo"></span> horas</p><br>
-      
-      <h2 style="font-size: 1.3rem; color: #111;">Valor Total: <span id="p-preco" style="color:#10b981;"></span></h2><br>
-      <p style="font-size: 0.8rem; color:#556;">Validade do orçamento: 7 dias.</p>
-    </div>
   </div>
 
   <script>
-    // ==========================================
-    // CONFIGURAÇÃO DO FIREBASE (COLE SEUS DADOS AQUI)
-    // ==========================================
+    // Configuração do Firebase Firestore
     const firebaseConfig = {
-      apiKey: "COLOQUE_SEU_API_KEY_AQUI",
-      authDomain: "COLOQUE_SEU_AUTH_DOMAIN_AQUI",
-      projectId: "COLOQUE_SEU_PROJECT_ID_AQUI",
-      storageBucket: "COLOQUE_SEU_STORAGE_BUCKET_AQUI",
-      messagingSenderId: "COLOQUE_SEU_MESSAGING_SENDER_ID_AQUI",
-      appId: "COLOQUE_SEU_APP_ID_AQUI"
+      apiKey: "AIzaSyCHsKj0Y0B538kbxv3uyXscbFJ5o5JX48w",
+      authDomain: "custo3d-3d649.firebaseapp.com",
+      projectId: "custo3d-3d649",
+      storageBucket: "custo3d-3d649.firebasestorage.app",
+      messagingSenderId: "1063139278364",
+      appId: "1:1063139278364:web:d47e81b9afcc88458569d9"
     };
 
-    // Inicializar Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
@@ -285,54 +223,48 @@
     let pedidos = [];
     let calcAtual = {};
 
-    window.onload = () => { 
-      carregarDadosNuvem(); 
-    };
+    window.onload = () => { carregarDadosCloud(); };
 
     function toggleTheme() { document.body.setAttribute('data-theme', document.body.getAttribute('data-theme')==='light'?'dark':'light'); }
     function switchTab(t) { document.querySelectorAll('.tab-content, nav button').forEach(e => e.classList.remove('active')); document.getElementById('tab-'+t).classList.add('active'); event.target.classList.add('active'); }
     function fmt(v) { return (v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
-    function fmtDate(ms) { let d = new Date(ms); return d.toLocaleDateString('pt-BR'); }
 
-    // CARREGAR DADOS DO FIRESTORE EM TEMPO REAL
-    function carregarDadosNuvem() {
-      // Carregar Configurações
-      db.collection("configuracoes").doc("geral").get().then(doc => {
-        if (doc.exists) cfg = doc.data();
+    // CARREGAR DADOS DO FIREBASE
+    function carregarDadosCloud() {
+      // Configurações
+      db.collection('configuracoes').doc('geral').get().then(doc => {
+        if(doc.exists) cfg = doc.data();
         uiInit();
-      }).catch(err => { console.error("Erro config:", err); uiInit(); });
+      }).catch(() => uiInit());
 
-      // Sincronizar Materiais
-      db.collection("materiais").onSnapshot(snapshot => {
+      // Materiais
+      db.collection('materiais').onSnapshot(snapshot => {
         materiais = [];
         snapshot.forEach(doc => materiais.push({ id: doc.id, ...doc.data() }));
         atualizarSelectsMateriais();
         renderizarMateriais();
-        calcular();
       });
 
-      // Sincronizar Produtos
-      db.collection("produtos").onSnapshot(snapshot => {
+      // Produtos
+      db.collection('produtos').onSnapshot(snapshot => {
         produtos = [];
         snapshot.forEach(doc => produtos.push({ id: doc.id, ...doc.data() }));
-        renderizarProdutos();
-        uiInitSelectsCRM();
-        renderizarKitSelecao();
+        uiInit();
       });
 
-      // Sincronizar Kits
-      db.collection("kits").onSnapshot(snapshot => {
+      // Kits
+      db.collection('kits').onSnapshot(snapshot => {
         kits = [];
         snapshot.forEach(doc => kits.push({ id: doc.id, ...doc.data() }));
-        uiInitSelectsCRM();
+        renderizarKits();
+        atualizarSelectCRM();
       });
 
-      // Sincronizar Pedidos
-      db.collection("pedidos").onSnapshot(snapshot => {
+      // Pedidos
+      db.collection('pedidos').onSnapshot(snapshot => {
         pedidos = [];
         snapshot.forEach(doc => pedidos.push({ id: doc.id, ...doc.data() }));
-        verificarStatusAutomatico();
-        renderizarPedidos(pedidos);
+        renderizarPedidos();
       });
     }
 
@@ -345,202 +277,95 @@
       document.getElementById('cfg-taxas').value = cfg.taxas;
       
       atualizarSelectsMateriais();
-      uiInitSelectsCRM();
-      renderizarKitSelecao();
+      atualizarSelectCRM();
+      renderizarProdutos();
+      renderizarKits();
+      renderizarKitSelector();
       calcular();
     }
 
     function atualizarSelectsMateriais() {
       const opts = `<option value="">-- Nenhum --</option>` + materiais.map(m => `<option value="${m.id}">${m.nome} ${m.detalhe} (R$${m.preco})</option>`).join('');
       [1,2,3,4].forEach(i => {
-        let el = document.getElementById(`prod-mat-${i}`);
+        const el = document.getElementById(`prod-mat-${i}`);
         if(el) el.innerHTML = opts;
       });
-      if(materiais[0]) {
-        let el1 = document.getElementById('prod-mat-1');
-        if(el1 && !el1.value) el1.value = materiais[0].id;
+    }
+
+    function atualizarSelectCRM() {
+      const el = document.getElementById('crm-item');
+      if(el) {
+        el.innerHTML = `<optgroup label="Produtos">`+produtos.map(p=>`<option value="p_${p.id}">${p.nome}</option>`).join('')+`</optgroup><optgroup label="Kits">`+kits.map(k=>`<option value="k_${k.id}">${k.nome}</option>`).join('')+`</optgroup>`;
       }
     }
 
-    function uiInitSelectsCRM() {
-      let crmItem = document.getElementById('crm-item');
-      if(crmItem) {
-        crmItem.innerHTML = `<optgroup label="Produtos">`+produtos.map(p=>`<option value="p_${p.id}">${p.nome}</option>`).join('')+`</optgroup><optgroup label="Kits">`+kits.map(k=>`<option value="k_${k.id}">${k.nome}</option>`).join('')+`</optgroup>`;
+    function renderizarKitSelector() {
+      const el = document.getElementById('kit-selecao-produtos');
+      if(el) {
+        el.innerHTML = produtos.map(p=>`<div class="kit-selector-row"><span>${p.nome} (${fmt(p.preco)})</span><input type="number" id="kq_${p.id}" value="0" min="0"></div>`).join('');
       }
-    }
-
-    function renderizarKitSelecao() {
-      let kitSel = document.getElementById('kit-selecao-produtos');
-      if(kitSel) {
-        kitSel.innerHTML = produtos.map(p=>`<div class="kit-selector-row"><span>${p.nome} (${fmt(p.preco)})</span><input type="number" id="kq_${p.id}" value="0" min="0"></div>`).join('');
-      }
-    }
-
-    function verificarStatusAutomatico() {
-      const seteDias = 7 * 24 * 60 * 60 * 1000;
-      const agora = Date.now();
-      pedidos.forEach(p => {
-        if(p.status === 'Orçamento' && p.data && (agora - p.data > seteDias)) {
-          db.collection("pedidos").doc(p.id).update({ status: 'Sem Retorno' });
-        }
-      });
     }
 
     function renderizarMateriais() {
-      let el = document.getElementById('lista-materiais');
-      if(!el) return;
-      el.innerHTML = materiais.map(m => {
-        let estClass = m.estoque <= 200 ? 'badge-danger' : 'badge-default';
+      const container = document.getElementById('lista-materiais');
+      if(!container) return;
+      container.innerHTML = materiais.map(m => {
+        let estClass = m.estoque <= 200 ? 'badge-danger' : 'badge';
         let alerta = m.estoque <= 200 ? `<br><span style="color:var(--danger); font-size:0.75rem;">⚠️ Estoque Crítico!</span>` : '';
         return `<div class="list-item">
                   <div class="item-info">
                     <h3>${m.nome} <span style="font-size:0.8rem">${m.detalhe}</span></h3>
-                    <p>${fmt(m.preco)}/kg | <span class="badge ${estClass}">Estoque: ${m.estoque}g</span>${alerta}</p>
+                    <p>${fmt(m.preco)}/kg | <span class="${estClass}">Estoque: ${m.estoque}g</span>${alerta}</p>
                   </div>
                   <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
                     <button class="btn btn-outline" style="padding:0.3rem; border-color:var(--primary); color:var(--primary);" onclick="reporEstoque('${m.id}')">+ 1Kg</button>
                     <button class="btn btn-outline" style="padding:0.3rem" onclick="editarMaterial('${m.id}')">Editar</button>
-                    <button class="btn btn-danger" style="padding:0.3rem" onclick="excluir('mat','${m.id}')">X</button>
+                    <button class="btn btn-danger" style="padding:0.3rem" onclick="excluirCloud('materiais','${m.id}')">X</button>
                   </div>
                 </div>`;
       }).join('');
     }
 
     function renderizarProdutos() {
-      let el = document.getElementById('lista-produtos');
-      if(!el) return;
-      el.innerHTML = produtos.map(p => `<div class="list-item"><div class="item-info"><h3>${p.nome}</h3><p>Venda: <strong>${fmt(p.preco)}</strong> | Custo: ${fmt(p.custo)}</p></div><div><button class="btn btn-outline" style="padding:0.3rem" onclick="excluir('pro','${p.id}')">X</button></div></div>`).join('');
+      const container = document.getElementById('lista-produtos');
+      if(!container) return;
+      container.innerHTML = produtos.map(p => `<div class="list-item"><div class="item-info"><h3>${p.nome}</h3><p>Venda: <strong>${fmt(p.preco)}</strong> | Custo: ${fmt(p.custo)}</p></div><div><button class="btn btn-outline" style="padding:0.3rem" onclick="editarProduto('${p.id}')">Editar</button> <button class="btn btn-danger" style="padding:0.3rem" onclick="excluirCloud('produtos','${p.id}')">X</button></div></div>`).join('');
+      renderizarKitSelector();
+      atualizarSelectCRM();
     }
 
     function renderizarKits() {
-      let el = document.getElementById('lista-kits');
-      if(!el) return;
-      el.innerHTML = kits.map(k => `<div class="list-item"><div class="item-info"><h3>${k.nome}</h3><p>Venda: <strong>${fmt(k.preco)}</strong> | Custo: ${fmt(k.custo)}</p></div><div><button class="btn btn-danger" style="padding:0.3rem" onclick="excluir('kit','${k.id}')">X</button></div></div>`).join('');
+      const container = document.getElementById('lista-kits');
+      if(!container) return;
+      container.innerHTML = kits.map(k => `<div class="list-item"><div class="item-info"><h3>${k.nome}</h3><p>Venda: <strong>${fmt(k.preco)}</strong> | Custo: ${fmt(k.custo)}</p></div><div><button class="btn btn-danger" style="padding:0.3rem" onclick="excluirCloud('kits','${k.id}')">X</button></div></div>`).join('');
     }
 
-    function renderizarPedidos(lista) {
+    function renderizarPedidos() {
       const container = document.getElementById('lista-pedidos');
       if(!container) return;
-      
-      if(lista.length === 0) {
-        container.innerHTML = `<p style="color:var(--text-muted); font-size:0.9rem;">Nenhum pedido encontrado.</p>`;
-        return;
-      }
-
-      container.innerHTML = lista.map(p => {
-        let badgeClass = 'badge-gray';
-        if(p.status === 'Em Preparo') badgeClass = 'badge-blue';
-        if(p.status === 'Enviado') badgeClass = 'badge-green';
-        if(p.status === 'Recusado') badgeClass = 'badge-red';
-        if(p.status === 'Sem Retorno') badgeClass = 'badge-orange';
-
+      container.innerHTML = pedidos.map(p => {
+        let btn = p.status==='Orçamento' ? `<button class="btn btn-warning" style="padding:0.3rem; font-size:0.75rem;" onclick="produzirPedido('${p.id}')">Dar Baixa (Produzir)</button>` : `<span class="badge">Produzido</span>`;
         let detalhes = '';
-        if(p.cpf) detalhes += `📄 CPF: ${p.cpf} &nbsp;`;
         if(p.contato) detalhes += `📞 ${p.contato} &nbsp;`;
-        if(p.endereco) detalhes += `<br>📍 ${p.endereco}${p.cidade||p.estado?' - '+[p.cidade,p.estado].filter(Boolean).join('/'):''}`;
+        if(p.endereco) detalhes += `<br>📍 ${p.endereco}`;
         if(p.obs) detalhes += `<br>📝 <i>Obs: ${p.obs}</i>`;
 
-        return `<div class="list-item" style="border-left: 4px solid var(--card-border); ${p.status==='Em Preparo'?'border-color:var(--accent);':''} ${p.status==='Enviado'?'border-color:var(--primary);':''} ${p.status==='Recusado'?'border-color:var(--danger);':''}">
+        return `<div class="list-item">
                   <div class="item-info">
-                    <h3>
-                      ${p.cliente} 
-                      <span class="badge ${badgeClass}" style="font-size:0.65rem;">${p.status}</span>
-                    </h3>
-                    <p style="font-size:0.75rem; margin-bottom:0.3rem;">Data: ${fmtDate(p.data)}</p>
+                    <h3>${p.cliente}</h3>
                     <p style="margin-bottom: 0.3rem; font-size:0.85rem;">${p.itemNome} | <strong style="color:var(--primary);">${fmt(p.preco)}</strong></p>
                     <p style="font-size:0.75rem;">${detalhes}</p>
-                    
-                    <div style="margin-top: 0.5rem; display: flex; gap: 0.3rem;">
-                      <button class="btn btn-outline" style="padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="gerarPDF('${p.id}')">🖨️ PDF</button>
-                      <button class="btn btn-whatsapp" style="padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="enviarWhatsPedido('${p.id}')">💬 Whats</button>
-                    </div>
                   </div>
-                  <div style="display:flex; flex-direction:column; gap:0.5rem; align-items:flex-end;">
-                    <select class="select-status" onchange="mudarStatusPedido('${p.id}', this.value)">
-                      <option value="Orçamento" ${p.status==='Orçamento'?'selected':''}>⏳ Orçamento</option>
-                      <option value="Em Preparo" ${p.status==='Em Preparo'?'selected':''}>🛠️ Em Preparo</option>
-                      <option value="Enviado" ${p.status==='Enviado'?'selected':''}>✅ Enviado</option>
-                      <option value="Recusado" ${p.status==='Recusado'?'selected':''}>❌ Recusado</option>
-                      <option value="Sem Retorno" ${p.status==='Sem Retorno'?'selected':''}>⚠️ Sem Retorno</option>
-                    </select>
-                    <button class="btn btn-danger" style="padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="excluir('ped','${p.id}')">Excluir</button>
+                  <div style="display:flex; gap:0.5rem; align-items:center;">
+                    ${btn}
+                    <button class="btn btn-danger" style="padding:0.3rem" onclick="excluirCloud('pedidos','${p.id}')">X</button>
                   </div>
                 </div>`;
-      }).reverse().join(''); 
-    }
-
-    function filtrarPedidos() {
-      let termo = document.getElementById('input-busca').value.toLowerCase().trim();
-      if(!termo) { renderizarPedidos(pedidos); return; }
-      
-      let filtrados = pedidos.filter(p => 
-        (p.cliente && p.cliente.toLowerCase().includes(termo)) ||
-        (p.cpf && p.cpf.toLowerCase().includes(termo)) ||
-        (p.contato && p.contato.toLowerCase().includes(termo))
-      );
-      renderizarPedidos(filtrados);
-    }
-
-    function mudarStatusPedido(id, novoStatus) {
-      let ped = pedidos.find(x => x.id === id);
-      if(!ped) return;
-
-      const requerDeducao = (novoStatus === 'Em Preparo' || novoStatus === 'Enviado');
-      
-      if (requerDeducao && !ped.estoqueDeduzido) {
-        if(confirm(`Mudar para "${novoStatus}" irá subtrair automaticamente o plástico do seu estoque. Confirmar?`)) {
-          movimentarEstoquePedido(ped, -1); 
-          ped.estoqueDeduzido = true;
-        } else {
-          renderizarPedidos(pedidos); 
-          return; 
-        }
-      } 
-      else if (!requerDeducao && ped.estoqueDeduzido) {
-        if(confirm(`Mudar para "${novoStatus}" irá DEVOLVER os materiais deste pedido para o seu estoque. Confirmar?`)) {
-          movimentarEstoquePedido(ped, 1); 
-          ped.estoqueDeduzido = false;
-        } else {
-          renderizarPedidos(pedidos); 
-          return;
-        }
-      }
-
-      db.collection("pedidos").doc(id).update({
-        status: novoStatus,
-        estoqueDeduzido: ped.estoqueDeduzido
-      });
-    }
-
-    function movimentarEstoquePedido(ped, multiplicador) {
-      if(ped.tipo === 'p') { 
-        alterarProdEstoque(ped.refId, 1 * multiplicador); 
-      }
-      else { 
-        let k = kits.find(x=>x.id === ped.refId); 
-        if(k && k.itens) k.itens.forEach(i => alterarProdEstoque(i.id, i.qtd * multiplicador)); 
-      }
-    }
-    
-    function alterarProdEstoque(pid, mult) {
-      let p = produtos.find(x=>x.id === pid); if(!p) return;
-      alterarEstoque(p.m1, (p.g1+p.purga)*mult); 
-      alterarEstoque(p.m2, p.g2*mult);
-      alterarEstoque(p.m3, p.g3*mult); 
-      alterarEstoque(p.m4, p.g4*mult);
-    }
-
-    function alterarEstoque(mid, val) {
-      if(!mid || val===0) return; 
-      let m = materiais.find(x=>x.id===mid); 
-      if(m) {
-        let novoEstoque = m.estoque + val;
-        db.collection("materiais").doc(mid).update({ estoque: novoEstoque });
-      }
+      }).join('');
     }
 
     function calcular() {
-      const getMat = id => materiais.find(m => m.id === id) || {preco:0};
+      const getMat = id => materiais.find(m => m.id === document.getElementById(id).value) || {preco:0};
       const g1 = parseFloat(document.getElementById('prod-g-1').value)||0; 
       const g2 = parseFloat(document.getElementById('prod-g-2').value)||0;
       const g3 = parseFloat(document.getElementById('prod-g-3').value)||0; 
@@ -552,21 +377,11 @@
       const ext = parseFloat(document.getElementById('prod-extras').value)||0;
       const mg = parseFloat(document.getElementById('prod-margem').value)||0;
 
-      let idm1 = document.getElementById('prod-mat-1').value;
-      let idm2 = document.getElementById('prod-mat-2').value;
-      let idm3 = document.getElementById('prod-mat-3').value;
-      let idm4 = document.getElementById('prod-mat-4').value;
-
-      const cFil = ((g1+purga)/1000)*getMat(idm1).preco + (g2/1000)*getMat(idm2).preco + (g3/1000)*getMat(idm3).preco + (g4/1000)*getMat(idm4).preco;
-      const cEn = tImp * cfg.energia; 
-      const cDep = tImp * (cfg.maqVal/cfg.maqHrs); 
-      const cMo = tMo * cfg.mo;
+      const cFil = ((g1+purga)/1000)*getMat('prod-mat-1').preco + (g2/1000)*getMat('prod-mat-2').preco + (g3/1000)*getMat('prod-mat-3').preco + (g4/1000)*getMat('prod-mat-4').preco;
+      const cEn = tImp * cfg.energia; const cDep = tImp * (cfg.maqVal/cfg.maqHrs); const cMo = tMo * cfg.mo;
       const sub = cFil + cEn + cDep + cMo + ext;
-      const cRis = sub * (cfg.risco/100); 
-      const cTax = (sub+cRis) * (cfg.taxas/100);
-      const total = sub + cRis + cTax; 
-      const lucro = total * (mg/100); 
-      const venda = total + lucro;
+      const cRis = sub * (cfg.risco/100); const cTax = (sub+cRis) * (cfg.taxas/100);
+      const total = sub + cRis + cTax; const lucro = total * (mg/100); const venda = total + lucro;
 
       document.getElementById('res-filamento').innerText = fmt(cFil); 
       document.getElementById('res-energia').innerText = fmt(cEn);
@@ -578,15 +393,31 @@
       document.getElementById('res-venda').innerText = fmt(venda);
       document.getElementById('res-lucro').innerText = fmt(lucro);
 
-      calcAtual = { custo: total, preco: venda, lucro: lucro, imp: tImp, g1, g2, g3, g4, purga };
+      calcAtual = { custo: total, preco: venda, lucro, imp: tImp, g1, g2, g3, g4, purga };
+    }
+
+    // Ações Cloud
+    function salvarMaterial() {
+      let id = document.getElementById('mat-id').value;
+      let nome = document.getElementById('mat-nome').value, det = document.getElementById('mat-detalhe').value, 
+          prc = parseFloat(document.getElementById('mat-preco').value), est = parseFloat(document.getElementById('mat-estoque').value);
+      if(!nome||isNaN(prc)) return alert("Preencha o tipo e o preço corretamente.");
+
+      const matData = { nome, detalhe: det, preco: prc, estoque: est };
+      const docId = id ? id : 'm_' + Date.now();
+
+      db.collection('materiais').doc(docId).set(matData).then(() => {
+        cancelarEdicaoMat();
+        alert("Material salvo na nuvem!");
+      });
     }
 
     function reporEstoque(id) {
       let m = materiais.find(x => x.id === id);
       if(m) {
         let novoEstoque = m.estoque + 1000;
-        db.collection("materiais").doc(id).update({ estoque: novoEstoque }).then(() => {
-          alert(`Sucesso! Adicionado 1kg ao estoque de ${m.nome} (${m.detalhe}).`);
+        db.collection('materiais').doc(id).update({ estoque: novoEstoque }).then(() => {
+          alert(`Adicionado 1kg ao estoque de ${m.nome}.`);
         });
       }
     }
@@ -599,7 +430,6 @@
       document.getElementById('mat-detalhe').value = m.detalhe;
       document.getElementById('mat-preco').value = m.preco;
       document.getElementById('mat-estoque').value = m.estoque;
-      
       document.getElementById('btn-mat').innerText = "Atualizar Material";
       document.getElementById('btn-cancel-mat').style.display = "inline-flex";
     }
@@ -610,52 +440,43 @@
       document.getElementById('mat-detalhe').value = '';
       document.getElementById('mat-preco').value = '';
       document.getElementById('mat-estoque').value = '1000';
-      
       document.getElementById('btn-mat').innerText = "Salvar Material";
       document.getElementById('btn-cancel-mat').style.display = "none";
     }
 
-    function salvarMaterial() {
-      let id = document.getElementById('mat-id').value;
-      let nome = document.getElementById('mat-nome').value, det = document.getElementById('mat-detalhe').value, 
-          prc = parseFloat(document.getElementById('mat-preco').value), est = parseFloat(document.getElementById('mat-estoque').value);
-      if(!nome||isNaN(prc)) return alert("Preencha o tipo e o preço corretamente.");
-
-      let dados = { nome, detalhe: det, preco: prc, estoque: est };
-
-      if(id) {
-        db.collection("materiais").doc(id).update(dados).then(() => {
-          cancelarEdicaoMat();
-          alert("Material atualizado!");
-        });
-      } else {
-        db.collection("materiais").add(dados).then(() => {
-          cancelarEdicaoMat();
-          alert("Material cadastrado!");
-        });
-      }
-    }
-
     function salvarProduto() {
-      let nome = document.getElementById('prod-nome').value; if(!nome) return alert("Nome!");
+      let nome = document.getElementById('prod-nome').value; if(!nome) return alert("Informe o nome do produto!");
+      let id = document.getElementById('prod-id').value;
+      const docId = id ? id : 'p_' + Date.now();
+
       let p = { 
-        nome, 
-        custo: calcAtual.custo, 
-        preco: calcAtual.preco, 
-        imp: calcAtual.imp, 
+        nome, custo: calcAtual.custo, preco: calcAtual.preco, imp: calcAtual.imp, 
         m1: document.getElementById('prod-mat-1').value, g1: calcAtual.g1,
         m2: document.getElementById('prod-mat-2').value, g2: calcAtual.g2,
         m3: document.getElementById('prod-mat-3').value, g3: calcAtual.g3,
-        m4: document.getElementById('prod-mat-4').value, g4: calcAtual.g4, 
-        purga: calcAtual.purga 
+        m4: document.getElementById('prod-mat-4').value, g4: calcAtual.g4, purga: calcAtual.purga 
       };
       
-      db.collection("produtos").add(p).then(() => {
-        alert("Produto Salvo na Nuvem!");
+      db.collection('produtos').doc(docId).set(p).then(() => {
+        alert("Produto salvo na nuvem!");
         limparCalc();
       });
     }
-    
+
+    function editarProduto(id) {
+      let p = produtos.find(x => x.id === id);
+      if(!p) return;
+      document.getElementById('prod-id').value = p.id;
+      document.getElementById('prod-nome').value = p.nome;
+      if (p.m1) document.getElementById('prod-mat-1').value = p.m1; document.getElementById('prod-g-1').value = p.g1;
+      if (p.m2) document.getElementById('prod-mat-2').value = p.m2; document.getElementById('prod-g-2').value = p.g2 || 0;
+      if (p.m3) document.getElementById('prod-mat-3').value = p.m3; document.getElementById('prod-g-3').value = p.g3 || 0;
+      if (p.m4) document.getElementById('prod-mat-4').value = p.m4; document.getElementById('prod-g-4').value = p.g4 || 0;
+      document.getElementById('prod-purga').value = p.purga || 0;
+      document.getElementById('form-title').innerText = "Editar Produto";
+      switchTab('calc'); calcular();
+    }
+
     function limparCalc() { 
       document.getElementById('prod-nome').value=''; 
       document.getElementById('prod-id').value=''; 
@@ -665,16 +486,17 @@
     }
 
     function salvarKit() {
-      let nome = document.getElementById('kit-nome').value; if(!nome) return alert("Nome!");
+      let nome = document.getElementById('kit-nome').value; if(!nome) return alert("Informe o nome do combo!");
       let itens = [], c = 0, p = 0;
       produtos.forEach(prod => {
-        let q = parseInt(document.getElementById('kq_'+prod.id).value)||0;
+        let qField = document.getElementById('kq_'+prod.id);
+        let q = qField ? parseInt(qField.value)||0 : 0;
         if(q>0) { itens.push({id:prod.id, qtd:q}); c += prod.custo*q; p += prod.preco*q; }
       });
       if(itens.length===0) return alert("Selecione quantidades!");
       
-      db.collection("kits").add({ nome, itens, custo: c, preco: p }).then(() => {
-        alert("Combo Salvo na Nuvem!");
+      db.collection('kits').add({ nome, itens, custo: c, preco: p }).then(() => {
+        alert("Combo salvo!");
         document.getElementById('kit-nome').value='';
       });
     }
@@ -682,139 +504,78 @@
     function salvarPedido() {
       let cli = document.getElementById('crm-cliente').value, 
           val = document.getElementById('crm-item').value,
-          cpf = document.getElementById('crm-cpf').value,
           cont = document.getElementById('crm-contato').value,
           end = document.getElementById('crm-endereco').value,
-          cid = document.getElementById('crm-cidade').value,
-          est = document.getElementById('crm-estado').value,
           obs = document.getElementById('crm-obs').value;
           
-      if(!cli||!val) return alert("Preencha pelo menos o Nome do Cliente e o Produto!");
+      if(!cli||!val) return alert("Preencha pelo menos o Nome e o Produto!");
       let [tipo, id] = val.split('_'); 
-      let ref = tipo==='p' ? produtos.find(x=>x.id===id) : kits.find(x=>x.id===id);
-      if(!ref) return;
+      let ref = tipo==='p' ? produtos.find(x=>x.id==id) : kits.find(x=>x.id==id);
       
-      let novoPedido = { 
-        data: Date.now(),
-        cliente: cli, 
-        cpf: cpf,
-        contato: cont,
-        endereco: end,
-        cidade: cid,
-        estado: est,
-        obs: obs,
-        tipo, 
-        refId: id, 
-        itemNome: ref.nome, 
-        preco: ref.preco, 
-        status: 'Orçamento',
-        estoqueDeduzido: false 
-      };
-      
-      db.collection("pedidos").add(novoPedido).then(() => {
+      db.collection('pedidos').add({
+        cliente: cli, contato: cont, endereco: end, obs: obs,
+        tipo, refId: id, itemNome: ref.nome, preco: ref.preco, status: 'Orçamento'
+      }).then(() => {
+        alert("Pedido lançado!");
         document.getElementById('crm-cliente').value='';
-        document.getElementById('crm-cpf').value='';
         document.getElementById('crm-contato').value='';
         document.getElementById('crm-endereco').value='';
-        document.getElementById('crm-cidade').value='';
-        document.getElementById('crm-estado').value='';
         document.getElementById('crm-obs').value='';
-        alert("Orçamento lançado na nuvem com sucesso!");
       });
     }
 
-    function gerarPDF(pedId) {
-      let ped = pedidos.find(x => x.id === pedId);
+    function produzirPedido(id) {
+      if(!confirm("Finalizar impressão? Isso vai deduzir os filamentos do estoque na nuvem!")) return;
+      let ped = pedidos.find(x=>x.id==id);
       if(!ped) return;
-      
-      let ref = ped.tipo === 'p' ? produtos.find(x=>x.id===ped.refId) : null;
-      let tempo = ref ? ref.imp : "Variável"; 
 
-      document.getElementById('p-cliente').innerText = ped.cliente || '-';
-      document.getElementById('p-cpf').innerText = ped.cpf || 'Não informado';
-      document.getElementById('p-contato').innerText = ped.contato || 'Não informado';
-      document.getElementById('p-endereco').innerText = `${ped.endereco || ''} ${ped.cidade || ped.estado ? '- ' + [ped.cidade, ped.estado].filter(Boolean).join('/') : ''}`.trim() || 'Não informado';
-      
-      document.getElementById('p-nome').innerText = ped.itemNome;
-      document.getElementById('p-tempo').innerText = tempo;
-      document.getElementById('p-preco').innerText = fmt(ped.preco);
+      if(ped.tipo==='p') { deduzirProdCloud(ped.refId, 1); }
+      else { 
+        let k = kits.find(x=>x.id==ped.refId); 
+        if(k) k.itens.forEach(i => deduzirProdCloud(i.id, i.qtd)); 
+      }
 
-      window.print();
+      db.collection('pedidos').doc(id).update({ status: 'Produzido' }).then(() => {
+        alert("Pedido atualizado e estoque baixado!");
+      });
     }
 
-    function gerarPDFAvulso() {
-      document.getElementById('p-cliente').innerText = 'Cliente Avulso';
-      document.getElementById('p-cpf').innerText = '-';
-      document.getElementById('p-contato').innerText = '-';
-      document.getElementById('p-endereco').innerText = '-';
-      
-      document.getElementById('p-nome').innerText = document.getElementById('prod-nome').value || 'Peça Avulsa';
-      document.getElementById('p-tempo').innerText = calcAtual.imp || 0;
-      document.getElementById('p-preco').innerText = fmt(calcAtual.preco);
-
-      window.print();
+    function deduzirProdCloud(pid, mult) {
+      let p = produtos.find(x=>x.id==pid); if(!p) return;
+      deduzirEstoqueCloud(p.m1, (p.g1+p.purga)*mult); 
+      deduzirEstoqueCloud(p.m2, p.g2*mult);
+      deduzirEstoqueCloud(p.m3, p.g3*mult); 
+      deduzirEstoqueCloud(p.m4, p.g4*mult);
     }
 
-    function enviarWhatsPedido(id) {
-      let ped = pedidos.find(x => x.id === id);
-      if(!ped) return;
-      
-      let msg = `Olá, *${ped.cliente}*! Tudo bem?\n\nSegue o orçamento referente ao pedido: *${ped.itemNome}*.\n\n💰 *Valor Total:* ${fmt(ped.preco)}\n\nPodemos dar andamento na sua produção? Qualquer dúvida, estou à disposição!`;
-      let fone = ped.contato ? ped.contato.replace(/\D/g, '') : '';
-      
-      let url = fone.length >= 10 
-        ? `https://api.whatsapp.com/send?phone=55${fone}&text=${encodeURIComponent(msg)}` 
-        : `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
-      
-      window.open(url, '_blank');
+    function deduzirEstoqueCloud(mid, qtd) {
+      if(!mid || qtd<=0) return; 
+      let m = materiais.find(x=>x.id===mid); 
+      if(m) {
+        let novoEst = Math.max(0, m.estoque - qtd);
+        db.collection('materiais').doc(mid).update({ estoque: novoEst; });
+      }
     }
 
     function salvarConfig() {
-      cfg = {
-        energia: parseFloat(document.getElementById('cfg-energia').value) || 0,
-        maqVal: parseFloat(document.getElementById('cfg-maquina').value) || 0,
-        maqHrs: parseFloat(document.getElementById('cfg-horas').value) || 1,
-        mo: parseFloat(document.getElementById('cfg-mo').value) || 0,
-        risco: parseFloat(document.getElementById('cfg-risco').value) || 0,
-        taxas: parseFloat(document.getElementById('cfg-taxas').value) || 0
-      };
+      cfg.energia = parseFloat(document.getElementById('cfg-energia').value); 
+      cfg.maqVal = parseFloat(document.getElementById('cfg-maquina').value);
+      cfg.maqHrs = parseFloat(document.getElementById('cfg-horas').value); 
+      cfg.mo = parseFloat(document.getElementById('cfg-mo').value);
+      cfg.risco = parseFloat(document.getElementById('cfg-risco').value); 
+      cfg.taxas = parseFloat(document.getElementById('cfg-taxas').value);
 
-      db.collection("configuracoes").doc("geral").set(cfg).then(() => {
-        alert("Configurações salvas na nuvem!");
+      db.collection('configuracoes').doc('geral').set(cfg).then(() => {
+        alert("Custos operacionais salvos na nuvem!");
         calcular();
       });
     }
-    
-    function excluir(tipo, id) {
-      if(!confirm("Tem certeza que deseja excluir?")) return;
-      
-      let col = "";
-      if(tipo === 'mat') col = "materiais";
-      if(tipo === 'pro') col = "produtos";
-      if(tipo === 'kit') col = "kits";
-      if(tipo === 'ped') {
-        col = "pedidos";
-        let p = pedidos.find(x => x.id === id);
-        if(p && p.estoqueDeduzido) {
-           if(confirm("Este pedido já teve o estoque deduzido. Deseja DEVOLVER os materiais ao estoque antes de excluir?")) {
-              movimentarEstoquePedido(p, 1); 
-           }
-        }
-      }
 
-      if(col) {
-        db.collection(col).doc(id).delete().then(() => {
-          // Atualiza visualmente
-        });
-      }
-    }
-    
-    function exportar() { 
-      let data = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({cfg, materiais, produtos, kits, pedidos})); 
-      let a = document.createElement('a'); 
-      a.href = data; 
-      a.download = `backup_3d_nuvem_${new Date().toISOString().slice(0,10)}.json`; 
-      a.click(); 
+    function excluirCloud(col, id) {
+      if(!confirm("Deseja realmente excluir?")) return;
+      db.collection(col).doc(id).delete().then(() => {
+        alert("Excluído com sucesso!");
+      });
     }
   </script>
 </body>
