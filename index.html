@@ -154,16 +154,16 @@
     <div class="card"><h2>Combos Salvos</h2><div id="lista-kits" class="list-container"></div></div>
   </div>
 
-  <!-- ABA CRM -->
+  <!-- ABA CRM / PEDIDOS (RESTAURADA) -->
   <div id="tab-crm" class="tab-content">
     <div class="card">
-      <h2>Novo Pedido</h2>
+      <h2>Novo Pedido / Orçamento</h2>
       <div class="grid-2">
         <div class="form-group"><label>Nome do Cliente</label><input type="text" id="crm-cliente" placeholder="Ex: Maria da Silva"></div>
         <div class="form-group"><label>Contato</label><input type="text" id="crm-contato" placeholder="Ex: (81) 99999-9999"></div>
       </div>
-      <div class="form-group"><label>Endereço</label><input type="text" id="crm-endereco"></div>
-      <div class="form-group"><label>Observações</label><input type="text" id="crm-obs"></div>
+      <div class="form-group"><label>Endereço</label><input type="text" id="crm-endereco" placeholder="Ex: Rua das Flores, 123"></div>
+      <div class="form-group"><label>Observações</label><input type="text" id="crm-obs" placeholder="Ex: Embalar para presente"></div>
       <div class="form-group"><label>Produto ou Kit</label><select id="crm-item"></select></div>
       <button class="btn" onclick="salvarPedido()" style="margin-top: 0.5rem;">Lançar Pedido</button>
     </div>
@@ -221,7 +221,6 @@
 
     function toggleTheme() { document.body.setAttribute('data-theme', document.body.getAttribute('data-theme')==='light'?'dark':'light'); }
     
-    // FUNÇÃO DE TROCA DE ABAS RESTAURADA
     function switchTab(t) { 
       document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active')); 
       document.querySelectorAll('nav button').forEach(e => e.classList.remove('active')); 
