@@ -34,7 +34,7 @@
     .theme-toggle { background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text); padding: 0.5rem 0.8rem; border-radius: 8px; cursor: pointer; }
     
     nav { display: flex; gap: 0.5rem; background: var(--card-bg); padding: 0.5rem; border-radius: 12px; margin-bottom: 1.5rem; border: 1px solid var(--card-border); flex-wrap: wrap; }
-    nav button { flex: 1; background: transparent; border: none; color: var(--text-muted); padding: 0.75rem; font-weight: bold; border-radius: 8px; cursor: pointer; min-width: 120px; }
+    nav button { flex: 1; background: transparent; border: none; color: var(--text-muted); padding: 0.75rem; font-weight: bold; border-radius: 8px; cursor: pointer; min-width: 120px; transition: all 0.2s; }
     nav button.active { background: var(--primary); color: #fff; }
     
     .tab-content { display: none; }
@@ -202,7 +202,6 @@
   </div>
 
   <script>
-    // CREDENCIAIS CORRETAS DO FIREBASE
     const firebaseConfig = {
       apiKey: "AIzaSyCHsKj0Y0B538kbxv3uyXscbFJ5o5JX48w",
       authDomain: "custo3d-3d649.firebaseapp.com",
@@ -221,7 +220,15 @@
     window.onload = () => { carregarDadosCloud(); };
 
     function toggleTheme() { document.body.setAttribute('data-theme', document.body.getAttribute('data-theme')==='light'?'dark':'light'); }
-    function switchTab(t) { document.querySelectorAll('.tab-content, nav button').forEach(e => e.classList.remove('active')); document.getElementById('tab-'+t).classList.add('active'); event.target.classList.add('active'); }
+    
+    // FUNÇÃO DE TROCA DE ABAS RESTAURADA
+    function switchTab(t) { 
+      document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active')); 
+      document.querySelectorAll('nav button').forEach(e => e.classList.remove('active')); 
+      document.getElementById('tab-'+t).classList.add('active'); 
+      event.currentTarget.classList.add('active'); 
+    }
+
     function fmt(v) { return (v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
 
     function carregarDadosCloud() {
