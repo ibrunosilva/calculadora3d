@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculadora de Custos - Impressão 3D</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --card-border: #334155;
+      --primary: #10b981;
+      --primary-hover: #059669;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --danger: #ef4444;
+      --danger-hover: #dc2626;
+      --accent: #3b82f6;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      padding: 1rem;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding-bottom: 80px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      color: var(--primary);
+    }
+
+    header p {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+
+    nav {
+      display: flex;
+      gap: 0.5rem;
+      background: var(--card-bg);
+      padding: 0.5rem;
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+      border: 1px solid var(--card-border);
+    }
+
+    nav button {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 0.75rem;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    nav button.active {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .card h2 {
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      color: var(--primary);
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 0.5rem;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    @media (min-width: 640px) {
+      .grid-2 {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .form-group label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .form-group input, .form-group select {
+      background: #0f172a;
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      padding: 0.6rem;
+      border-radius: 6px;
+      font-size: 0.95rem;
+    }
+
+    .form-group input:focus, .form-group select:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .btn {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 0.75rem 1.25rem;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      width: 100%;
+      transition: background 0.2s;
+    }
+
+    .btn:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-danger {
+      background: var(--danger);
+    }
+
+    .btn-danger:hover {
+      background: var(--danger-hover);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--card-border);
+      color: var(--text);
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .results-panel {
+      background: #0f172a;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 1rem;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.4rem 0;
+      border-bottom: 1px dashed var(--card-border);
+      font-size: 0.9rem;
+    }
+
+    .result-row:last-child {
+      border-bottom: none;
+    }
+
+    .result-row.highlight {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: var(--primary);
+      border-top: 1px solid var(--card-border);
+      padding-top: 0.75rem;
+      margin-top: 0.5rem;
+    }
+
+    .product-list, .material-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .product-item, .material-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #0f172a;
+      border: 1px solid var(--card-border);
+      padding: 0.85rem 1rem;
+      border-radius: 8px;
+    }
+
+    .product-info h3, .material-info h3 {
+      font-size: 1rem;
+    }
+
+    .product-info p, .material-info p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .product-actions, .material-actions {
+      display: flex;
+      gap: 0.4rem;
+    }
+
+    .product-actions button, .material-actions button {
+      padding: 0.4rem 0.6rem;
+      font-size: 0.75rem;
+      border-radius: 4px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: bold;
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--primary);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>3D Cost Pro</h1>
+    <p>Calculadora de Custos & Precificação - Impressão 3D</p>
+  </header>
+
+  <nav>
+    <button class="active" onclick="switchTab('calc')">Calculadora</button>
+    <button onclick="switchTab('produtos')">Produtos Salvos</button>
+    <button onclick="switchTab('config')">Configurações</button>
+  </nav>
+
+  <!-- ABA CALCULADORA -->
+  <div id="tab-calc" class="tab-content active">
+    <div class="card">
+      <h2 id="form-title">Calcular Peça</h2>
+      <input type="hidden" id="prod-id">
+      
+      <div class="form-group">
+        <label>Nome do Produto/Peça</label>
+        <input type="text" id="prod-nome" placeholder="Ex: Vaso Decorativo Geometrico">
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Material Utilizado</label>
+          <select id="prod-material" onchange="calcular()"></select>
+        </div>
+
+        <div class="form-group">
+          <label>Consumo de Filamento (g)</label>
+          <input type="number" id="prod-gramas" value="100" oninput="calcular()">
+        </div>
+
+        <div class="form-group">
+          <label>Tempo de Impressão (Horas)</label>
+          <input type="number" step="0.1" id="prod-tempo-imp" value="3.5" oninput="calcular()">
+        </div>
+
+        <div class="form-group">
+          <label>Tempo de Mão de Obra (Horas)</label>
+          <input type="number" step="0.1" id="prod-tempo-mo" value="0.5" oninput="calcular()">
+        </div>
+
+        <div class="form-group">
+          <label>Embalagem & Insumos Extras (R$)</label>
+          <input type="number" step="0.01" id="prod-embalagem" value="2.50" oninput="calcular()">
+        </div>
+
+        <div class="form-group">
+          <label>Componentes Extras (Parafusos, Leds, Imãs) (R$)</label>
+          <input type="number" step="0.01" id="prod-componentes" value="0.00" oninput="calcular()">
+        </div>
+
+        <div class="form-group">
+          <label>Margem de Lucro Desejada (%)</label>
+          <input type="number" id="prod-margem" value="100" oninput="calcular()">
+        </div>
+      </div>
+
+      <div class="results-panel">
+        <div class="result-row"><span>Filamento (<span id="res-mat-nome">PLA</span>):</span> <span id="res-filamento">R$ 0,00</span></div>
+        <div class="result-row"><span>Energia:</span> <span id="res-energia">R$ 0,00</span></div>
+        <div class="result-row"><span>Depreciação Máquina:</span> <span id="res-depreciacao">R$ 0,00</span></div>
+        <div class="result-row"><span>Manutenção:</span> <span id="res-manutencao">R$ 0,00</span></div>
+        <div class="result-row"><span>Mão de Obra:</span> <span id="res-mo">R$ 0,00</span></div>
+        <div class="result-row"><span>Embalagem + Extras:</span> <span id="res-extras">R$ 0,00</span></div>
+        <div class="result-row" style="font-weight: bold; color: var(--accent);"><span>Subtotal Direto:</span> <span id="res-subtotal">R$ 0,00</span></div>
+        <div class="result-row"><span>Taxas & Impostos (% s/ custo):</span> <span id="res-taxas">R$ 0,00</span></div>
+        
+        <div class="result-row highlight"><span>Custo Total de Produção:</span> <span id="res-custo-total">R$ 0,00</span></div>
+        <div class="result-row highlight" style="color: var(--primary);"><span>Preço de Venda Sugerido:</span> <span id="res-preco-venda">R$ 0,00</span></div>
+        <div class="result-row"><span>Lucro Líquido Real:</span> <span id="res-lucro" style="color: #4ade80; font-weight: bold;">R$ 0,00</span></div>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn" onclick="salvarProduto()">Salvar Produto</button>
+        <button class="btn btn-outline" onclick="limparFormulario()">Limpar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ABA PRODUTOS -->
+  <div id="tab-produtos" class="tab-content">
+    <div class="card">
+      <h2>Produtos Cadastrados</h2>
+      <div id="lista-produtos" class="product-list">
+        <!-- Inserido dinamicamente -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ABA CONFIGURAÇÕES -->
+  <div id="tab-config" class="tab-content">
+    <div class="card">
+      <h2 id="mat-form-title">Gerenciar Materiais / Filamentos</h2>
+      <input type="hidden" id="mat-id">
+      
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Nome do Material</label>
+          <input type="text" id="mat-nome" placeholder="Ex: PLA, PETG, ABS">
+        </div>
+        <div class="form-group">
+          <label>Preço por Kg (R$)</label>
+          <input type="number" step="0.01" id="mat-preco" placeholder="100.00">
+        </div>
+      </div>
+      
+      <div class="btn-group">
+        <button class="btn" id="btn-salvar-mat" onclick="adicionarMaterial()">Cadastrar Material</button>
+        <button class="btn btn-outline" id="btn-cancelar-mat" onclick="limparFormMaterial()" style="display: none;">Cancelar</button>
+      </div>
+      
+      <div id="lista-materiais" class="material-list" style="margin-top: 1.25rem;">
+        <!-- Inserido dinamicamente -->
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Custos de Operação</h2>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Custo de Energia por Hora (R$/h)</label>
+          <input type="number" step="0.01" id="cfg-energia-hora" value="0.35">
+        </div>
+        <div class="form-group">
+          <label>Valor da Máquina (R$)</label>
+          <input type="number" step="0.01" id="cfg-maquina-valor" value="4500.00">
+        </div>
+        <div class="form-group">
+          <label>Vida Útil Estimada (Horas)</label>
+          <input type="number" id="cfg-maquina-horas" value="5000">
+        </div>
+        <div class="form-group">
+          <label>Taxa de Manutenção (% do Filamento)</label>
+          <input type="number" id="cfg-manutencao-pct" value="10">
+        </div>
+        <div class="form-group">
+          <label>Valor da Mão de Obra (R$/hora)</label>
+          <input type="number" step="0.01" id="cfg-mo-hora" value="25.00">
+        </div>
+        <div class="form-group">
+          <label>Taxas de Venda + Impostos MEI (% sobre custo)</label>
+          <input type="number" step="0.1" id="cfg-taxas-pct" value="10">
+        </div>
+      </div>
+      <button class="btn" onclick="salvarConfiguracoes()" style="margin-top: 1rem;">Salvar Custos Operacionais</button>
+    </div>
+
+    <div class="card">
+      <h2>Backup dos Dados</h2>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+        Exporte ou importe seus produtos, materiais e configurações para não perder informações ou mover para outro dispositivo.
+      </p>
+      <div class="btn-group">
+        <button class="btn btn-outline" onclick="exportarBackup()">Exportar Backup (JSON)</button>
+        <button class="btn btn-outline" onclick="document.getElementById('import-file').click()">Importar Backup</button>
+        <input type="file" id="import-file" style="display: none;" accept=".json" onchange="importarBackup(event)">
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ESTADO PADRÃO
+    let config = {
+      energiaHora: 0.35,
+      maquinaValor: 4500,
+      maquinaHoras: 5000,
+      manutencaoPct: 10,
+      moHora: 25,
+      taxasPct: 10
+    };
+
+    let materiais = [
+      { id: 'pla', nome: 'PLA', precoKg: 100 },
+      { id: 'petg', nome: 'PETG', precoKg: 110 }
+    ];
+
+    let produtos = [];
+
+    // INICIALIZAÇÃO
+    window.onload = function() {
+      carregarDados();
+      preencherSelectMateriais();
+      renderizarListaMateriais();
+      preencherFormConfig();
+      calcular();
+      renderizarProdutos();
+    };
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('nav button').forEach(el => el.classList.remove('active'));
+      
+      document.getElementById('tab-' + tabId).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    function carregarDados() {
+      const cfgSalva = localStorage.getItem('3dcost_config');
+      if (cfgSalva) config = JSON.parse(cfgSalva);
+
+      const matSalvos = localStorage.getItem('3dcost_materiais');
+      if (matSalvos) materiais = JSON.parse(matSalvos);
+
+      const prodsSalvos = localStorage.getItem('3dcost_produtos');
+      if (prodsSalvos) produtos = JSON.parse(prodsSalvos);
+    }
+
+    function preencherSelectMateriais() {
+      const select = document.getElementById('prod-material');
+      const valAtual = select.value;
+      select.innerHTML = materiais.map(m => `<option value="${m.id}">${m.nome} (R$ ${m.precoKg.toFixed(2)}/kg)</option>`).join('');
+      if (valAtual && materiais.some(m => m.id === valAtual)) {
+        select.value = valAtual;
+      }
+    }
+
+    function renderizarListaMateriais() {
+      const container = document.getElementById('lista-materiais');
+      if (materiais.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">Nenhum material cadastrado.</p>';
+        return;
+      }
+
+      container.innerHTML = materiais.map(m => `
+        <div class="material-item">
+          <div class="material-info">
+            <h3>${m.nome}</h3>
+            <p>Preço: ${fmt(m.precoKg)} / kg</p>
+          </div>
+          <div class="material-actions">
+            <button class="btn btn-outline" onclick="editarMaterial('${m.id}')">Editar</button>
+            <button class="btn btn-danger" onclick="excluirMaterial('${m.id}')">Excluir</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function adicionarMaterial() {
+      const id = document.getElementById('mat-id').value;
+      const nome = document.getElementById('mat-nome').value.trim();
+      const preco = parseFloat(document.getElementById('mat-preco').value);
+
+      if (!nome || isNaN(preco) || preco <= 0) {
+        alert('Informe um nome válido e um preço maior que zero.');
+        return;
+      }
+
+      if (id) {
+        // Edição de material existente
+        const index = materiais.findIndex(m => m.id === id);
+        if (index !== -1) {
+          materiais[index].nome = nome;
+          materiais[index].precoKg = preco;
+
+          // Atualizar o nome do material nos produtos vinculados
+          produtos.forEach(p => {
+            if (p.materialId === id) {
+              p.materialNome = nome;
+            }
+          });
+          localStorage.setItem('3dcost_produtos', JSON.stringify(produtos));
+        }
+      } else {
+        // Novo cadastro
+        const idExistente = materiais.findIndex(m => m.nome.toLowerCase() === nome.toLowerCase());
+        if (idExistente !== -1) {
+          materiais[idExistente].precoKg = preco;
+        } else {
+          materiais.push({
+            id: 'mat_' + Date.now(),
+            nome: nome,
+            precoKg: preco
+          });
+        }
+      }
+
+      localStorage.setItem('3dcost_materiais', JSON.stringify(materiais));
+      limparFormMaterial();
+      preencherSelectMateriais();
+      renderizarListaMateriais();
+      renderizarProdutos();
+      calcular();
+      alert('Material salvo com sucesso!');
+    }
+
+    function editarMaterial(id) {
+      const mat = materiais.find(m => m.id === id);
+      if (!mat) return;
+
+      document.getElementById('mat-id').value = mat.id;
+      document.getElementById('mat-nome').value = mat.nome;
+      document.getElementById('mat-preco').value = mat.precoKg;
+
+      document.getElementById('mat-form-title').innerText = "Editar Material";
+      document.getElementById('btn-salvar-mat').innerText = "Salvar Alterações";
+      document.getElementById('btn-cancelar-mat').style.display = "block";
+    }
+
+    function limparFormMaterial() {
+      document.getElementById('mat-id').value = '';
+      document.getElementById('mat-nome').value = '';
+      document.getElementById('mat-preco').value = '';
+
+      document.getElementById('mat-form-title').innerText = "Gerenciar Materiais / Filamentos";
+      document.getElementById('btn-salvar-mat').innerText = "Cadastrar Material";
+      document.getElementById('btn-cancelar-mat').style.display = "none";
+    }
+
+    function excluirMaterial(id) {
+      if (materiais.length <= 1) {
+        alert('Você precisa ter pelo menos um material cadastrado.');
+        return;
+      }
+      if (confirm('Tem certeza que deseja excluir este material?')) {
+        materiais = materiais.filter(m => m.id !== id);
+        localStorage.setItem('3dcost_materiais', JSON.stringify(materiais));
+        limparFormMaterial();
+        preencherSelectMateriais();
+        renderizarListaMateriais();
+        calcular();
+      }
+    }
+
+    function preencherFormConfig() {
+      document.getElementById('cfg-energia-hora').value = config.energiaHora;
+      document.getElementById('cfg-maquina-valor').value = config.maquinaValor;
+      document.getElementById('cfg-maquina-horas').value = config.maquinaHoras;
+      document.getElementById('cfg-manutencao-pct').value = config.manutencaoPct;
+      document.getElementById('cfg-mo-hora').value = config.moHora;
+      document.getElementById('cfg-taxas-pct').value = config.taxasPct;
+    }
+
+    function salvarConfiguracoes() {
+      config = {
+        energiaHora: parseFloat(document.getElementById('cfg-energia-hora').value) || 0,
+        maquinaValor: parseFloat(document.getElementById('cfg-maquina-valor').value) || 0,
+        maquinaHoras: parseFloat(document.getElementById('cfg-maquina-horas').value) || 1,
+        manutencaoPct: parseFloat(document.getElementById('cfg-manutencao-pct').value) || 0,
+        moHora: parseFloat(document.getElementById('cfg-mo-hora').value) || 0,
+        taxasPct: parseFloat(document.getElementById('cfg-taxas-pct').value) || 0
+      };
+
+      localStorage.setItem('3dcost_config', JSON.stringify(config));
+      alert('Configurações salvas com sucesso!');
+      calcular();
+    }
+
+    function calcular() {
+      const matId = document.getElementById('prod-material').value;
+      const materialSel = materiais.find(m => m.id === matId) || materiais[0] || { nome: 'N/A', precoKg: 0 };
+      
+      const gramas = parseFloat(document.getElementById('prod-gramas').value) || 0;
+      const tempoImp = parseFloat(document.getElementById('prod-tempo-imp').value) || 0;
+      const tempoMo = parseFloat(document.getElementById('prod-tempo-mo').value) || 0;
+      const embalagem = parseFloat(document.getElementById('prod-embalagem').value) || 0;
+      const componentes = parseFloat(document.getElementById('prod-componentes').value) || 0;
+      const margem = parseFloat(document.getElementById('prod-margem').value) || 0;
+
+      // Cálculos
+      const custoFilamento = (gramas / 1000) * materialSel.precoKg;
+      const custoEnergia = tempoImp * config.energiaHora;
+      const custoDepreciacao = tempoImp * (config.maquinaValor / config.maquinaHoras);
+      const custoManutencao = custoFilamento * (config.manutencaoPct / 100);
+      const custoMo = tempoMo * config.moHora;
+      const custoExtras = embalagem + componentes;
+
+      const subtotal = custoFilamento + custoEnergia + custoDepreciacao + custoManutencao + custoMo + custoExtras;
+      const custoTaxas = subtotal * (config.taxasPct / 100);
+      const custoTotal = subtotal + custoTaxas;
+
+      const lucro = custoTotal * (margem / 100);
+      const precoVenda = custoTotal + lucro;
+
+      // Atualizar Tela
+      document.getElementById('res-mat-nome').innerText = materialSel.nome;
+      document.getElementById('res-filamento').innerText = fmt(custoFilamento);
+      document.getElementById('res-energia').innerText = fmt(custoEnergia);
+      document.getElementById('res-depreciacao').innerText = fmt(custoDepreciacao);
+      document.getElementById('res-manutencao').innerText = fmt(custoManutencao);
+      document.getElementById('res-mo').innerText = fmt(custoMo);
+      document.getElementById('res-extras').innerText = fmt(custoExtras);
+      document.getElementById('res-subtotal').innerText = fmt(subtotal);
+      document.getElementById('res-taxas').innerText = fmt(custoTaxas);
+      document.getElementById('res-custo-total').innerText = fmt(custoTotal);
+      document.getElementById('res-preco-venda').innerText = fmt(precoVenda);
+      document.getElementById('res-lucro').innerText = fmt(lucro);
+
+      return { custoTotal, precoVenda, lucro, materialNome: materialSel.nome };
+    }
+
+    function fmt(val) {
+      return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    function salvarProduto() {
+      const nome = document.getElementById('prod-nome').value.trim();
+      if (!nome) {
+        alert('Por favor, informe o nome do produto.');
+        return;
+      }
+
+      const id = document.getElementById('prod-id').value;
+      const res = calcular();
+
+      const prodData = {
+        id: id ? parseInt(id) : Date.now(),
+        nome: nome,
+        materialId: document.getElementById('prod-material').value,
+        materialNome: res.materialNome,
+        gramas: parseFloat(document.getElementById('prod-gramas').value) || 0,
+        tempoImp: parseFloat(document.getElementById('prod-tempo-imp').value) || 0,
+        tempoMo: parseFloat(document.getElementById('prod-tempo-mo').value) || 0,
+        embalagem: parseFloat(document.getElementById('prod-embalagem').value) || 0,
+        componentes: parseFloat(document.getElementById('prod-componentes').value) || 0,
+        margem: parseFloat(document.getElementById('prod-margem').value) || 0,
+        custoTotal: res.custoTotal,
+        precoVenda: res.precoVenda,
+        lucro: res.lucro
+      };
+
+      if (id) {
+        const index = produtos.findIndex(p => p.id === parseInt(id));
+        if (index !== -1) produtos[index] = prodData;
+      } else {
+        produtos.push(prodData);
+      }
+
+      localStorage.setItem('3dcost_produtos', JSON.stringify(produtos));
+      alert('Produto salvo com sucesso!');
+      limparFormulario();
+      renderizarProdutos();
+    }
+
+    function renderizarProdutos() {
+      const container = document.getElementById('lista-produtos');
+      if (produtos.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">Nenhum produto cadastrado ainda.</p>';
+        return;
+      }
+
+      container.innerHTML = produtos.map(p => `
+        <div class="product-item">
+          <div class="product-info">
+            <h3>${p.nome} <span style="font-size:0.75rem; color: var(--accent);">(${p.materialNome || 'N/A'})</span></h3>
+            <p>Custo: ${fmt(p.custoTotal)} | Venda: <strong style="color: var(--primary);">${fmt(p.precoVenda)}</strong></p>
+            <span class="badge">Lucro: ${fmt(p.lucro)} (${p.margem}%)</span>
+          </div>
+          <div class="product-actions">
+            <button class="btn btn-outline" onclick="editarProduto(${p.id})">Editar</button>
+            <button class="btn btn-outline" onclick="duplicarProduto(${p.id})">Duplicar</button>
+            <button class="btn btn-danger" onclick="excluirProduto(${p.id})">X</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function editarProduto(id) {
+      const p = produtos.find(item => item.id === id);
+      if (!p) return;
+
+      document.getElementById('prod-id').value = p.id;
+      document.getElementById('prod-nome').value = p.nome;
+      if (p.materialId) document.getElementById('prod-material').value = p.materialId;
+      document.getElementById('prod-gramas').value = p.gramas;
+      document.getElementById('prod-tempo-imp').value = p.tempoImp;
+      document.getElementById('prod-tempo-mo').value = p.tempoMo;
+      document.getElementById('prod-embalagem').value = p.embalagem;
+      document.getElementById('prod-componentes').value = p.componentes;
+      document.getElementById('prod-margem').value = p.margem;
+
+      document.getElementById('form-title').innerText = "Editar Produto";
+      switchTab('calc');
+      calcular();
+    }
+
+    function duplicarProduto(id) {
+      const p = produtos.find(item => item.id === id);
+      if (!p) return;
+
+      const novoProd = { ...p, id: Date.now(), nome: p.nome + ' (Cópia)' };
+      produtos.push(novoProd);
+      localStorage.setItem('3dcost_produtos', JSON.stringify(produtos));
+      renderizarProdutos();
+    }
+
+    function excluirProduto(id) {
+      if (confirm('Tem certeza que deseja excluir este produto?')) {
+        produtos = produtos.filter(p => p.id !== id);
+        localStorage.setItem('3dcost_produtos', JSON.stringify(produtos));
+        renderizarProdutos();
+      }
+    }
+
+    function limparFormulario() {
+      document.getElementById('prod-id').value = '';
+      document.getElementById('prod-nome').value = '';
+      document.getElementById('prod-gramas').value = 100;
+      document.getElementById('prod-tempo-imp').value = 3.5;
+      document.getElementById('prod-tempo-mo').value = 0.5;
+      document.getElementById('prod-embalagem').value = 2.50;
+      document.getElementById('prod-componentes').value = 0.00;
+      document.getElementById('prod-margem').value = 100;
+      document.getElementById('form-title').innerText = "Calcular Peça";
+      calcular();
+    }
+
+    function exportarBackup() {
+      const data = { config, materiais, produtos };
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `backup_3dcost_${new Date().toISOString().slice(0,10)}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function importarBackup(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const importedData = JSON.parse(e.target.result);
+          if (importedData.config && importedData.produtos) {
+            config = importedData.config;
+            produtos = importedData.produtos;
+            if (importedData.materiais) materiais = importedData.materiais;
+            
+            localStorage.setItem('3dcost_config', JSON.stringify(config));
+            localStorage.setItem('3dcost_materiais', JSON.stringify(materiais));
+            localStorage.setItem('3dcost_produtos', JSON.stringify(produtos));
+            
+            preencherSelectMateriais();
+            renderizarListaMateriais();
+            preencherFormConfig();
+            renderizarProdutos();
+            calcular();
+            alert('Backup importado com sucesso!');
+          } else {
+            alert('Arquivo de backup inválido.');
+          }
+        } catch (err) {
+          alert('Erro ao ler o arquivo de backup.');
+        }
+      };
+      reader.readAsText(file);
+    }
+  </script>
+</body>
+</html>
