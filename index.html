@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Calculadora de Custos - Impressão 3D</title>
+  <title>3D Cost Pro - Precificação de Impressão 3D</title>
   <style>
     :root {
       --bg: #0f172a;
@@ -16,6 +16,21 @@
       --danger: #ef4444;
       --danger-hover: #dc2626;
       --accent: #3b82f6;
+      --input-bg: #0f172a;
+    }
+
+    [data-theme="light"] {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --card-border: #e2e8f0;
+      --primary: #10b981;
+      --primary-hover: #059669;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --danger: #ef4444;
+      --danger-hover: #dc2626;
+      --accent: #2563eb;
+      --input-bg: #f1f5f9;
     }
 
     * {
@@ -32,10 +47,13 @@
       max-width: 1000px;
       margin: 0 auto;
       padding-bottom: 80px;
+      transition: background-color 0.3s, color 0.3s;
     }
 
     header {
-      text-align: center;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       margin-bottom: 1.5rem;
     }
 
@@ -45,8 +63,18 @@
     }
 
     header p {
-      font-size: 0.875rem;
+      font-size: 0.85rem;
       color: var(--text-muted);
+    }
+
+    .theme-toggle {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      padding: 0.5rem 0.8rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
     }
 
     nav {
@@ -125,17 +153,12 @@
     }
 
     .form-group input, .form-group select {
-      background: #0f172a;
+      background: var(--input-bg);
       border: 1px solid var(--card-border);
       color: var(--text);
       padding: 0.6rem;
       border-radius: 6px;
       font-size: 0.95rem;
-    }
-
-    .form-group input:focus, .form-group select:focus {
-      outline: none;
-      border-color: var(--primary);
     }
 
     .btn {
@@ -148,19 +171,21 @@
       cursor: pointer;
       width: 100%;
       transition: background 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
     }
 
     .btn:hover {
       background: var(--primary-hover);
     }
 
-    .btn-danger {
-      background: var(--danger);
-    }
+    .btn-danger { background: var(--danger); }
+    .btn-danger:hover { background: var(--danger-hover); }
 
-    .btn-danger:hover {
-      background: var(--danger-hover);
-    }
+    .btn-whatsapp { background: #25D366; color: #fff; }
+    .btn-whatsapp:hover { background: #1ebc57; }
 
     .btn-outline {
       background: transparent;
@@ -172,10 +197,11 @@
       display: flex;
       gap: 0.5rem;
       margin-top: 1rem;
+      flex-wrap: wrap;
     }
 
     .results-panel {
-      background: #0f172a;
+      background: var(--input-bg);
       border: 1px solid var(--card-border);
       border-radius: 8px;
       padding: 1rem;
@@ -190,10 +216,6 @@
       font-size: 0.9rem;
     }
 
-    .result-row:last-child {
-      border-bottom: none;
-    }
-
     .result-row.highlight {
       font-size: 1.1rem;
       font-weight: bold;
@@ -202,6 +224,36 @@
       padding-top: 0.75rem;
       margin-top: 0.5rem;
     }
+
+    /* Gráficos Visuais de Custos */
+    .chart-container {
+      margin-top: 1rem;
+      padding: 0.5rem;
+      background: var(--card-bg);
+      border-radius: 8px;
+      border: 1px solid var(--card-border);
+    }
+
+    .chart-bar {
+      display: flex;
+      height: 20px;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 0.5rem;
+    }
+
+    .chart-segment { height: 100%; }
+
+    .chart-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+      margin-top: 0.8rem;
+      font-size: 0.75rem;
+    }
+
+    .legend-item { display: flex; align-items: center; gap: 0.3rem; }
+    .legend-color { width: 10px; height: 10px; border-radius: 2px; }
 
     .product-list, .material-list {
       display: flex;
@@ -213,31 +265,24 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: #0f172a;
+      background: var(--input-bg);
       border: 1px solid var(--card-border);
       padding: 0.85rem 1rem;
       border-radius: 8px;
+      gap: 1rem;
     }
 
-    .product-info h3, .material-info h3 {
-      font-size: 1rem;
+    .product-thumb {
+      width: 50px;
+      height: 50px;
+      object-fit: cover;
+      border-radius: 6px;
+      background: var(--card-border);
     }
 
-    .product-info p, .material-info p {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-    }
-
-    .product-actions, .material-actions {
-      display: flex;
-      gap: 0.4rem;
-    }
-
-    .product-actions button, .material-actions button {
-      padding: 0.4rem 0.6rem;
-      font-size: 0.75rem;
-      border-radius: 4px;
-    }
+    .product-info { flex: 1; }
+    .product-info h3 { font-size: 1rem; }
+    .product-info p { font-size: 0.8rem; color: var(--text-muted); }
 
     .badge {
       display: inline-block;
@@ -248,18 +293,36 @@
       background: rgba(16, 185, 129, 0.2);
       color: var(--primary);
     }
+
+    /* Modal / Estilo de Impressão de Orçamento */
+    @media print {
+      body * { visibility: hidden; }
+      #print-area, #print-area * { visibility: visible; }
+      #print-area {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        color: #000;
+        background: #fff;
+        padding: 2rem;
+      }
+    }
   </style>
 </head>
 <body>
 
   <header>
-    <h1>Custos Impressão 3D</h1>
-    <p>Calculadora de Custos & Precificação - Impressão 3D</p>
+    <div>
+      <h1>3D Cost Pro</h1>
+      <p>Calculadora & Orçamentos - Bambu Lab A1 / AMS</p>
+    </div>
+    <button class="theme-toggle" onclick="toggleTheme()">☀️ / 🌙</button>
   </header>
 
   <nav>
     <button class="active" onclick="switchTab('calc')">Calculadora</button>
-    <button onclick="switchTab('produtos')">Produtos Salvos</button>
+    <button onclick="switchTab('produtos')">Produtos</button>
     <button onclick="switchTab('config')">Configurações</button>
   </nav>
 
@@ -269,22 +332,47 @@
       <h2 id="form-title">Calcular Peça</h2>
       <input type="hidden" id="prod-id">
       
-      <div class="form-group">
-        <label>Nome do Produto/Peça</label>
-        <input type="text" id="prod-nome" placeholder="Ex: Vaso Decorativo Geometrico">
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Nome da Peça / Produto</label>
+          <input type="text" id="prod-nome" placeholder="Ex: Vaso Multicor Geometrico">
+        </div>
+
+        <div class="form-group">
+          <label>Foto da Peça (Opcional)</label>
+          <input type="file" id="prod-foto-input" accept="image/*" onchange="carregarFoto(event)">
+        </div>
+      </div>
+
+      <!-- SEÇÃO AMS / MATERIAIS -->
+      <div style="border: 1px dashed var(--card-border); padding: 0.8rem; border-radius: 8px; margin-bottom: 1rem;">
+        <span style="font-size: 0.85rem; font-weight: bold; color: var(--accent);">Configuração de Materiais & AMS Lite</span>
+        <div class="grid-2" style="margin-top: 0.5rem;">
+          <div class="form-group">
+            <label>Material Principal</label>
+            <select id="prod-material-1" onchange="calcular()"></select>
+          </div>
+          <div class="form-group">
+            <label>Consumo Filamento Principal (g)</label>
+            <input type="number" id="prod-gramas-1" value="100" oninput="calcular()">
+          </div>
+          <div class="form-group">
+            <label>Material Secundário (Multicor)</label>
+            <select id="prod-material-2" onchange="calcular()"></select>
+          </div>
+          <div class="form-group">
+            <label>Consumo Filamento Secundário (g)</label>
+            <input type="number" id="prod-gramas-2" value="0" oninput="calcular()">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Desperdício AMS / Purga e Torre de Troca (g)</label>
+          <input type="number" id="prod-purga-gramas" value="15" oninput="calcular()" placeholder="Ex: 15g de purga">
+        </div>
       </div>
 
       <div class="grid-2">
-        <div class="form-group">
-          <label>Material Utilizado</label>
-          <select id="prod-material" onchange="calcular()"></select>
-        </div>
-
-        <div class="form-group">
-          <label>Consumo de Filamento (g)</label>
-          <input type="number" id="prod-gramas" value="100" oninput="calcular()">
-        </div>
-
         <div class="form-group">
           <label>Tempo de Impressão (Horas)</label>
           <input type="number" step="0.1" id="prod-tempo-imp" value="3.5" oninput="calcular()">
@@ -296,12 +384,12 @@
         </div>
 
         <div class="form-group">
-          <label>Embalagem & Insumos Extras (R$)</label>
+          <label>Embalagem & Extras (R$)</label>
           <input type="number" step="0.01" id="prod-embalagem" value="2.50" oninput="calcular()">
         </div>
 
         <div class="form-group">
-          <label>Componentes Extras (Parafusos, Leds, Imãs) (R$)</label>
+          <label>Componentes Adicionais (Ímãs, LEDs, Parafusos) (R$)</label>
           <input type="number" step="0.01" id="prod-componentes" value="0.00" oninput="calcular()">
         </div>
 
@@ -311,23 +399,33 @@
         </div>
       </div>
 
+      <!-- PAINEL DE RESULTADOS -->
       <div class="results-panel">
-        <div class="result-row"><span>Filamento (<span id="res-mat-nome">PLA</span>):</span> <span id="res-filamento">R$ 0,00</span></div>
-        <div class="result-row"><span>Energia:</span> <span id="res-energia">R$ 0,00</span></div>
+        <div class="result-row"><span>Filamentos + Purga AMS:</span> <span id="res-filamento">R$ 0,00</span></div>
+        <div class="result-row"><span>Energia Elétrica:</span> <span id="res-energia">R$ 0,00</span></div>
         <div class="result-row"><span>Depreciação Máquina:</span> <span id="res-depreciacao">R$ 0,00</span></div>
         <div class="result-row"><span>Manutenção:</span> <span id="res-manutencao">R$ 0,00</span></div>
         <div class="result-row"><span>Mão de Obra:</span> <span id="res-mo">R$ 0,00</span></div>
         <div class="result-row"><span>Embalagem + Extras:</span> <span id="res-extras">R$ 0,00</span></div>
-        <div class="result-row" style="font-weight: bold; color: var(--accent);"><span>Subtotal Direto:</span> <span id="res-subtotal">R$ 0,00</span></div>
-        <div class="result-row"><span>Taxas & Impostos (% s/ custo):</span> <span id="res-taxas">R$ 0,00</span></div>
+        <div class="result-row"><span>Taxas & Impostos MEI:</span> <span id="res-taxas">R$ 0,00</span></div>
         
         <div class="result-row highlight"><span>Custo Total de Produção:</span> <span id="res-custo-total">R$ 0,00</span></div>
         <div class="result-row highlight" style="color: var(--primary);"><span>Preço de Venda Sugerido:</span> <span id="res-preco-venda">R$ 0,00</span></div>
         <div class="result-row"><span>Lucro Líquido Real:</span> <span id="res-lucro" style="color: #4ade80; font-weight: bold;">R$ 0,00</span></div>
+
+        <!-- GRÁFICO DE COMPOSIÇÃO DE CUSTOS -->
+        <div class="chart-container">
+          <span style="font-size: 0.75rem; color: var(--text-muted);">Composição Visual do Custo:</span>
+          <div class="chart-bar" id="chart-bar"></div>
+          <div class="chart-legend" id="chart-legend"></div>
+        </div>
       </div>
 
+      <!-- BOTÕES DE AÇÃO / ATENDIMENTO AO CLIENTE -->
       <div class="btn-group">
         <button class="btn" onclick="salvarProduto()">Salvar Produto</button>
+        <button class="btn btn-whatsapp" onclick="enviarWhatsApp()">Enviar Orçamento WhatsApp</button>
+        <button class="btn btn-outline" onclick="gerarPDFOrçamento()">Imprimir / Gerar PDF</button>
         <button class="btn btn-outline" onclick="limparFormulario()">Limpar</button>
       </div>
     </div>
@@ -337,18 +435,15 @@
   <div id="tab-produtos" class="tab-content">
     <div class="card">
       <h2>Produtos Cadastrados</h2>
-      <div id="lista-produtos" class="product-list">
-        <!-- Inserido dinamicamente -->
-      </div>
+      <div id="lista-produtos" class="product-list"></div>
     </div>
   </div>
 
   <!-- ABA CONFIGURAÇÕES -->
   <div id="tab-config" class="tab-content">
     <div class="card">
-      <h2 id="mat-form-title">Gerenciar Materiais / Filamentos</h2>
+      <h2>Gerenciar Materiais / Filamentos</h2>
       <input type="hidden" id="mat-id">
-      
       <div class="grid-2">
         <div class="form-group">
           <label>Nome do Material</label>
@@ -359,15 +454,11 @@
           <input type="number" step="0.01" id="mat-preco" placeholder="100.00">
         </div>
       </div>
-      
       <div class="btn-group">
-        <button class="btn" id="btn-salvar-mat" onclick="adicionarMaterial()">Cadastrar Material</button>
+        <button class="btn" id="btn-salvar-mat" onclick="adicionarOuAtualizarMaterial()">Salvar Material</button>
         <button class="btn btn-outline" id="btn-cancelar-mat" onclick="limparFormMaterial()" style="display: none;">Cancelar</button>
       </div>
-      
-      <div id="lista-materiais" class="material-list" style="margin-top: 1.25rem;">
-        <!-- Inserido dinamicamente -->
-      </div>
+      <div id="lista-materiais" class="material-list" style="margin-top: 1rem;"></div>
     </div>
 
     <div class="card">
@@ -394,7 +485,7 @@
           <input type="number" step="0.01" id="cfg-mo-hora" value="25.00">
         </div>
         <div class="form-group">
-          <label>Taxas de Venda + Impostos MEI (% sobre custo)</label>
+          <label>Taxas + Impostos MEI (% sobre custo)</label>
           <input type="number" step="0.1" id="cfg-taxas-pct" value="10">
         </div>
       </div>
@@ -403,9 +494,6 @@
 
     <div class="card">
       <h2>Backup dos Dados</h2>
-      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
-        Exporte ou importe seus produtos, materiais e configurações para não perder informações ou mover para outro dispositivo.
-      </p>
       <div class="btn-group">
         <button class="btn btn-outline" onclick="exportarBackup()">Exportar Backup (JSON)</button>
         <button class="btn btn-outline" onclick="document.getElementById('import-file').click()">Importar Backup</button>
@@ -414,25 +502,24 @@
     </div>
   </div>
 
+  <!-- ÁREA DE IMPRESSÃO OCULTA PARA ORÇAMENTO DO CLIENTE -->
+  <div id="print-area" style="display: none;">
+    <h1 style="color: #10b981; border-bottom: 2px solid #ccc; padding-bottom: 0.5rem;">Orçamento de Impressão 3D</h1>
+    <br>
+    <p><strong>Produto / Peça:</strong> <span id="print-nome"></span></p>
+    <p><strong>Tempo Estimado de Produção:</strong> <span id="print-tempo"></span> horas</p>
+    <br>
+    <h2 style="font-size: 1.5rem; color: #333;">Valor Total: <span id="print-preco" style="color: #10b981;"></span></h2>
+    <br>
+    <p style="font-size: 0.8rem; color: #666;">Validade do orçamento: 7 dias.</p>
+  </div>
+
   <script>
-    // ESTADO PADRÃO
-    let config = {
-      energiaHora: 0.35,
-      maquinaValor: 4500,
-      maquinaHoras: 5000,
-      manutencaoPct: 10,
-      moHora: 25,
-      taxasPct: 10
-    };
-
-    let materiais = [
-      { id: 'pla', nome: 'PLA', precoKg: 100 },
-      { id: 'petg', nome: 'PETG', precoKg: 110 }
-    ];
-
+    let config = { energiaHora: 0.35, maquinaValor: 4500, maquinaHoras: 5000, manutencaoPct: 10, moHora: 25, taxasPct: 10 };
+    let materiais = [ { id: 'pla', nome: 'PLA', precoKg: 100 }, { id: 'petg', nome: 'PETG', precoKg: 110 } ];
     let produtos = [];
+    let fotoTempBase64 = "";
 
-    // INICIALIZAÇÃO
     window.onload = function() {
       carregarDados();
       preencherSelectMateriais();
@@ -442,135 +529,304 @@
       renderizarProdutos();
     };
 
+    function toggleTheme() {
+      const body = document.body;
+      const theme = body.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+      body.setAttribute('data-theme', theme);
+    }
+
     function switchTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('nav button').forEach(el => el.classList.remove('active'));
-      
       document.getElementById('tab-' + tabId).classList.add('active');
       event.target.classList.add('active');
     }
 
     function carregarDados() {
-      const cfgSalva = localStorage.getItem('3dcost_config');
-      if (cfgSalva) config = JSON.parse(cfgSalva);
-
-      const matSalvos = localStorage.getItem('3dcost_materiais');
-      if (matSalvos) materiais = JSON.parse(matSalvos);
-
-      const prodsSalvos = localStorage.getItem('3dcost_produtos');
-      if (prodsSalvos) produtos = JSON.parse(prodsSalvos);
+      const cfg = localStorage.getItem('3dcost_config'); if (cfg) config = JSON.parse(cfg);
+      const mat = localStorage.getItem('3dcost_materiais'); if (mat) materiais = JSON.parse(mat);
+      const prod = localStorage.getItem('3dcost_produtos'); if (prod) produtos = JSON.parse(prod);
     }
 
     function preencherSelectMateriais() {
-      const select = document.getElementById('prod-material');
-      const valAtual = select.value;
-      select.innerHTML = materiais.map(m => `<option value="${m.id}">${m.nome} (R$ ${m.precoKg.toFixed(2)}/kg)</option>`).join('');
-      if (valAtual && materiais.some(m => m.id === valAtual)) {
-        select.value = valAtual;
+      const s1 = document.getElementById('prod-material-1');
+      const s2 = document.getElementById('prod-material-2');
+      const opts = `<option value="">-- Nenhum / Desativado --</option>` + materiais.map(m => `<option value="${m.id}">${m.nome} (R$ ${m.precoKg.toFixed(2)}/kg)</option>`).join('');
+      
+      s1.innerHTML = materiais.map(m => `<option value="${m.id}">${m.nome} (R$ ${m.precoKg.toFixed(2)}/kg)</option>`).join('');
+      s2.innerHTML = opts;
+    }
+
+    function carregarFoto(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(evt) { fotoTempBase64 = evt.target.result; };
+        reader.readAsDataURL(file);
       }
     }
 
-    function renderizarListaMateriais() {
-      const container = document.getElementById('lista-materiais');
-      if (materiais.length === 0) {
-        container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">Nenhum material cadastrado.</p>';
+    function calcular() {
+      const m1 = materiais.find(m => m.id === document.getElementById('prod-material-1').value) || materiais[0] || { precoKg: 0 };
+      const m2 = materiais.find(m => m.id === document.getElementById('prod-material-2').value) || { precoKg: 0 };
+
+      const g1 = parseFloat(document.getElementById('prod-gramas-1').value) || 0;
+      const g2 = parseFloat(document.getElementById('prod-gramas-2').value) || 0;
+      const gPurga = parseFloat(document.getElementById('prod-purga-gramas').value) || 0;
+
+      const tempoImp = parseFloat(document.getElementById('prod-tempo-imp').value) || 0;
+      const tempoMo = parseFloat(document.getElementById('prod-tempo-mo').value) || 0;
+      const embalagem = parseFloat(document.getElementById('prod-embalagem').value) || 0;
+      const componentes = parseFloat(document.getElementById('prod-componentes').value) || 0;
+      const margem = parseFloat(document.getElementById('prod-margem').value) || 0;
+
+      // Custo Filamentos + Purga (Atribuído proporcionalmente ao M1)
+      const custoFilamento = ((g1 + gPurga) / 1000) * m1.precoKg + (g2 / 1000) * m2.precoKg;
+      const custoEnergia = tempoImp * config.energiaHora;
+      const custoDepreciacao = tempoImp * (config.maquinaValor / config.maquinaHoras);
+      const custoManutencao = custoFilamento * (config.manutencaoPct / 100);
+      const custoMo = tempoMo * config.moHora;
+      const custoExtras = embalagem + componentes;
+
+      const subtotal = custoFilamento + custoEnergia + custoDepreciacao + custoManutencao + custoMo + custoExtras;
+      const custoTaxas = subtotal * (config.taxasPct / 100);
+      const custoTotal = subtotal + custoTaxas;
+
+      const lucro = custoTotal * (margem / 100);
+      const precoVenda = custoTotal + lucro;
+
+      // Atualizar Valores na Tela
+      document.getElementById('res-filamento').innerText = fmt(custoFilamento);
+      document.getElementById('res-energia').innerText = fmt(custoEnergia);
+      document.getElementById('res-depreciacao').innerText = fmt(custoDepreciacao);
+      document.getElementById('res-manutencao').innerText = fmt(custoManutencao);
+      document.getElementById('res-mo').innerText = fmt(custoMo);
+      document.getElementById('res-extras').innerText = fmt(custoExtras);
+      document.getElementById('res-taxas').innerText = fmt(custoTaxas);
+      document.getElementById('res-custo-total').innerText = fmt(custoTotal);
+      document.getElementById('res-preco-venda').innerText = fmt(precoVenda);
+      document.getElementById('res-lucro').innerText = fmt(lucro);
+
+      renderizarGraficoCustos(custoFilamento, custoEnergia, custoDepreciacao, custoMo, custoExtras + custoTaxas + custoManutencao, custoTotal);
+
+      return { custoTotal, precoVenda, lucro, tempoImp };
+    }
+
+    function renderizarGraficoCustos(fil, energ, dep, mo, outros, total) {
+      if (total <= 0) return;
+      const pct = v => ((v / total) * 100).toFixed(1);
+
+      const bar = document.getElementById('chart-bar');
+      const leg = document.getElementById('chart-legend');
+
+      bar.innerHTML = `
+        <div class="chart-segment" style="width: ${pct(fil)}%; background: #10b981;" title="Filamento"></div>
+        <div class="chart-segment" style="width: ${pct(energ)}%; background: #f59e0b;" title="Energia"></div>
+        <div class="chart-segment" style="width: ${pct(dep)}%; background: #ef4444;" title="Depreciação"></div>
+        <div class="chart-segment" style="width: ${pct(mo)}%; background: #3b82f6;" title="Mão de Obra"></div>
+        <div class="chart-segment" style="width: ${pct(outros)}%; background: #8b5cf6;" title="Outros"></div>
+      `;
+
+      leg.innerHTML = `
+        <div class="legend-item"><div class="legend-color" style="background:#10b981;"></div>Filamento (${pct(fil)}%)</div>
+        <div class="legend-item"><div class="legend-color" style="background:#f59e0b;"></div>Energia (${pct(energ)}%)</div>
+        <div class="legend-item"><div class="legend-color" style="background:#ef4444;"></div>Depreciação (${pct(dep)}%)</div>
+        <div class="legend-item"><div class="legend-color" style="background:#3b82f6;"></div>Mão de Obra (${pct(mo)}%)</div>
+        <div class="legend-item"><div class="legend-color" style="background:#8b5cf6;"></div>Outros (${pct(outros)}%)</div>
+      `;
+    }
+
+    function fmt(val) { return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
+
+    function enviarWhatsApp() {
+      const nome = document.getElementById('prod-nome').value.trim() || 'Peça Personalizada 3D';
+      const res = calcular();
+      const msg = `Olá! Tudo bem?\n\nSegue o orçamento para a sua peça *${nome}*:\n\n` +
+                  `💰 *Valor Total:* ${fmt(res.precoVenda)}\n` +
+                  `⏱️ *Tempo Estimado de Produção:* ${res.tempoImp}h\n\n` +
+                  `Qualquer dúvida estou à disposição!`;
+      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+
+    function gerarPDFOrçamento() {
+      const nome = document.getElementById('prod-nome').value.trim() || 'Peça Personalizada 3D';
+      const res = calcular();
+
+      document.getElementById('print-nome').innerText = nome;
+      document.getElementById('print-tempo').innerText = res.tempoImp;
+      document.getElementById('print-preco').innerText = fmt(res.precoVenda);
+
+      const printArea = document.getElementById('print-area');
+      printArea.style.display = 'block';
+      window.print();
+      printArea.style.display = 'none';
+    }
+
+    function salvarProduto() {
+      const nome = document.getElementById('prod-nome').value.trim();
+      if (!nome) { alert('Informe o nome do produto.'); return; }
+
+      const id = document.getElementById('prod-id').value;
+      const res = calcular();
+
+      const prodData = {
+        id: id ? parseInt(id) : Date.now(),
+        nome: nome,
+        foto: fotoTempBase64,
+        m1: document.getElementById('prod-material-1').value,
+        g1: parseFloat(document.getElementById('prod-gramas-1').value) || 0,
+        m2: document.getElementById('prod-material-2').value,
+        g2: parseFloat(document.getElementById('prod-gramas-2').value) || 0,
+        purga: parseFloat(document.getElementById('prod-purga-gramas').value) || 0,
+        tempoImp: parseFloat(document.getElementById('prod-tempo-imp').value) || 0,
+        tempoMo: parseFloat(document.getElementById('prod-tempo-mo').value) || 0,
+        embalagem: parseFloat(document.getElementById('prod-embalagem').value) || 0,
+        componentes: parseFloat(document.getElementById('prod-componentes').value) || 0,
+        margem: parseFloat(document.getElementById('prod-margem').value) || 0,
+        custoTotal: res.custoTotal,
+        precoVenda: res.precoVenda,
+        lucro: res.lucro
+      };
+
+      if (id) {
+        const index = produtos.findIndex(p => p.id === parseInt(id));
+        if (index !== -1) produtos[index] = prodData;
+      } else { produtos.push(prodData); }
+
+      localStorage.setItem('3dcost_produtos', JSON.stringify(produtos));
+      alert('Produto salvo!');
+      limparFormulario();
+      renderizarProdutos();
+    }
+
+    function renderizarProdutos() {
+      const container = document.getElementById('lista-produtos');
+      if (produtos.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">Nenhum produto cadastrado ainda.</p>';
         return;
       }
 
-      container.innerHTML = materiais.map(m => `
-        <div class="material-item">
-          <div class="material-info">
-            <h3>${m.nome}</h3>
-            <p>Preço: ${fmt(m.precoKg)} / kg</p>
+      container.innerHTML = produtos.map(p => `
+        <div class="product-item">
+          ${p.foto ? `<img src="${p.foto}" class="product-thumb">` : `<div class="product-thumb"></div>`}
+          <div class="product-info">
+            <h3>${p.nome}</h3>
+            <p>Custo: ${fmt(p.custoTotal)} | Venda: <strong style="color: var(--primary);">${fmt(p.precoVenda)}</strong></p>
+            <span class="badge">Lucro: ${fmt(p.lucro)} (${p.margem}%)</span>
           </div>
-          <div class="material-actions">
-            <button class="btn btn-outline" onclick="editarMaterial('${m.id}')">Editar</button>
-            <button class="btn btn-danger" onclick="excluirMaterial('${m.id}')">Excluir</button>
+          <div class="product-actions" style="display:flex; gap:0.3rem;">
+            <button class="btn btn-outline" style="padding:0.3rem 0.5rem;" onclick="editarProduto(${p.id})">Editar</button>
+            <button class="btn btn-danger" style="padding:0.3rem 0.5rem;" onclick="excluirProduto(${p.id})">X</button>
           </div>
         </div>
       `).join('');
     }
 
-    function adicionarMaterial() {
-      const id = document.getElementById('mat-id').value;
-      const nome = document.getElementById('mat-nome').value.trim();
-      const preco = parseFloat(document.getElementById('mat-preco').value);
+    function editarProduto(id) {
+      const p = produtos.find(item => item.id === id);
+      if (!p) return;
 
-      if (!nome || isNaN(preco) || preco <= 0) {
-        alert('Informe um nome válido e um preço maior que zero.');
-        return;
-      }
+      document.getElementById('prod-id').value = p.id;
+      document.getElementById('prod-nome').value = p.nome;
+      fotoTempBase64 = p.foto || "";
+      if (p.m1) document.getElementById('prod-material-1').value = p.m1;
+      document.getElementById('prod-gramas-1').value = p.g1;
+      if (p.m2) document.getElementById('prod-material-2').value = p.m2;
+      document.getElementById('prod-gramas-2').value = p.g2;
+      document.getElementById('prod-purga-gramas').value = p.purga || 0;
+      document.getElementById('prod-tempo-imp').value = p.tempoImp;
+      document.getElementById('prod-tempo-mo').value = p.tempoMo;
+      document.getElementById('prod-embalagem').value = p.embalagem;
+      document.getElementById('prod-componentes').value = p.componentes;
+      document.getElementById('prod-margem').value = p.margem;
 
-      if (id) {
-        // Edição de material existente
-        const index = materiais.findIndex(m => m.id === id);
-        if (index !== -1) {
-          materiais[index].nome = nome;
-          materiais[index].precoKg = preco;
-
-          // Atualizar o nome do material nos produtos vinculados
-          produtos.forEach(p => {
-            if (p.materialId === id) {
-              p.materialNome = nome;
-            }
-          });
-          localStorage.setItem('3dcost_produtos', JSON.stringify(produtos));
-        }
-      } else {
-        // Novo cadastro
-        const idExistente = materiais.findIndex(m => m.nome.toLowerCase() === nome.toLowerCase());
-        if (idExistente !== -1) {
-          materiais[idExistente].precoKg = preco;
-        } else {
-          materiais.push({
-            id: 'mat_' + Date.now(),
-            nome: nome,
-            precoKg: preco
-          });
-        }
-      }
-
-      localStorage.setItem('3dcost_materiais', JSON.stringify(materiais));
-      limparFormMaterial();
-      preencherSelectMateriais();
-      renderizarListaMateriais();
-      renderizarProdutos();
+      document.getElementById('form-title').innerText = "Editar Produto";
+      switchTab('calc');
       calcular();
-      alert('Material salvo com sucesso!');
     }
 
-    function editarMaterial(id) {
-      const mat = materiais.find(m => m.id === id);
-      if (!mat) return;
+    function excluirProduto(id) {
+      if (confirm('Excluir este produto?')) {
+        produtos = produtos.filter(p => p.id !== id);
+        localStorage.setItem('3dcost_produtos', JSON.stringify(produtos));
+        renderizarProdutos();
+      }
+    }
 
-      document.getElementById('mat-id').value = mat.id;
-      document.getElementById('mat-nome').value = mat.nome;
-      document.getElementById('mat-preco').value = mat.precoKg;
+    function limparFormulario() {
+      document.getElementById('prod-id').value = '';
+      document.getElementById('prod-nome').value = '';
+      document.getElementById('prod-foto-input').value = '';
+      fotoTempBase64 = "";
+      document.getElementById('prod-gramas-1').value = 100;
+      document.getElementById('prod-gramas-2').value = 0;
+      document.getElementById('prod-purga-gramas').value = 15;
+      document.getElementById('prod-tempo-imp').value = 3.5;
+      document.getElementById('prod-tempo-mo').value = 0.5;
+      document.getElementById('prod-embalagem').value = 2.50;
+      document.getElementById('prod-componentes').value = 0.00;
+      document.getElementById('prod-margem').value = 100;
+      document.getElementById('form-title').innerText = "Calcular Peça";
+      calcular();
+    }
 
-      document.getElementById('mat-form-title').innerText = "Editar Material";
-      document.getElementById('btn-salvar-mat').innerText = "Salvar Alterações";
-      document.getElementById('btn-cancelar-mat').style.display = "block";
+    function renderizarListaMateriais() {
+      const container = document.getElementById('lista-materiais');
+      container.innerHTML = materiais.map(m => `
+        <div class="material-item">
+          <div><h3>${m.nome}</h3><p>${fmt(m.precoKg)} / kg</p></div>
+          <div>
+            <button class="btn btn-outline" style="padding:0.3rem 0.5rem;" onclick="prepararEdicaoMaterial('${m.id}')">Editar</button>
+            <button class="btn btn-danger" style="padding:0.3rem 0.5rem;" onclick="excluirMaterial('${m.id}')">X</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function prepararEdicaoMaterial(id) {
+      const m = materiais.find(item => item.id === id);
+      if (!m) return;
+      document.getElementById('mat-id').value = m.id;
+      document.getElementById('mat-nome').value = m.nome;
+      document.getElementById('mat-preco').value = m.precoKg;
+      document.getElementById('btn-salvar-mat').innerText = 'Atualizar Material';
+      document.getElementById('btn-cancelar-mat').style.display = 'inline-block';
     }
 
     function limparFormMaterial() {
       document.getElementById('mat-id').value = '';
       document.getElementById('mat-nome').value = '';
       document.getElementById('mat-preco').value = '';
+      document.getElementById('btn-salvar-mat').innerText = 'Salvar Material';
+      document.getElementById('btn-cancelar-mat').style.display = 'none';
+    }
 
-      document.getElementById('mat-form-title').innerText = "Gerenciar Materiais / Filamentos";
-      document.getElementById('btn-salvar-mat').innerText = "Cadastrar Material";
-      document.getElementById('btn-cancelar-mat').style.display = "none";
+    function adicionarOuAtualizarMaterial() {
+      const id = document.getElementById('mat-id').value;
+      const nome = document.getElementById('mat-nome').value.trim();
+      const preco = parseFloat(document.getElementById('mat-preco').value);
+
+      if (!nome || isNaN(preco) || preco <= 0) { alert('Informe dados válidos.'); return; }
+
+      if (id) {
+        const idx = materiais.findIndex(m => m.id === id);
+        if (idx !== -1) { materiais[idx].nome = nome; materiais[idx].precoKg = preco; }
+      } else {
+        materiais.push({ id: 'mat_' + Date.now(), nome: nome, precoKg: preco });
+      }
+
+      localStorage.setItem('3dcost_materiais', JSON.stringify(materiais));
+      limparFormMaterial();
+      preencherSelectMateriais();
+      renderizarListaMateriais();
+      calcular();
     }
 
     function excluirMaterial(id) {
-      if (materiais.length <= 1) {
-        alert('Você precisa ter pelo menos um material cadastrado.');
-        return;
-      }
-      if (confirm('Tem certeza que deseja excluir este material?')) {
+      if (materiais.length <= 1) { alert('Você precisa de ao menos um material.'); return; }
+      if (confirm('Excluir material?')) {
         materiais = materiais.filter(m => m.id !== id);
         localStorage.setItem('3dcost_materiais', JSON.stringify(materiais));
-        limparFormMaterial();
         preencherSelectMateriais();
         renderizarListaMateriais();
         calcular();
@@ -595,211 +851,43 @@
         moHora: parseFloat(document.getElementById('cfg-mo-hora').value) || 0,
         taxasPct: parseFloat(document.getElementById('cfg-taxas-pct').value) || 0
       };
-
       localStorage.setItem('3dcost_config', JSON.stringify(config));
-      alert('Configurações salvas com sucesso!');
-      calcular();
-    }
-
-    function calcular() {
-      const matId = document.getElementById('prod-material').value;
-      const materialSel = materiais.find(m => m.id === matId) || materiais[0] || { nome: 'N/A', precoKg: 0 };
-      
-      const gramas = parseFloat(document.getElementById('prod-gramas').value) || 0;
-      const tempoImp = parseFloat(document.getElementById('prod-tempo-imp').value) || 0;
-      const tempoMo = parseFloat(document.getElementById('prod-tempo-mo').value) || 0;
-      const embalagem = parseFloat(document.getElementById('prod-embalagem').value) || 0;
-      const componentes = parseFloat(document.getElementById('prod-componentes').value) || 0;
-      const margem = parseFloat(document.getElementById('prod-margem').value) || 0;
-
-      // Cálculos
-      const custoFilamento = (gramas / 1000) * materialSel.precoKg;
-      const custoEnergia = tempoImp * config.energiaHora;
-      const custoDepreciacao = tempoImp * (config.maquinaValor / config.maquinaHoras);
-      const custoManutencao = custoFilamento * (config.manutencaoPct / 100);
-      const custoMo = tempoMo * config.moHora;
-      const custoExtras = embalagem + componentes;
-
-      const subtotal = custoFilamento + custoEnergia + custoDepreciacao + custoManutencao + custoMo + custoExtras;
-      const custoTaxas = subtotal * (config.taxasPct / 100);
-      const custoTotal = subtotal + custoTaxas;
-
-      const lucro = custoTotal * (margem / 100);
-      const precoVenda = custoTotal + lucro;
-
-      // Atualizar Tela
-      document.getElementById('res-mat-nome').innerText = materialSel.nome;
-      document.getElementById('res-filamento').innerText = fmt(custoFilamento);
-      document.getElementById('res-energia').innerText = fmt(custoEnergia);
-      document.getElementById('res-depreciacao').innerText = fmt(custoDepreciacao);
-      document.getElementById('res-manutencao').innerText = fmt(custoManutencao);
-      document.getElementById('res-mo').innerText = fmt(custoMo);
-      document.getElementById('res-extras').innerText = fmt(custoExtras);
-      document.getElementById('res-subtotal').innerText = fmt(subtotal);
-      document.getElementById('res-taxas').innerText = fmt(custoTaxas);
-      document.getElementById('res-custo-total').innerText = fmt(custoTotal);
-      document.getElementById('res-preco-venda').innerText = fmt(precoVenda);
-      document.getElementById('res-lucro').innerText = fmt(lucro);
-
-      return { custoTotal, precoVenda, lucro, materialNome: materialSel.nome };
-    }
-
-    function fmt(val) {
-      return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    }
-
-    function salvarProduto() {
-      const nome = document.getElementById('prod-nome').value.trim();
-      if (!nome) {
-        alert('Por favor, informe o nome do produto.');
-        return;
-      }
-
-      const id = document.getElementById('prod-id').value;
-      const res = calcular();
-
-      const prodData = {
-        id: id ? parseInt(id) : Date.now(),
-        nome: nome,
-        materialId: document.getElementById('prod-material').value,
-        materialNome: res.materialNome,
-        gramas: parseFloat(document.getElementById('prod-gramas').value) || 0,
-        tempoImp: parseFloat(document.getElementById('prod-tempo-imp').value) || 0,
-        tempoMo: parseFloat(document.getElementById('prod-tempo-mo').value) || 0,
-        embalagem: parseFloat(document.getElementById('prod-embalagem').value) || 0,
-        componentes: parseFloat(document.getElementById('prod-componentes').value) || 0,
-        margem: parseFloat(document.getElementById('prod-margem').value) || 0,
-        custoTotal: res.custoTotal,
-        precoVenda: res.precoVenda,
-        lucro: res.lucro
-      };
-
-      if (id) {
-        const index = produtos.findIndex(p => p.id === parseInt(id));
-        if (index !== -1) produtos[index] = prodData;
-      } else {
-        produtos.push(prodData);
-      }
-
-      localStorage.setItem('3dcost_produtos', JSON.stringify(produtos));
-      alert('Produto salvo com sucesso!');
-      limparFormulario();
-      renderizarProdutos();
-    }
-
-    function renderizarProdutos() {
-      const container = document.getElementById('lista-produtos');
-      if (produtos.length === 0) {
-        container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">Nenhum produto cadastrado ainda.</p>';
-        return;
-      }
-
-      container.innerHTML = produtos.map(p => `
-        <div class="product-item">
-          <div class="product-info">
-            <h3>${p.nome} <span style="font-size:0.75rem; color: var(--accent);">(${p.materialNome || 'N/A'})</span></h3>
-            <p>Custo: ${fmt(p.custoTotal)} | Venda: <strong style="color: var(--primary);">${fmt(p.precoVenda)}</strong></p>
-            <span class="badge">Lucro: ${fmt(p.lucro)} (${p.margem}%)</span>
-          </div>
-          <div class="product-actions">
-            <button class="btn btn-outline" onclick="editarProduto(${p.id})">Editar</button>
-            <button class="btn btn-outline" onclick="duplicarProduto(${p.id})">Duplicar</button>
-            <button class="btn btn-danger" onclick="excluirProduto(${p.id})">X</button>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    function editarProduto(id) {
-      const p = produtos.find(item => item.id === id);
-      if (!p) return;
-
-      document.getElementById('prod-id').value = p.id;
-      document.getElementById('prod-nome').value = p.nome;
-      if (p.materialId) document.getElementById('prod-material').value = p.materialId;
-      document.getElementById('prod-gramas').value = p.gramas;
-      document.getElementById('prod-tempo-imp').value = p.tempoImp;
-      document.getElementById('prod-tempo-mo').value = p.tempoMo;
-      document.getElementById('prod-embalagem').value = p.embalagem;
-      document.getElementById('prod-componentes').value = p.componentes;
-      document.getElementById('prod-margem').value = p.margem;
-
-      document.getElementById('form-title').innerText = "Editar Produto";
-      switchTab('calc');
-      calcular();
-    }
-
-    function duplicarProduto(id) {
-      const p = produtos.find(item => item.id === id);
-      if (!p) return;
-
-      const novoProd = { ...p, id: Date.now(), nome: p.nome + ' (Cópia)' };
-      produtos.push(novoProd);
-      localStorage.setItem('3dcost_produtos', JSON.stringify(produtos));
-      renderizarProdutos();
-    }
-
-    function excluirProduto(id) {
-      if (confirm('Tem certeza que deseja excluir este produto?')) {
-        produtos = produtos.filter(p => p.id !== id);
-        localStorage.setItem('3dcost_produtos', JSON.stringify(produtos));
-        renderizarProdutos();
-      }
-    }
-
-    function limparFormulario() {
-      document.getElementById('prod-id').value = '';
-      document.getElementById('prod-nome').value = '';
-      document.getElementById('prod-gramas').value = 100;
-      document.getElementById('prod-tempo-imp').value = 3.5;
-      document.getElementById('prod-tempo-mo').value = 0.5;
-      document.getElementById('prod-embalagem').value = 2.50;
-      document.getElementById('prod-componentes').value = 0.00;
-      document.getElementById('prod-margem').value = 100;
-      document.getElementById('form-title').innerText = "Calcular Peça";
+      alert('Configurações salvas!');
       calcular();
     }
 
     function exportarBackup() {
-      const data = { config, materiais, produtos };
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", `backup_3dcost_${new Date().toISOString().slice(0,10)}.json`);
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ config, materiais, produtos }, null, 2));
+      const anchor = document.createElement('a');
+      anchor.setAttribute("href", dataStr);
+      anchor.setAttribute("download", `backup_3dcost_${new Date().toISOString().slice(0,10)}.json`);
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
     }
 
     function importarBackup(event) {
       const file = event.target.files[0];
       if (!file) return;
-
       const reader = new FileReader();
       reader.onload = function(e) {
         try {
-          const importedData = JSON.parse(e.target.result);
-          if (importedData.config && importedData.produtos) {
-            config = importedData.config;
-            produtos = importedData.produtos;
-            if (importedData.materiais) materiais = importedData.materiais;
-            
+          const imported = JSON.parse(e.target.result);
+          if (imported.config && imported.produtos) {
+            config = imported.config;
+            produtos = imported.produtos;
+            if (imported.materiais) materiais = imported.materiais;
             localStorage.setItem('3dcost_config', JSON.stringify(config));
             localStorage.setItem('3dcost_materiais', JSON.stringify(materiais));
             localStorage.setItem('3dcost_produtos', JSON.stringify(produtos));
-            
             preencherSelectMateriais();
             renderizarListaMateriais();
             preencherFormConfig();
             renderizarProdutos();
             calcular();
-            alert('Backup importado com sucesso!');
-          } else {
-            alert('Arquivo de backup inválido.');
+            alert('Backup restaurado com sucesso!');
           }
-        } catch (err) {
-          alert('Erro ao ler o arquivo de backup.');
-        }
+        } catch (err) { alert('Arquivo de backup inválido.'); }
       };
       reader.readAsText(file);
     }
