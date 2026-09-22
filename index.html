@@ -101,9 +101,9 @@
   <div id="auth-screen" style="display:flex; justify-content:center; align-items:center; height:100vh; background:var(--bg); position:fixed; top:0; left:0; width:100%; z-index:9999;">
     <div class="card" style="width: 100%; max-width: 400px; text-align: center;">
       <h2 style="margin-bottom: 1rem;">🔒 Acesso Restrito</h2>
-      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Faça login para aceder ao sistema.</p>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Faça login para acessar ao sistema.</p>
       <div class="form-group"><input type="email" id="login-email" placeholder="O seu e-mail"></div>
-      <div class="form-group"><input type="password" id="login-senha" placeholder="Palavra-passe"></div>
+      <div class="form-group"><input type="password" id="login-senha" placeholder="Senha"></div>
       <button class="btn" onclick="fazerLogin()" style="width: 100%; margin-top: 0.5rem;">Entrar</button>
       <p id="login-erro" style="color: var(--danger); font-size: 0.8rem; margin-top: 0.5rem;"></p>
     </div>
@@ -322,7 +322,7 @@
       
       firebase.auth().signInWithEmailAndPassword(email, senha)
         .catch((error) => {
-          document.getElementById('login-erro').innerText = "Erro: E-mail ou palavra-passe incorretos.";
+          document.getElementById('login-erro').innerText = "Erro: E-mail ou senha incorretos.";
         });
     }
 
