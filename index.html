@@ -3,7 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>3D Custo, Cadastro e Orçamento - Precificação 2.0</title>
+  <title>3D Custo, Cadastro e Orçamento - Nuvem (Firebase)</title>
+  
+  <!-- SDK do Firebase (Firestore) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
   <style>
     :root {
       --bg: #0f172a; --card-bg: #1e293b; --card-border: #334155;
@@ -94,7 +99,7 @@
   <header>
     <div>
       <h1>3D Custo, Cadastro e Orçamento</h1>
-      <p>Calculadora, CRM & Estoque (Bambu Lab AMS)</p>
+      <p>Calculadora, CRM & Estoque (NuviCloud Firebase)</p>
     </div>
     <button class="theme-toggle" onclick="toggleTheme()">☀️/🌙</button>
   </header>
@@ -231,11 +236,10 @@
       <button class="btn" onclick="salvarConfig()">Salvar Custos</button>
     </div>
     <div class="card">
-      <h2>Backup</h2>
+      <h2>Backup / Migração</h2>
+      <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.5rem;">Como agora usamos nuvem (Firebase), o backup serve apenas como arquivo de segurança extra.</p>
       <div class="btn-group">
-        <button class="btn btn-outline" onclick="exportar()">Exportar Backup</button>
-        <button class="btn btn-outline" onclick="document.getElementById('import-file').click()">Importar Backup</button>
-        <input type="file" id="import-file" style="display:none;" onchange="importar(event)">
+        <button class="btn btn-outline" onclick="exportar()">Exportar Backup JSON</button>
       </div>
     </div>
   </div>
@@ -258,74 +262,134 @@
   </div>
 
   <script>
+    // ==========================================
+    // CONFIGURAÇÃO DO FIREBASE (COLE SEUS DADOS AQUI)
+    // ==========================================
+    const firebaseConfig = {
+      apiKey: "AIzaSyCHsKj0Y0B538kbxv3uyXscbFJ5o5JX48w",
+      authDomain: "custo3d-3d649.firebaseapp.com",
+      projectId: "custo3d-3d649",
+      storageBucket: "custo3d-3d649.firebasestorage.app",
+      messagingSenderId: "1063139278364",
+      appId: "1:1063139278364:web:d47e81b9afcc88458569d9"
+    };
+
+    // Inicializar Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
     let cfg = { energia: 0.35, maqVal: 4500, maqHrs: 5000, mo: 25, risco: 5, taxas: 10 };
-    let materiais = [{ id: 'm1', nome: 'PLA', detalhe: 'Voolt3D Vermelho', preco: 90, estoque: 1000 }];
-    let produtos = []; let kits = []; let pedidos = [];
+    let materiais = []; 
+    let produtos = []; 
+    let kits = []; 
+    let pedidos = [];
     let calcAtual = {};
 
-    window.onload = () => { carregar(); uiInit(); };
+    window.onload = () => { 
+      carregarDadosNuvem(); 
+    };
 
     function toggleTheme() { document.body.setAttribute('data-theme', document.body.getAttribute('data-theme')==='light'?'dark':'light'); }
     function switchTab(t) { document.querySelectorAll('.tab-content, nav button').forEach(e => e.classList.remove('active')); document.getElementById('tab-'+t).classList.add('active'); event.target.classList.add('active'); }
     function fmt(v) { return (v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
     function fmtDate(ms) { let d = new Date(ms); return d.toLocaleDateString('pt-BR'); }
 
-    function carregar() {
-      const c = localStorage.getItem('3dc_cfg'); if(c) cfg = JSON.parse(c);
-      const m = localStorage.getItem('3dc_mat'); if(m) materiais = JSON.parse(m);
-      const p = localStorage.getItem('3dc_pro'); if(p) produtos = JSON.parse(p);
-      const k = localStorage.getItem('3dc_kit'); if(k) kits = JSON.parse(k);
-      const pd = localStorage.getItem('3dc_ped'); 
-      if(pd) {
-        pedidos = JSON.parse(pd);
-        pedidos.forEach(ped => {
-          if(!ped.data) ped.data = ped.id; 
-          if(ped.status === 'Produzido') { ped.status = 'Enviado'; ped.estoqueDeduzido = true; } 
-          if(ped.estoqueDeduzido === undefined) ped.estoqueDeduzido = false;
-        });
-      }
-    }
-    
-    function salvarDB() {
-      localStorage.setItem('3dc_cfg', JSON.stringify(cfg)); localStorage.setItem('3dc_mat', JSON.stringify(materiais));
-      localStorage.setItem('3dc_pro', JSON.stringify(produtos)); localStorage.setItem('3dc_kit', JSON.stringify(kits));
-      localStorage.setItem('3dc_ped', JSON.stringify(pedidos));
+    // CARREGAR DADOS DO FIRESTORE EM TEMPO REAL
+    function carregarDadosNuvem() {
+      // Carregar Configurações
+      db.collection("configuracoes").doc("geral").get().then(doc => {
+        if (doc.exists) cfg = doc.data();
+        uiInit();
+      }).catch(err => { console.error("Erro config:", err); uiInit(); });
+
+      // Sincronizar Materiais
+      db.collection("materiais").onSnapshot(snapshot => {
+        materiais = [];
+        snapshot.forEach(doc => materiais.push({ id: doc.id, ...doc.data() }));
+        atualizarSelectsMateriais();
+        renderizarMateriais();
+        calcular();
+      });
+
+      // Sincronizar Produtos
+      db.collection("produtos").onSnapshot(snapshot => {
+        produtos = [];
+        snapshot.forEach(doc => produtos.push({ id: doc.id, ...doc.data() }));
+        renderizarProdutos();
+        uiInitSelectsCRM();
+        renderizarKitSelecao();
+      });
+
+      // Sincronizar Kits
+      db.collection("kits").onSnapshot(snapshot => {
+        kits = [];
+        snapshot.forEach(doc => kits.push({ id: doc.id, ...doc.data() }));
+        uiInitSelectsCRM();
+      });
+
+      // Sincronizar Pedidos
+      db.collection("pedidos").onSnapshot(snapshot => {
+        pedidos = [];
+        snapshot.forEach(doc => pedidos.push({ id: doc.id, ...doc.data() }));
+        verificarStatusAutomatico();
+        renderizarPedidos(pedidos);
+      });
     }
 
     function uiInit() {
-      document.getElementById('cfg-energia').value = cfg.energia; document.getElementById('cfg-maquina').value = cfg.maqVal;
-      document.getElementById('cfg-horas').value = cfg.maqHrs; document.getElementById('cfg-mo').value = cfg.mo;
-      document.getElementById('cfg-risco').value = cfg.risco; document.getElementById('cfg-taxas').value = cfg.taxas;
+      document.getElementById('cfg-energia').value = cfg.energia; 
+      document.getElementById('cfg-maquina').value = cfg.maqVal;
+      document.getElementById('cfg-horas').value = cfg.maqHrs; 
+      document.getElementById('cfg-mo').value = cfg.mo;
+      document.getElementById('cfg-risco').value = cfg.risco; 
+      document.getElementById('cfg-taxas').value = cfg.taxas;
       
-      const opts = `<option value="">-- Nenhum --</option>` + materiais.map(m => `<option value="${m.id}">${m.nome} ${m.detalhe} (R$${m.preco})</option>`).join('');
-      [1,2,3,4].forEach(i => document.getElementById(`prod-mat-${i}`).innerHTML = opts);
-      if(materiais[0]) document.getElementById('prod-mat-1').value = materiais[0].id;
-      
-      document.getElementById('crm-item').innerHTML = `<optgroup label="Produtos">`+produtos.map(p=>`<option value="p_${p.id}">${p.nome}</option>`).join('')+`</optgroup><optgroup label="Kits">`+kits.map(k=>`<option value="k_${k.id}">${k.nome}</option>`).join('')+`</optgroup>`;
-      document.getElementById('kit-selecao-produtos').innerHTML = produtos.map(p=>`<div class="kit-selector-row"><span>${p.nome} (${fmt(p.preco)})</span><input type="number" id="kq_${p.id}" value="0" min="0"></div>`).join('');
-
-      renderizarPedidos(pedidos); 
-      renderizarMateriais();
-      renderizarProdutos();
-      renderizarKits();
+      atualizarSelectsMateriais();
+      uiInitSelectsCRM();
+      renderizarKitSelecao();
       calcular();
     }
 
+    function atualizarSelectsMateriais() {
+      const opts = `<option value="">-- Nenhum --</option>` + materiais.map(m => `<option value="${m.id}">${m.nome} ${m.detalhe} (R$${m.preco})</option>`).join('');
+      [1,2,3,4].forEach(i => {
+        let el = document.getElementById(`prod-mat-${i}`);
+        if(el) el.innerHTML = opts;
+      });
+      if(materiais[0]) {
+        let el1 = document.getElementById('prod-mat-1');
+        if(el1 && !el1.value) el1.value = materiais[0].id;
+      }
+    }
+
+    function uiInitSelectsCRM() {
+      let crmItem = document.getElementById('crm-item');
+      if(crmItem) {
+        crmItem.innerHTML = `<optgroup label="Produtos">`+produtos.map(p=>`<option value="p_${p.id}">${p.nome}</option>`).join('')+`</optgroup><optgroup label="Kits">`+kits.map(k=>`<option value="k_${k.id}">${k.nome}</option>`).join('')+`</optgroup>`;
+      }
+    }
+
+    function renderizarKitSelecao() {
+      let kitSel = document.getElementById('kit-selecao-produtos');
+      if(kitSel) {
+        kitSel.innerHTML = produtos.map(p=>`<div class="kit-selector-row"><span>${p.nome} (${fmt(p.preco)})</span><input type="number" id="kq_${p.id}" value="0" min="0"></div>`).join('');
+      }
+    }
+
     function verificarStatusAutomatico() {
-      let alterou = false;
       const seteDias = 7 * 24 * 60 * 60 * 1000;
       const agora = Date.now();
       pedidos.forEach(p => {
         if(p.status === 'Orçamento' && p.data && (agora - p.data > seteDias)) {
-          p.status = 'Sem Retorno';
-          alterou = true;
+          db.collection("pedidos").doc(p.id).update({ status: 'Sem Retorno' });
         }
       });
-      if(alterou) salvarDB();
     }
 
     function renderizarMateriais() {
-      document.getElementById('lista-materiais').innerHTML = materiais.map(m => {
+      let el = document.getElementById('lista-materiais');
+      if(!el) return;
+      el.innerHTML = materiais.map(m => {
         let estClass = m.estoque <= 200 ? 'badge-danger' : 'badge-default';
         let alerta = m.estoque <= 200 ? `<br><span style="color:var(--danger); font-size:0.75rem;">⚠️ Estoque Crítico!</span>` : '';
         return `<div class="list-item">
@@ -343,16 +407,20 @@
     }
 
     function renderizarProdutos() {
-      document.getElementById('lista-produtos').innerHTML = produtos.map(p => `<div class="list-item"><div class="item-info"><h3>${p.nome}</h3><p>Venda: <strong>${fmt(p.preco)}</strong> | Custo: ${fmt(p.custo)}</p></div><div><button class="btn btn-outline" style="padding:0.3rem" onclick="editarProduto(${p.id})">Editar</button> <button class="btn btn-danger" style="padding:0.3rem" onclick="excluir('pro',${p.id})">X</button></div></div>`).join('');
+      let el = document.getElementById('lista-produtos');
+      if(!el) return;
+      el.innerHTML = produtos.map(p => `<div class="list-item"><div class="item-info"><h3>${p.nome}</h3><p>Venda: <strong>${fmt(p.preco)}</strong> | Custo: ${fmt(p.custo)}</p></div><div><button class="btn btn-outline" style="padding:0.3rem" onclick="excluir('pro','${p.id}')">X</button></div></div>`).join('');
     }
 
     function renderizarKits() {
-      document.getElementById('lista-kits').innerHTML = kits.map(k => `<div class="list-item"><div class="item-info"><h3>${k.nome}</h3><p>Venda: <strong>${fmt(k.preco)}</strong> | Custo: ${fmt(k.custo)}</p></div><div><button class="btn btn-danger" style="padding:0.3rem" onclick="excluir('kit',${k.id})">X</button></div></div>`).join('');
+      let el = document.getElementById('lista-kits');
+      if(!el) return;
+      el.innerHTML = kits.map(k => `<div class="list-item"><div class="item-info"><h3>${k.nome}</h3><p>Venda: <strong>${fmt(k.preco)}</strong> | Custo: ${fmt(k.custo)}</p></div><div><button class="btn btn-danger" style="padding:0.3rem" onclick="excluir('kit','${k.id}')">X</button></div></div>`).join('');
     }
 
     function renderizarPedidos(lista) {
-      verificarStatusAutomatico(); 
       const container = document.getElementById('lista-pedidos');
+      if(!container) return;
       
       if(lista.length === 0) {
         container.innerHTML = `<p style="color:var(--text-muted); font-size:0.9rem;">Nenhum pedido encontrado.</p>`;
@@ -383,19 +451,19 @@
                     <p style="font-size:0.75rem;">${detalhes}</p>
                     
                     <div style="margin-top: 0.5rem; display: flex; gap: 0.3rem;">
-                      <button class="btn btn-outline" style="padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="gerarPDF(${p.id})">🖨️ PDF</button>
-                      <button class="btn btn-whatsapp" style="padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="enviarWhatsPedido(${p.id})">💬 Whats</button>
+                      <button class="btn btn-outline" style="padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="gerarPDF('${p.id}')">🖨️ PDF</button>
+                      <button class="btn btn-whatsapp" style="padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="enviarWhatsPedido('${p.id}')">💬 Whats</button>
                     </div>
                   </div>
                   <div style="display:flex; flex-direction:column; gap:0.5rem; align-items:flex-end;">
-                    <select class="select-status" onchange="mudarStatusPedido(${p.id}, this.value)">
+                    <select class="select-status" onchange="mudarStatusPedido('${p.id}', this.value)">
                       <option value="Orçamento" ${p.status==='Orçamento'?'selected':''}>⏳ Orçamento</option>
                       <option value="Em Preparo" ${p.status==='Em Preparo'?'selected':''}>🛠️ Em Preparo</option>
                       <option value="Enviado" ${p.status==='Enviado'?'selected':''}>✅ Enviado</option>
                       <option value="Recusado" ${p.status==='Recusado'?'selected':''}>❌ Recusado</option>
                       <option value="Sem Retorno" ${p.status==='Sem Retorno'?'selected':''}>⚠️ Sem Retorno</option>
                     </select>
-                    <button class="btn btn-danger" style="padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="excluir('ped',${p.id})">Excluir</button>
+                    <button class="btn btn-danger" style="padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="excluir('ped','${p.id}')">Excluir</button>
                   </div>
                 </div>`;
       }).reverse().join(''); 
@@ -414,7 +482,7 @@
     }
 
     function mudarStatusPedido(id, novoStatus) {
-      let ped = pedidos.find(x => x.id == id);
+      let ped = pedidos.find(x => x.id === id);
       if(!ped) return;
 
       const requerDeducao = (novoStatus === 'Em Preparo' || novoStatus === 'Enviado');
@@ -424,7 +492,7 @@
           movimentarEstoquePedido(ped, -1); 
           ped.estoqueDeduzido = true;
         } else {
-          uiInit(); 
+          renderizarPedidos(pedidos); 
           return; 
         }
       } 
@@ -433,14 +501,15 @@
           movimentarEstoquePedido(ped, 1); 
           ped.estoqueDeduzido = false;
         } else {
-          uiInit(); 
+          renderizarPedidos(pedidos); 
           return;
         }
       }
 
-      ped.status = novoStatus;
-      salvarDB();
-      uiInit();
+      db.collection("pedidos").doc(id).update({
+        status: novoStatus,
+        estoqueDeduzido: ped.estoqueDeduzido
+      });
     }
 
     function movimentarEstoquePedido(ped, multiplicador) {
@@ -448,13 +517,13 @@
         alterarProdEstoque(ped.refId, 1 * multiplicador); 
       }
       else { 
-        let k = kits.find(x=>x.id==ped.refId); 
-        if(k) k.itens.forEach(i => alterarProdEstoque(i.id, i.qtd * multiplicador)); 
+        let k = kits.find(x=>x.id === ped.refId); 
+        if(k && k.itens) k.itens.forEach(i => alterarProdEstoque(i.id, i.qtd * multiplicador)); 
       }
     }
     
     function alterarProdEstoque(pid, mult) {
-      let p = produtos.find(x=>x.id==pid); if(!p) return;
+      let p = produtos.find(x=>x.id === pid); if(!p) return;
       alterarEstoque(p.m1, (p.g1+p.purga)*mult); 
       alterarEstoque(p.m2, p.g2*mult);
       alterarEstoque(p.m3, p.g3*mult); 
@@ -464,13 +533,18 @@
     function alterarEstoque(mid, val) {
       if(!mid || val===0) return; 
       let m = materiais.find(x=>x.id===mid); 
-      if(m) m.estoque += val; 
+      if(m) {
+        let novoEstoque = m.estoque + val;
+        db.collection("materiais").doc(mid).update({ estoque: novoEstoque });
+      }
     }
 
     function calcular() {
-      const getMat = id => materiais.find(m => m.id === document.getElementById(id).value) || {preco:0};
-      const g1 = parseFloat(document.getElementById('prod-g-1').value)||0; const g2 = parseFloat(document.getElementById('prod-g-2').value)||0;
-      const g3 = parseFloat(document.getElementById('prod-g-3').value)||0; const g4 = parseFloat(document.getElementById('prod-g-4').value)||0;
+      const getMat = id => materiais.find(m => m.id === id) || {preco:0};
+      const g1 = parseFloat(document.getElementById('prod-g-1').value)||0; 
+      const g2 = parseFloat(document.getElementById('prod-g-2').value)||0;
+      const g3 = parseFloat(document.getElementById('prod-g-3').value)||0; 
+      const g4 = parseFloat(document.getElementById('prod-g-4').value)||0;
       const purga = parseFloat(document.getElementById('prod-purga').value)||0;
 
       const tImp = parseFloat(document.getElementById('prod-tempo-imp').value)||0;
@@ -478,16 +552,30 @@
       const ext = parseFloat(document.getElementById('prod-extras').value)||0;
       const mg = parseFloat(document.getElementById('prod-margem').value)||0;
 
-      const cFil = ((g1+purga)/1000)*getMat('prod-mat-1').preco + (g2/1000)*getMat('prod-mat-2').preco + (g3/1000)*getMat('prod-mat-3').preco + (g4/1000)*getMat('prod-mat-4').preco;
-      const cEn = tImp * cfg.energia; const cDep = tImp * (cfg.maqVal/cfg.maqHrs); const cMo = tMo * cfg.mo;
-      const sub = cFil + cEn + cDep + cMo + ext;
-      const cRis = sub * (cfg.risco/100); const cTax = (sub+cRis) * (cfg.taxas/100);
-      const total = sub + cRis + cTax; const lucro = total * (mg/100); const venda = total + lucro;
+      let idm1 = document.getElementById('prod-mat-1').value;
+      let idm2 = document.getElementById('prod-mat-2').value;
+      let idm3 = document.getElementById('prod-mat-3').value;
+      let idm4 = document.getElementById('prod-mat-4').value;
 
-      document.getElementById('res-filamento').innerText = fmt(cFil); document.getElementById('res-energia').innerText = fmt(cEn);
-      document.getElementById('res-depreciacao').innerText = fmt(cDep); document.getElementById('res-mo').innerText = fmt(cMo);
-      document.getElementById('res-risco').innerText = fmt(cRis); document.getElementById('res-taxas').innerText = fmt(cTax);
-      document.getElementById('res-custo').innerText = fmt(total); document.getElementById('res-venda').innerText = fmt(venda);
+      const cFil = ((g1+purga)/1000)*getMat(idm1).preco + (g2/1000)*getMat(idm2).preco + (g3/1000)*getMat(idm3).preco + (g4/1000)*getMat(idm4).preco;
+      const cEn = tImp * cfg.energia; 
+      const cDep = tImp * (cfg.maqVal/cfg.maqHrs); 
+      const cMo = tMo * cfg.mo;
+      const sub = cFil + cEn + cDep + cMo + ext;
+      const cRis = sub * (cfg.risco/100); 
+      const cTax = (sub+cRis) * (cfg.taxas/100);
+      const total = sub + cRis + cTax; 
+      const lucro = total * (mg/100); 
+      const venda = total + lucro;
+
+      document.getElementById('res-filamento').innerText = fmt(cFil); 
+      document.getElementById('res-energia').innerText = fmt(cEn);
+      document.getElementById('res-depreciacao').innerText = fmt(cDep); 
+      document.getElementById('res-mo').innerText = fmt(cMo);
+      document.getElementById('res-risco').innerText = fmt(cRis); 
+      document.getElementById('res-taxas').innerText = fmt(cTax);
+      document.getElementById('res-custo').innerText = fmt(total); 
+      document.getElementById('res-venda').innerText = fmt(venda);
       document.getElementById('res-lucro').innerText = fmt(lucro);
 
       calcAtual = { custo: total, preco: venda, lucro: lucro, imp: tImp, g1, g2, g3, g4, purga };
@@ -496,9 +584,10 @@
     function reporEstoque(id) {
       let m = materiais.find(x => x.id === id);
       if(m) {
-        m.estoque += 1000;
-        salvarDB(); uiInit();
-        alert(`Sucesso! Foi adicionado 1kg ao estoque de ${m.nome} (${m.detalhe}). Estoque atual: ${m.estoque}g.`);
+        let novoEstoque = m.estoque + 1000;
+        db.collection("materiais").doc(id).update({ estoque: novoEstoque }).then(() => {
+          alert(`Sucesso! Adicionado 1kg ao estoque de ${m.nome} (${m.detalhe}).`);
+        });
       }
     }
 
@@ -532,35 +621,39 @@
           prc = parseFloat(document.getElementById('mat-preco').value), est = parseFloat(document.getElementById('mat-estoque').value);
       if(!nome||isNaN(prc)) return alert("Preencha o tipo e o preço corretamente.");
 
+      let dados = { nome, detalhe: det, preco: prc, estoque: est };
+
       if(id) {
-        let idx = materiais.findIndex(m => m.id === id);
-        if(idx !== -1) {
-          materiais[idx].nome = nome; materiais[idx].detalhe = det; materiais[idx].preco = prc; materiais[idx].estoque = est;
-        }
+        db.collection("materiais").doc(id).update(dados).then(() => {
+          cancelarEdicaoMat();
+          alert("Material atualizado!");
+        });
       } else {
-        materiais.push({ id:'m_'+Date.now(), nome, detalhe:det, preco:prc, estoque:est });
+        db.collection("materiais").add(dados).then(() => {
+          cancelarEdicaoMat();
+          alert("Material cadastrado!");
+        });
       }
-      
-      cancelarEdicaoMat(); 
-      salvarDB(); uiInit(); alert("Material salvo com sucesso!");
     }
 
     function salvarProduto() {
       let nome = document.getElementById('prod-nome').value; if(!nome) return alert("Nome!");
-      let id = document.getElementById('prod-id').value;
-      let p = { id: id ? parseInt(id) : Date.now(), nome, custo: calcAtual.custo, preco: calcAtual.preco, imp: calcAtual.imp, 
-                m1: document.getElementById('prod-mat-1').value, g1: calcAtual.g1,
-                m2: document.getElementById('prod-mat-2').value, g2: calcAtual.g2,
-                m3: document.getElementById('prod-mat-3').value, g3: calcAtual.g3,
-                m4: document.getElementById('prod-mat-4').value, g4: calcAtual.g4, purga: calcAtual.purga };
+      let p = { 
+        nome, 
+        custo: calcAtual.custo, 
+        preco: calcAtual.preco, 
+        imp: calcAtual.imp, 
+        m1: document.getElementById('prod-mat-1').value, g1: calcAtual.g1,
+        m2: document.getElementById('prod-mat-2').value, g2: calcAtual.g2,
+        m3: document.getElementById('prod-mat-3').value, g3: calcAtual.g3,
+        m4: document.getElementById('prod-mat-4').value, g4: calcAtual.g4, 
+        purga: calcAtual.purga 
+      };
       
-      if(id) {
-         let idx = produtos.findIndex(x => x.id == id);
-         if(idx !== -1) produtos[idx] = p;
-      } else {
-         produtos.push(p);
-      }
-      salvarDB(); uiInit(); alert("Produto Salvo!"); limparCalc();
+      db.collection("produtos").add(p).then(() => {
+        alert("Produto Salvo na Nuvem!");
+        limparCalc();
+      });
     }
     
     function limparCalc() { 
@@ -569,21 +662,6 @@
       document.getElementById('prod-g-1').value=100;
       document.getElementById('form-title').innerText = "Calcular Peça";
       calcular(); 
-    }
-    
-    function editarProduto(id) { 
-      let p = produtos.find(x => x.id === id);
-      if(!p) return;
-      document.getElementById('prod-id').value = p.id;
-      document.getElementById('prod-nome').value = p.nome;
-      if (p.m1) document.getElementById('prod-mat-1').value = p.m1; document.getElementById('prod-g-1').value = p.g1;
-      if (p.m2) document.getElementById('prod-mat-2').value = p.m2; document.getElementById('prod-g-2').value = p.g2 || 0;
-      if (p.m3) document.getElementById('prod-mat-3').value = p.m3; document.getElementById('prod-g-3').value = p.g3 || 0;
-      if (p.m4) document.getElementById('prod-mat-4').value = p.m4; document.getElementById('prod-g-4').value = p.g4 || 0;
-      document.getElementById('prod-purga').value = p.purga || 0;
-      
-      document.getElementById('form-title').innerText = "Editar Produto";
-      switchTab('calc'); calcular();
     }
 
     function salvarKit() {
@@ -594,8 +672,11 @@
         if(q>0) { itens.push({id:prod.id, qtd:q}); c += prod.custo*q; p += prod.preco*q; }
       });
       if(itens.length===0) return alert("Selecione quantidades!");
-      kits.push({ id: Date.now(), nome, itens, custo: c, preco: p });
-      salvarDB(); uiInit(); document.getElementById('kit-nome').value='';
+      
+      db.collection("kits").add({ nome, itens, custo: c, preco: p }).then(() => {
+        alert("Combo Salvo na Nuvem!");
+        document.getElementById('kit-nome').value='';
+      });
     }
 
     function salvarPedido() {
@@ -609,10 +690,11 @@
           obs = document.getElementById('crm-obs').value;
           
       if(!cli||!val) return alert("Preencha pelo menos o Nome do Cliente e o Produto!");
-      let [tipo, id] = val.split('_'); let ref = tipo==='p' ? produtos.find(x=>x.id==id) : kits.find(x=>x.id==id);
+      let [tipo, id] = val.split('_'); 
+      let ref = tipo==='p' ? produtos.find(x=>x.id===id) : kits.find(x=>x.id===id);
+      if(!ref) return;
       
-      pedidos.push({ 
-        id: Date.now(), 
+      let novoPedido = { 
         data: Date.now(),
         cliente: cli, 
         cpf: cpf,
@@ -622,29 +704,30 @@
         estado: est,
         obs: obs,
         tipo, 
-        refId: parseInt(id), 
+        refId: id, 
         itemNome: ref.nome, 
         preco: ref.preco, 
-        status: 'Orçamento', // Iniciando sempre como Orçamento para aguardar confirmação
+        status: 'Orçamento',
         estoqueDeduzido: false 
-      });
+      };
       
-      salvarDB(); uiInit(); 
-      document.getElementById('crm-cliente').value='';
-      document.getElementById('crm-cpf').value='';
-      document.getElementById('crm-contato').value='';
-      document.getElementById('crm-endereco').value='';
-      document.getElementById('crm-cidade').value='';
-      document.getElementById('crm-estado').value='';
-      document.getElementById('crm-obs').value='';
-      alert("Orçamento lançado com sucesso!");
+      db.collection("pedidos").add(novoPedido).then(() => {
+        document.getElementById('crm-cliente').value='';
+        document.getElementById('crm-cpf').value='';
+        document.getElementById('crm-contato').value='';
+        document.getElementById('crm-endereco').value='';
+        document.getElementById('crm-cidade').value='';
+        document.getElementById('crm-estado').value='';
+        document.getElementById('crm-obs').value='';
+        alert("Orçamento lançado na nuvem com sucesso!");
+      });
     }
 
     function gerarPDF(pedId) {
-      let ped = pedidos.find(x => x.id == pedId);
+      let ped = pedidos.find(x => x.id === pedId);
       if(!ped) return;
       
-      let ref = ped.tipo === 'p' ? produtos.find(x=>x.id==ped.refId) : null;
+      let ref = ped.tipo === 'p' ? produtos.find(x=>x.id===ped.refId) : null;
       let tempo = ref ? ref.imp : "Variável"; 
 
       document.getElementById('p-cliente').innerText = ped.cliente || '-';
@@ -673,7 +756,7 @@
     }
 
     function enviarWhatsPedido(id) {
-      let ped = pedidos.find(x => x.id == id);
+      let ped = pedidos.find(x => x.id === id);
       if(!ped) return;
       
       let msg = `Olá, *${ped.cliente}*! Tudo bem?\n\nSegue o orçamento referente ao pedido: *${ped.itemNome}*.\n\n💰 *Valor Total:* ${fmt(ped.preco)}\n\nPodemos dar andamento na sua produção? Qualquer dúvida, estou à disposição!`;
@@ -687,33 +770,52 @@
     }
 
     function salvarConfig() {
-      cfg.energia=parseFloat(document.getElementById('cfg-energia').value); cfg.maqVal=parseFloat(document.getElementById('cfg-maquina').value);
-      cfg.maqHrs=parseFloat(document.getElementById('cfg-horas').value); cfg.mo=parseFloat(document.getElementById('cfg-mo').value);
-      cfg.risco=parseFloat(document.getElementById('cfg-risco').value); cfg.taxas=parseFloat(document.getElementById('cfg-taxas').value);
-      salvarDB(); uiInit(); alert("Configurações Salvas!");
+      cfg = {
+        energia: parseFloat(document.getElementById('cfg-energia').value) || 0,
+        maqVal: parseFloat(document.getElementById('cfg-maquina').value) || 0,
+        maqHrs: parseFloat(document.getElementById('cfg-horas').value) || 1,
+        mo: parseFloat(document.getElementById('cfg-mo').value) || 0,
+        risco: parseFloat(document.getElementById('cfg-risco').value) || 0,
+        taxas: parseFloat(document.getElementById('cfg-taxas').value) || 0
+      };
+
+      db.collection("configuracoes").doc("geral").set(cfg).then(() => {
+        alert("Configurações salvas na nuvem!");
+        calcular();
+      });
     }
     
     function excluir(tipo, id) {
       if(!confirm("Tem certeza que deseja excluir?")) return;
-      if(tipo==='mat') materiais = materiais.filter(x=>x.id!==id);
-      if(tipo==='pro') produtos = produtos.filter(x=>x.id!=id);
-      if(tipo==='kit') kits = kits.filter(x=>x.id!=id);
       
-      if(tipo==='ped') {
-        let p = pedidos.find(x=>x.id==id);
+      let col = "";
+      if(tipo === 'mat') col = "materiais";
+      if(tipo === 'pro') col = "produtos";
+      if(tipo === 'kit') col = "kits";
+      if(tipo === 'ped') {
+        col = "pedidos";
+        let p = pedidos.find(x => x.id === id);
         if(p && p.estoqueDeduzido) {
            if(confirm("Este pedido já teve o estoque deduzido. Deseja DEVOLVER os materiais ao estoque antes de excluir?")) {
               movimentarEstoquePedido(p, 1); 
            }
         }
-        pedidos = pedidos.filter(x=>x.id!=id);
       }
-      
-      salvarDB(); uiInit();
+
+      if(col) {
+        db.collection(col).doc(id).delete().then(() => {
+          // Atualiza visualmente
+        });
+      }
     }
     
-    function exportar() { let data = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({cfg,materiais,produtos,kits,pedidos})); let a = document.createElement('a'); a.href = data; a.download = `backup_3d_${new Date().toISOString().slice(0,10)}.json`; a.click(); }
-    function importar(e) { let r = new FileReader(); r.onload=function(ev){ let obj = JSON.parse(ev.target.result); cfg=obj.cfg; materiais=obj.materiais; produtos=obj.produtos; kits=obj.kits; pedidos=obj.pedidos; salvarDB(); uiInit(); alert("Restaurado com sucesso!"); }; r.readAsText(e.target.files[0]); }
+    function exportar() { 
+      let data = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({cfg, materiais, produtos, kits, pedidos})); 
+      let a = document.createElement('a'); 
+      a.href = data; 
+      a.download = `backup_3d_nuvem_${new Date().toISOString().slice(0,10)}.json`; 
+      a.click(); 
+    }
   </script>
 </body>
 </html>
