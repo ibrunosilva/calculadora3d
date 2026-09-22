@@ -96,182 +96,189 @@
   </style>
 </head>
 <body>
-<!-- TELA DE LOGIN (Bloqueia o acesso inicial) -->
-<div id="auth-screen" style="display:flex; justify-content:center; align-items:center; height:100vh; background:var(--bg);">
-  <div class="card" style="width: 100%; max-width: 400px; text-align: center;">
-    <h2 style="margin-bottom: 1rem;">🔒 Acesso Restrito</h2>
-    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Faça login para aceder ao sistema.</p>
-    <div class="form-group"><input type="email" id="login-email" placeholder="O seu e-mail"></div>
-    <div class="form-group"><input type="password" id="login-senha" placeholder="Palavra-passe"></div>
-    <button class="btn" onclick="fazerLogin()" style="width: 100%; margin-top: 0.5rem;">Entrar</button>
-    <p id="login-erro" style="color: var(--danger); font-size: 0.8rem; margin-top: 0.5rem;"></p>
-  </div>
-</div>
-  <header>
-    <div>
-      <h1>3D Custo, Cadastro e Orçamento</h1>
-      <p>Calculadora, CRM & Estoque (Bambu Lab AMS)</p>
+
+  <!-- TELA DE LOGIN (Bloqueia o acesso inicial) -->
+  <div id="auth-screen" style="display:flex; justify-content:center; align-items:center; height:100vh; background:var(--bg); position:fixed; top:0; left:0; width:100%; z-index:9999;">
+    <div class="card" style="width: 100%; max-width: 400px; text-align: center;">
+      <h2 style="margin-bottom: 1rem;">🔒 Acesso Restrito</h2>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Faça login para aceder ao sistema.</p>
+      <div class="form-group"><input type="email" id="login-email" placeholder="O seu e-mail"></div>
+      <div class="form-group"><input type="password" id="login-senha" placeholder="Palavra-passe"></div>
+      <button class="btn" onclick="fazerLogin()" style="width: 100%; margin-top: 0.5rem;">Entrar</button>
+      <p id="login-erro" style="color: var(--danger); font-size: 0.8rem; margin-top: 0.5rem;"></p>
     </div>
-    <button class="theme-toggle" onclick="toggleTheme()">☀️/🌙</button>
-  </header>
+  </div>
 
-  <nav>
-    <button class="active" onclick="switchTab('calc')">Calculadora</button>
-    <button onclick="switchTab('produtos')">Produtos</button>
-    <button onclick="switchTab('kits')">Combos/Kits</button>
-    <button onclick="switchTab('crm')">Pedidos (CRM)</button>
-    <button onclick="switchTab('config')">Configuração</button>
-  </nav>
+  <!-- CONTEÚDO PRINCIPAL DO SISTEMA (Fica oculto até autenticar) -->
+  <div id="app-content" style="display:none;">
 
-  <!-- ABA CALCULADORA -->
-  <div id="tab-calc" class="tab-content active">
-    <div class="card">
-      <h2 id="form-title">Calcular Peça</h2>
-      <input type="hidden" id="prod-id">
-      <div class="grid-2">
-        <div class="form-group"><label>Nome da Peça / Produto</label><input type="text" id="prod-nome"></div>
+    <header>
+      <div>
+        <h1>3D Custo, Cadastro e Orçamento</h1>
+        <p>Calculadora, CRM & Estoque (Bambu Lab AMS)</p>
       </div>
-      <div style="border: 1px dashed var(--card-border); padding: 0.8rem; border-radius: 8px; margin-bottom: 1rem;">
-        <span style="font-size: 0.85rem; font-weight: bold; color: var(--accent);">AMS Lite (Até 4 Filamentos)</span>
-        <div class="grid-2" style="margin-top: 0.5rem;">
-          <div class="form-group"><label>Filamento 1</label><select id="prod-mat-1" onchange="calcular()"></select></div>
-          <div class="form-group"><label>Consumo 1 (g)</label><input type="number" id="prod-g-1" value="100" oninput="calcular()"></div>
-          <div class="form-group"><label>Filamento 2</label><select id="prod-mat-2" onchange="calcular()"></select></div>
-          <div class="form-group"><label>Consumo 2 (g)</label><input type="number" id="prod-g-2" value="0" oninput="calcular()"></div>
-          <div class="form-group"><label>Filamento 3</label><select id="prod-mat-3" onchange="calcular()"></select></div>
-          <div class="form-group"><label>Consumo 3 (g)</label><input type="number" id="prod-g-3" value="0" oninput="calcular()"></div>
-          <div class="form-group"><label>Filamento 4</label><select id="prod-mat-4" onchange="calcular()"></select></div>
-          <div class="form-group"><label>Consumo 4 (g)</label><input type="number" id="prod-g-4" value="0" oninput="calcular()"></div>
+      <button class="theme-toggle" onclick="toggleTheme()">☀️/🌙</button>
+    </header>
+
+    <nav>
+      <button class="active" onclick="switchTab('calc')">Calculadora</button>
+      <button onclick="switchTab('produtos')">Produtos</button>
+      <button onclick="switchTab('kits')">Combos/Kits</button>
+      <button onclick="switchTab('crm')">Pedidos (CRM)</button>
+      <button onclick="switchTab('config')">Configuração</button>
+    </nav>
+
+    <!-- ABA CALCULADORA -->
+    <div id="tab-calc" class="tab-content active">
+      <div class="card">
+        <h2 id="form-title">Calcular Peça</h2>
+        <input type="hidden" id="prod-id">
+        <div class="grid-2">
+          <div class="form-group"><label>Nome da Peça / Produto</label><input type="text" id="prod-nome"></div>
         </div>
-        <div class="form-group"><label>Desperdício Purga AMS (g)</label><input type="number" id="prod-purga" value="15" oninput="calcular()"></div>
+        <div style="border: 1px dashed var(--card-border); padding: 0.8rem; border-radius: 8px; margin-bottom: 1rem;">
+          <span style="font-size: 0.85rem; font-weight: bold; color: var(--accent);">AMS Lite (Até 4 Filamentos)</span>
+          <div class="grid-2" style="margin-top: 0.5rem;">
+            <div class="form-group"><label>Filamento 1</label><select id="prod-mat-1" onchange="calcular()"></select></div>
+            <div class="form-group"><label>Consumo 1 (g)</label><input type="number" id="prod-g-1" value="100" oninput="calcular()"></div>
+            <div class="form-group"><label>Filamento 2</label><select id="prod-mat-2" onchange="calcular()"></select></div>
+            <div class="form-group"><label>Consumo 2 (g)</label><input type="number" id="prod-g-2" value="0" oninput="calcular()"></div>
+            <div class="form-group"><label>Filamento 3</label><select id="prod-mat-3" onchange="calcular()"></select></div>
+            <div class="form-group"><label>Consumo 3 (g)</label><input type="number" id="prod-g-3" value="0" oninput="calcular()"></div>
+            <div class="form-group"><label>Filamento 4</label><select id="prod-mat-4" onchange="calcular()"></select></div>
+            <div class="form-group"><label>Consumo 4 (g)</label><input type="number" id="prod-g-4" value="0" oninput="calcular()"></div>
+          </div>
+          <div class="form-group"><label>Desperdício Purga AMS (g)</label><input type="number" id="prod-purga" value="15" oninput="calcular()"></div>
+        </div>
+        <div class="grid-2">
+          <div class="form-group"><label>Tempo Impressão (Horas)</label><input type="number" step="0.1" id="prod-tempo-imp" value="3.5" oninput="calcular()"></div>
+          <div class="form-group"><label>Tempo Mão de Obra (Horas)</label><input type="number" step="0.1" id="prod-tempo-mo" value="0.5" oninput="calcular()"></div>
+          <div class="form-group"><label>Embalagem & Extras (R$)</label><input type="number" step="0.01" id="prod-extras" value="2.50" oninput="calcular()"></div>
+          <div class="form-group"><label>Margem de Lucro (%)</label><input type="number" id="prod-margem" value="100" oninput="calcular()"></div>
+        </div>
+        <div class="results-panel">
+          <div class="result-row"><span>Filamentos + Purga:</span> <span id="res-filamento">R$ 0,00</span></div>
+          <div class="result-row"><span>Energia Elétrica:</span> <span id="res-energia">R$ 0,00</span></div>
+          <div class="result-row"><span>Depreciação:</span> <span id="res-depreciacao">R$ 0,00</span></div>
+          <div class="result-row"><span>Mão de Obra:</span> <span id="res-mo">R$ 0,00</span></div>
+          <div class="result-row"><span>Risco/Falha Estimada:</span> <span id="res-risco">R$ 0,00</span></div>
+          <div class="result-row"><span>Impostos MEI:</span> <span id="res-taxas">R$ 0,00</span></div>
+          <div class="result-row highlight"><span>Custo Total:</span> <span id="res-custo">R$ 0,00</span></div>
+          <div class="result-row highlight" style="color: var(--primary);"><span>Preço Sugerido:</span> <span id="res-venda">R$ 0,00</span></div>
+          <div class="result-row"><span>Lucro Real:</span> <span id="res-lucro" style="color: #4ade80; font-weight: bold;">R$ 0,00</span></div>
+        </div>
+        <div class="btn-group">
+          <button class="btn" onclick="salvarProduto()">Salvar Produto</button>
+          <button class="btn btn-outline" onclick="gerarPDFAvulso()">🖨️ Imprimir Avulso</button>
+          <button class="btn btn-outline" onclick="limparCalc()">Limpar</button>
+        </div>
       </div>
-      <div class="grid-2">
-        <div class="form-group"><label>Tempo Impressão (Horas)</label><input type="number" step="0.1" id="prod-tempo-imp" value="3.5" oninput="calcular()"></div>
-        <div class="form-group"><label>Tempo Mão de Obra (Horas)</label><input type="number" step="0.1" id="prod-tempo-mo" value="0.5" oninput="calcular()"></div>
-        <div class="form-group"><label>Embalagem & Extras (R$)</label><input type="number" step="0.01" id="prod-extras" value="2.50" oninput="calcular()"></div>
-        <div class="form-group"><label>Margem de Lucro (%)</label><input type="number" id="prod-margem" value="100" oninput="calcular()"></div>
-      </div>
-      <div class="results-panel">
-        <div class="result-row"><span>Filamentos + Purga:</span> <span id="res-filamento">R$ 0,00</span></div>
-        <div class="result-row"><span>Energia Elétrica:</span> <span id="res-energia">R$ 0,00</span></div>
-        <div class="result-row"><span>Depreciação:</span> <span id="res-depreciacao">R$ 0,00</span></div>
-        <div class="result-row"><span>Mão de Obra:</span> <span id="res-mo">R$ 0,00</span></div>
-        <div class="result-row"><span>Risco/Falha Estimada:</span> <span id="res-risco">R$ 0,00</span></div>
-        <div class="result-row"><span>Impostos MEI:</span> <span id="res-taxas">R$ 0,00</span></div>
-        <div class="result-row highlight"><span>Custo Total:</span> <span id="res-custo">R$ 0,00</span></div>
-        <div class="result-row highlight" style="color: var(--primary);"><span>Preço Sugerido:</span> <span id="res-venda">R$ 0,00</span></div>
-        <div class="result-row"><span>Lucro Real:</span> <span id="res-lucro" style="color: #4ade80; font-weight: bold;">R$ 0,00</span></div>
-      </div>
-      <div class="btn-group">
-        <button class="btn" onclick="salvarProduto()">Salvar Produto</button>
-        <button class="btn btn-outline" onclick="gerarPDFAvulso()">🖨️ Imprimir Avulso</button>
-        <button class="btn btn-outline" onclick="limparCalc()">Limpar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ABA PRODUTOS -->
-  <div id="tab-produtos" class="tab-content">
-    <div class="card"><h2>Produtos Salvos</h2><div id="lista-produtos" class="list-container"></div></div>
-  </div>
-
-  <!-- ABA KITS/COMBOS -->
-  <div id="tab-kits" class="tab-content">
-    <div class="card">
-      <h2>Criar Combo / Kit</h2>
-      <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">Selecione a quantidade de cada produto salvo para formar um combo.</p>
-      <div class="form-group"><label>Nome do Combo</label><input type="text" id="kit-nome" placeholder="Ex: Kit Enfeites de Natal"></div>
-      <div id="kit-selecao-produtos" style="background:var(--input-bg); border:1px solid var(--card-border); border-radius:8px; padding:0.5rem; margin-bottom:1rem;"></div>
-      <button class="btn" onclick="salvarKit()">Salvar Combo</button>
-    </div>
-    <div class="card"><h2>Combos Salvos</h2><div id="lista-kits" class="list-container"></div></div>
-  </div>
-
-  <!-- ABA CRM / PEDIDOS -->
-  <div id="tab-crm" class="tab-content">
-    <div class="card">
-      <h2>Novo Pedido / Orçamento</h2>
-      <div class="grid-2">
-        <div class="form-group"><label>Nome do Cliente *</label><input type="text" id="crm-cliente" placeholder="Ex: Maria da Silva"></div>
-        <div class="form-group"><label>CPF</label><input type="text" id="crm-cpf" placeholder="Ex: 000.000.000-00"></div>
-      </div>
-      <div class="grid-2">
-        <div class="form-group"><label>Contato (WhatsApp / Email)</label><input type="text" id="crm-contato" placeholder="Ex: 81999999999"></div>
-        <div class="form-group"><label>Endereço (Rua, Número, Bairro)</label><input type="text" id="crm-endereco" placeholder="Ex: Rua das Flores, 123 - Boa Viagem"></div>
-      </div>
-      <div class="grid-3">
-        <div class="form-group"><label>Cidade</label><input type="text" id="crm-cidade" placeholder="Ex: Recife"></div>
-        <div class="form-group"><label>Estado (UF)</label><input type="text" id="crm-estado" placeholder="Ex: PE"></div>
-        <div class="form-group"><label>Produto ou Kit *</label><select id="crm-item"></select></div>
-      </div>
-      <div class="form-group"><label>Observações (Opcional)</label><input type="text" id="crm-obs" placeholder="Ex: Entregar à tarde, embalar para presente..."></div>
-      <button class="btn" onclick="salvarPedido()" style="margin-top: 0.5rem;">Lançar Pedido (Orçamento)</button>
     </div>
 
-    <div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
-        <h2 style="margin-bottom:0; border-bottom:none; padding-bottom:0;">Controle de Pedidos & Fluxo</h2>
-        <input type="text" id="input-busca" placeholder="🔍 Pesquisar por Nome, CPF ou Tel..." oninput="filtrarPedidos()" style="padding:0.4rem 0.6rem; font-size:0.85rem; border-radius:6px; border:1px solid var(--card-border); background:var(--input-bg); color:var(--text); width:260px;">
-      </div>
-      <div id="lista-pedidos" class="list-container"></div>
+    <!-- ABA PRODUTOS -->
+    <div id="tab-produtos" class="tab-content">
+      <div class="card"><h2>Produtos Salvos</h2><div id="lista-produtos" class="list-container"></div></div>
     </div>
-  </div>
 
-  <!-- ABA CONFIGURAÇÕES -->
-  <div id="tab-config" class="tab-content">
-    <div class="card">
-      <h2>Estoque de Materiais</h2>
-      <input type="hidden" id="mat-id">
-      <div class="grid-4">
-        <div class="form-group"><label>Tipo (PLA/PETG)</label><input type="text" id="mat-nome"></div>
-        <div class="form-group"><label>Marca / Cor</label><input type="text" id="mat-detalhe"></div>
-        <div class="form-group"><label>Preço / Kg (R$)</label><input type="number" step="0.01" id="mat-preco"></div>
-        <div class="form-group"><label>Estoque (g)</label><input type="number" id="mat-estoque" value="1000"></div>
+    <!-- ABA KITS/COMBOS -->
+    <div id="tab-kits" class="tab-content">
+      <div class="card">
+        <h2>Criar Combo / Kit</h2>
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">Selecione a quantidade de cada produto salvo para formar um combo.</p>
+        <div class="form-group"><label>Nome do Combo</label><input type="text" id="kit-nome" placeholder="Ex: Kit Enfeites de Natal"></div>
+        <div id="kit-selecao-produtos" style="background:var(--input-bg); border:1px solid var(--card-border); border-radius:8px; padding:0.5rem; margin-bottom:1rem;"></div>
+        <button class="btn" onclick="salvarKit()">Salvar Combo</button>
       </div>
-      <div class="btn-group">
-        <button class="btn" id="btn-mat" onclick="salvarMaterial()">Salvar Material</button>
-        <button class="btn btn-outline" id="btn-cancel-mat" style="display:none;" onclick="cancelarEdicaoMat()">Cancelar</button>
-      </div>
-      <div id="lista-materiais" class="list-container" style="margin-top:1rem;"></div>
+      <div class="card"><h2>Combos Salvos</h2><div id="lista-kits" class="list-container"></div></div>
     </div>
-    <div class="card">
-      <h2>Custos Operacionais</h2>
-      <div class="grid-2">
-        <div class="form-group"><label>Energia (R$/h)</label><input type="number" step="0.01" id="cfg-energia" value="0.35"></div>
-        <div class="form-group"><label>Valor Máquina (R$)</label><input type="number" step="0.01" id="cfg-maquina" value="4500.00"></div>
-        <div class="form-group"><label>Vida Útil (Horas)</label><input type="number" id="cfg-horas" value="5000"></div>
-        <div class="form-group"><label>Mão de Obra (R$/h)</label><input type="number" step="0.01" id="cfg-mo" value="25.00"></div>
-        <div class="form-group"><label>Taxa de Risco/Falha (%)</label><input type="number" id="cfg-risco" value="5"></div>
-        <div class="form-group"><label>Impostos MEI (%)</label><input type="number" id="cfg-taxas" value="10"></div>
-      </div>
-      <button class="btn" onclick="salvarConfig()">Salvar Custos</button>
-    </div>
-    <div class="card">
-      <h2>Backup</h2>
-      <div class="btn-group">
-        <button class="btn btn-outline" onclick="exportar()">Exportar Backup</button>
-        <button class="btn btn-outline" onclick="document.getElementById('import-file').click()">Importar Backup</button>
-        <input type="file" id="import-file" style="display:none;" onchange="importar(event)">
-      </div>
-    </div>
-  </div>
 
-  <!-- ÁREA DE IMPRESSÃO (ORÇAMENTO CLIENTE) -->
-  <div id="print-area" style="display:none;">
-    <div style="font-family: sans-serif; color: #000; padding: 1rem;">
-      <h1 style="color:#10b981; border-bottom:2px solid #ccc; padding-bottom:0.5rem; margin-bottom:1rem;">Orçamento de Impressão 3D</h1>
-      <p><strong>Cliente:</strong> <span id="p-cliente"></span></p>
-      <p><strong>CPF:</strong> <span id="p-cpf"></span></p>
-      <p><strong>Contato:</strong> <span id="p-contato"></span></p>
-      <p><strong>Endereço:</strong> <span id="p-endereco"></span></p><br>
-      
-      <p><strong>Produto / Kit:</strong> <span id="p-nome"></span></p>
-      <p><strong>Tempo Estimado de Produção:</strong> <span id="p-tempo"></span> horas</p><br>
-      
-      <h2 style="font-size: 1.3rem; color: #111;">Valor Total: <span id="p-preco" style="color:#10b981;"></span></h2><br>
-      <p style="font-size: 0.8rem; color:#556;">Validade do orçamento: 7 dias.</p>
+    <!-- ABA CRM / PEDIDOS -->
+    <div id="tab-crm" class="tab-content">
+      <div class="card">
+        <h2>Novo Pedido / Orçamento</h2>
+        <div class="grid-2">
+          <div class="form-group"><label>Nome do Cliente *</label><input type="text" id="crm-cliente" placeholder="Ex: Maria da Silva"></div>
+          <div class="form-group"><label>CPF</label><input type="text" id="crm-cpf" placeholder="Ex: 000.000.000-00"></div>
+        </div>
+        <div class="grid-2">
+          <div class="form-group"><label>Contato (WhatsApp / Email)</label><input type="text" id="crm-contato" placeholder="Ex: 81999999999"></div>
+          <div class="form-group"><label>Endereço (Rua, Número, Bairro)</label><input type="text" id="crm-endereco" placeholder="Ex: Rua das Flores, 123 - Boa Viagem"></div>
+        </div>
+        <div class="grid-3">
+          <div class="form-group"><label>Cidade</label><input type="text" id="crm-cidade" placeholder="Ex: Recife"></div>
+          <div class="form-group"><label>Estado (UF)</label><input type="text" id="crm-estado" placeholder="Ex: PE"></div>
+          <div class="form-group"><label>Produto ou Kit *</label><select id="crm-item"></select></div>
+        </div>
+        <div class="form-group"><label>Observações (Opcional)</label><input type="text" id="crm-obs" placeholder="Ex: Entregar à tarde, embalar para presente..."></div>
+        <button class="btn" onclick="salvarPedido()" style="margin-top: 0.5rem;">Lançar Pedido (Orçamento)</button>
+      </div>
+
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+          <h2 style="margin-bottom:0; border-bottom:none; padding-bottom:0;">Controle de Pedidos & Fluxo</h2>
+          <input type="text" id="input-busca" placeholder="🔍 Pesquisar por Nome, CPF ou Tel..." oninput="filtrarPedidos()" style="padding:0.4rem 0.6rem; font-size:0.85rem; border-radius:6px; border:1px solid var(--card-border); background:var(--input-bg); color:var(--text); width:260px;">
+        </div>
+        <div id="lista-pedidos" class="list-container"></div>
+      </div>
     </div>
-  </div>
+
+    <!-- ABA CONFIGURAÇÕES -->
+    <div id="tab-config" class="tab-content">
+      <div class="card">
+        <h2>Estoque de Materiais</h2>
+        <input type="hidden" id="mat-id">
+        <div class="grid-4">
+          <div class="form-group"><label>Tipo (PLA/PETG)</label><input type="text" id="mat-nome"></div>
+          <div class="form-group"><label>Marca / Cor</label><input type="text" id="mat-detalhe"></div>
+          <div class="form-group"><label>Preço / Kg (R$)</label><input type="number" step="0.01" id="mat-preco"></div>
+          <div class="form-group"><label>Estoque (g)</label><input type="number" id="mat-estoque" value="1000"></div>
+        </div>
+        <div class="btn-group">
+          <button class="btn" id="btn-mat" onclick="salvarMaterial()">Salvar Material</button>
+          <button class="btn btn-outline" id="btn-cancel-mat" style="display:none;" onclick="cancelarEdicaoMat()">Cancelar</button>
+        </div>
+        <div id="lista-materiais" class="list-container" style="margin-top:1rem;"></div>
+      </div>
+      <div class="card">
+        <h2>Custos Operacionais</h2>
+        <div class="grid-2">
+          <div class="form-group"><label>Energia (R$/h)</label><input type="number" step="0.01" id="cfg-energia" value="0.35"></div>
+          <div class="form-group"><label>Valor Máquina (R$)</label><input type="number" step="0.01" id="cfg-maquina" value="4500.00"></div>
+          <div class="form-group"><label>Vida Útil (Horas)</label><input type="number" id="cfg-horas" value="5000"></div>
+          <div class="form-group"><label>Mão de Obra (R$/h)</label><input type="number" step="0.01" id="cfg-mo" value="25.00"></div>
+          <div class="form-group"><label>Taxa de Risco/Falha (%)</label><input type="number" id="cfg-risco" value="5"></div>
+          <div class="form-group"><label>Impostos MEI (%)</label><input type="number" id="cfg-taxas" value="10"></div>
+        </div>
+        <button class="btn" onclick="salvarConfig()">Salvar Custos</button>
+      </div>
+      <div class="card">
+        <h2>Backup</h2>
+        <div class="btn-group">
+          <button class="btn btn-outline" onclick="exportar()">Exportar Backup</button>
+          <button class="btn btn-outline" onclick="document.getElementById('import-file').click()">Importar Backup</button>
+          <input type="file" id="import-file" style="display:none;" onchange="importar(event)">
+        </div>
+      </div>
+    </div>
+
+    <!-- ÁREA DE IMPRESSÃO (ORÇAMENTO CLIENTE) -->
+    <div id="print-area" style="display:none;">
+      <div style="font-family: sans-serif; color: #000; padding: 1rem;">
+        <h1 style="color:#10b981; border-bottom:2px solid #ccc; padding-bottom:0.5rem; margin-bottom:1rem;">Orçamento de Impressão 3D</h1>
+        <p><strong>Cliente:</strong> <span id="p-cliente"></span></p>
+        <p><strong>CPF:</strong> <span id="p-cpf"></span></p>
+        <p><strong>Contato:</strong> <span id="p-contato"></span></p>
+        <p><strong>Endereço:</strong> <span id="p-endereco"></span></p><br>
+        
+        <p><strong>Produto / Kit:</strong> <span id="p-nome"></span></p>
+        <p><strong>Tempo Estimado de Produção:</strong> <span id="p-tempo"></span> horas</p><br>
+        
+        <h2 style="font-size: 1.3rem; color: #111;">Valor Total: <span id="p-preco" style="color:#10b981;"></span></h2><br>
+        <p style="font-size: 0.8rem; color:#556;">Validade do orçamento: 7 dias.</p>
+      </div>
+    </div>
+
+  </div> <!-- FIM DA DIV app-content -->
 
   <script>
     // CONFIGURAÇÃO DO FIREBASE
@@ -308,7 +315,7 @@
       });
     };
 
-    // Adicione esta função junto com as suas outras funções do script:
+    // Função de Login
     function fazerLogin() {
       let email = document.getElementById('login-email').value;
       let senha = document.getElementById('login-senha').value;
@@ -854,7 +861,6 @@
       }; 
       r.readAsText(e.target.files[0]); 
     }
-    </div>
   </script>
 </body>
 </html>
