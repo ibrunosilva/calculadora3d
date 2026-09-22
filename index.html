@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>3D Custo, Cadastro e Orçamento - Firebase</title>
   
-  <!-- Firebase SDKs (Modular / Compat) -->
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
@@ -42,9 +42,11 @@
     .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.25rem; }
     .card h2 { font-size: 1.1rem; margin-bottom: 1rem; color: var(--primary); border-bottom: 1px solid var(--card-border); padding-bottom: 0.5rem; }
     
-    .grid-2 { display: grid; grid-template-columns: 1fr; gap: 1rem; }
-    .grid-4 { display: grid; grid-template-columns: 1fr; gap: 1rem; }
-    @media (min-width: 640px) { .grid-2 { grid-template-columns: 1fr 1fr; } .grid-4 { grid-template-columns: 1fr 1fr 1fr 1fr; } }
+    .grid-2, .grid-4 { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+    @media (min-width: 640px) { 
+      .grid-2 { grid-template-columns: 1fr 1fr; } 
+      .grid-4 { grid-template-columns: 1fr 1fr 1fr 1fr; } 
+    }
     
     .form-group { display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 0.75rem; }
     .form-group label { font-size: 0.85rem; color: var(--text-muted); }
@@ -67,9 +69,7 @@
     .item-info h3 { font-size: 1rem; margin-bottom: 0.2rem; }
     .item-info p { font-size: 0.8rem; color: var(--text-muted); }
     .badge { padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: bold; background: rgba(16, 185, 129, 0.2); color: var(--primary); }
-    .badge-warn { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
     .badge-danger { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
-
     .kit-selector-row { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; border-bottom: 1px solid var(--card-border); }
     .kit-selector-row input { width: 60px; text-align: center; }
   </style>
@@ -143,11 +143,10 @@
     <div class="card"><h2>Produtos Salvos</h2><div id="lista-produtos" class="list-container"></div></div>
   </div>
 
-  <!-- ABA KITS/COMBOS -->
+  <!-- ABA KITS -->
   <div id="tab-kits" class="tab-content">
     <div class="card">
       <h2>Criar Combo / Kit</h2>
-      <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">Selecione a quantidade de cada produto salvo para formar um combo.</p>
       <div class="form-group"><label>Nome do Combo</label><input type="text" id="kit-nome" placeholder="Ex: Kit Enfeites de Natal"></div>
       <div id="kit-selecao-produtos" style="background:var(--input-bg); border:1px solid var(--card-border); border-radius:8px; padding:0.5rem; margin-bottom:1rem;"></div>
       <button class="btn" onclick="salvarKit()">Salvar Combo</button>
@@ -155,20 +154,20 @@
     <div class="card"><h2>Combos Salvos</h2><div id="lista-kits" class="list-container"></div></div>
   </div>
 
-  <!-- ABA CRM / PEDIDOS -->
+  <!-- ABA CRM -->
   <div id="tab-crm" class="tab-content">
     <div class="card">
       <h2>Novo Pedido</h2>
       <div class="grid-2">
         <div class="form-group"><label>Nome do Cliente</label><input type="text" id="crm-cliente" placeholder="Ex: Maria da Silva"></div>
-        <div class="form-group"><label>Contato (WhatsApp / Email)</label><input type="text" id="crm-contato" placeholder="Ex: (81) 99999-9999"></div>
+        <div class="form-group"><label>Contato</label><input type="text" id="crm-contato" placeholder="Ex: (81) 99999-9999"></div>
       </div>
-      <div class="form-group"><label>Endereço de Entrega Completo</label><input type="text" id="crm-endereco" placeholder="Ex: Rua das Flores, 123 - Boa Viagem, Recife/PE"></div>
-      <div class="form-group"><label>Observações (Opcional)</label><input type="text" id="crm-obs" placeholder="Ex: Entregar à tarde, embalar para presente..."></div>
+      <div class="form-group"><label>Endereço</label><input type="text" id="crm-endereco"></div>
+      <div class="form-group"><label>Observações</label><input type="text" id="crm-obs"></div>
       <div class="form-group"><label>Produto ou Kit</label><select id="crm-item"></select></div>
-      <button class="btn" onclick="salvarPedido()" style="margin-top: 0.5rem;">Lançar Pedido (Orçamento)</button>
+      <button class="btn" onclick="salvarPedido()" style="margin-top: 0.5rem;">Lançar Pedido</button>
     </div>
-    <div class="card"><h2>Controle de Pedidos & Estoque</h2><div id="lista-pedidos" class="list-container"></div></div>
+    <div class="card"><h2>Controle de Pedidos</h2><div id="lista-pedidos" class="list-container"></div></div>
   </div>
 
   <!-- ABA CONFIGURAÇÕES -->
@@ -203,7 +202,7 @@
   </div>
 
   <script>
-    // Configuração do Firebase Firestore
+    // CREDENCIAIS CORRETAS DO FIREBASE
     const firebaseConfig = {
       apiKey: "AIzaSyCHsKj0Y0B538kbxv3uyXscbFJ5o5JX48w",
       authDomain: "custo3d-3d649.firebaseapp.com",
@@ -217,11 +216,7 @@
     const db = firebase.firestore();
 
     let cfg = { energia: 0.35, maqVal: 4500, maqHrs: 5000, mo: 25, risco: 5, taxas: 10 };
-    let materiais = []; 
-    let produtos = []; 
-    let kits = []; 
-    let pedidos = [];
-    let calcAtual = {};
+    let materiais = [], produtos = [], kits = [], pedidos = [], calcAtual = {};
 
     window.onload = () => { carregarDadosCloud(); };
 
@@ -229,15 +224,12 @@
     function switchTab(t) { document.querySelectorAll('.tab-content, nav button').forEach(e => e.classList.remove('active')); document.getElementById('tab-'+t).classList.add('active'); event.target.classList.add('active'); }
     function fmt(v) { return (v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
 
-    // CARREGAR DADOS DO FIREBASE
     function carregarDadosCloud() {
-      // Configurações
       db.collection('configuracoes').doc('geral').get().then(doc => {
         if(doc.exists) cfg = doc.data();
         uiInit();
       }).catch(() => uiInit());
 
-      // Materiais
       db.collection('materiais').onSnapshot(snapshot => {
         materiais = [];
         snapshot.forEach(doc => materiais.push({ id: doc.id, ...doc.data() }));
@@ -245,14 +237,12 @@
         renderizarMateriais();
       });
 
-      // Produtos
       db.collection('produtos').onSnapshot(snapshot => {
         produtos = [];
         snapshot.forEach(doc => produtos.push({ id: doc.id, ...doc.data() }));
         uiInit();
       });
 
-      // Kits
       db.collection('kits').onSnapshot(snapshot => {
         kits = [];
         snapshot.forEach(doc => kits.push({ id: doc.id, ...doc.data() }));
@@ -260,7 +250,6 @@
         atualizarSelectCRM();
       });
 
-      // Pedidos
       db.collection('pedidos').onSnapshot(snapshot => {
         pedidos = [];
         snapshot.forEach(doc => pedidos.push({ id: doc.id, ...doc.data() }));
@@ -311,14 +300,13 @@
       if(!container) return;
       container.innerHTML = materiais.map(m => {
         let estClass = m.estoque <= 200 ? 'badge-danger' : 'badge';
-        let alerta = m.estoque <= 200 ? `<br><span style="color:var(--danger); font-size:0.75rem;">⚠️ Estoque Crítico!</span>` : '';
         return `<div class="list-item">
                   <div class="item-info">
                     <h3>${m.nome} <span style="font-size:0.8rem">${m.detalhe}</span></h3>
-                    <p>${fmt(m.preco)}/kg | <span class="${estClass}">Estoque: ${m.estoque}g</span>${alerta}</p>
+                    <p>${fmt(m.preco)}/kg | <span class="${estClass}">Estoque: ${m.estoque}g</span></p>
                   </div>
-                  <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-                    <button class="btn btn-outline" style="padding:0.3rem; border-color:var(--primary); color:var(--primary);" onclick="reporEstoque('${m.id}')">+ 1Kg</button>
+                  <div style="display:flex; gap:0.5rem;">
+                    <button class="btn btn-outline" style="padding:0.3rem; color:var(--primary);" onclick="reporEstoque('${m.id}')">+ 1Kg</button>
                     <button class="btn btn-outline" style="padding:0.3rem" onclick="editarMaterial('${m.id}')">Editar</button>
                     <button class="btn btn-danger" style="padding:0.3rem" onclick="excluirCloud('materiais','${m.id}')">X</button>
                   </div>
@@ -329,7 +317,7 @@
     function renderizarProdutos() {
       const container = document.getElementById('lista-produtos');
       if(!container) return;
-      container.innerHTML = produtos.map(p => `<div class="list-item"><div class="item-info"><h3>${p.nome}</h3><p>Venda: <strong>${fmt(p.preco)}</strong> | Custo: ${fmt(p.custo)}</p></div><div><button class="btn btn-outline" style="padding:0.3rem" onclick="editarProduto('${p.id}')">Editar</button> <button class="btn btn-danger" style="padding:0.3rem" onclick="excluirCloud('produtos','${p.id}')">X</button></div></div>`).join('');
+      container.innerHTML = produtos.map(p => `<div class="list-item"><div class="item-info"><h3>${p.nome}</h3><p>Venda: <strong>${fmt(p.preco)}</strong></p></div><div><button class="btn btn-outline" style="padding:0.3rem" onclick="editarProduto('${p.id}')">Editar</button> <button class="btn btn-danger" style="padding:0.3rem" onclick="excluirCloud('produtos','${p.id}')">X</button></div></div>`).join('');
       renderizarKitSelector();
       atualizarSelectCRM();
     }
@@ -337,30 +325,15 @@
     function renderizarKits() {
       const container = document.getElementById('lista-kits');
       if(!container) return;
-      container.innerHTML = kits.map(k => `<div class="list-item"><div class="item-info"><h3>${k.nome}</h3><p>Venda: <strong>${fmt(k.preco)}</strong> | Custo: ${fmt(k.custo)}</p></div><div><button class="btn btn-danger" style="padding:0.3rem" onclick="excluirCloud('kits','${k.id}')">X</button></div></div>`).join('');
+      container.innerHTML = kits.map(k => `<div class="list-item"><div class="item-info"><h3>${k.nome}</h3><p>Venda: <strong>${fmt(k.preco)}</strong></p></div><div><button class="btn btn-danger" style="padding:0.3rem" onclick="excluirCloud('kits','${k.id}')">X</button></div></div>`).join('');
     }
 
     function renderizarPedidos() {
       const container = document.getElementById('lista-pedidos');
       if(!container) return;
       container.innerHTML = pedidos.map(p => {
-        let btn = p.status==='Orçamento' ? `<button class="btn btn-warning" style="padding:0.3rem; font-size:0.75rem;" onclick="produzirPedido('${p.id}')">Dar Baixa (Produzir)</button>` : `<span class="badge">Produzido</span>`;
-        let detalhes = '';
-        if(p.contato) detalhes += `📞 ${p.contato} &nbsp;`;
-        if(p.endereco) detalhes += `<br>📍 ${p.endereco}`;
-        if(p.obs) detalhes += `<br>📝 <i>Obs: ${p.obs}</i>`;
-
-        return `<div class="list-item">
-                  <div class="item-info">
-                    <h3>${p.cliente}</h3>
-                    <p style="margin-bottom: 0.3rem; font-size:0.85rem;">${p.itemNome} | <strong style="color:var(--primary);">${fmt(p.preco)}</strong></p>
-                    <p style="font-size:0.75rem;">${detalhes}</p>
-                  </div>
-                  <div style="display:flex; gap:0.5rem; align-items:center;">
-                    ${btn}
-                    <button class="btn btn-danger" style="padding:0.3rem" onclick="excluirCloud('pedidos','${p.id}')">X</button>
-                  </div>
-                </div>`;
+        let btn = p.status==='Orçamento' ? `<button class="btn btn-warning" style="padding:0.3rem; font-size:0.75rem;" onclick="produzirPedido('${p.id}')">Produzir</button>` : `<span class="badge">Produzido</span>`;
+        return `<div class="list-item"><div class="item-info"><h3>${p.cliente}</h3><p>${p.itemNome} | <strong>${fmt(p.preco)}</strong></p></div><div style="display:flex; gap:0.5rem; align-items:center;">${btn}<button class="btn btn-danger" style="padding:0.3rem" onclick="excluirCloud('pedidos','${p.id}')">X</button></div></div>`;
       }).join('');
     }
 
@@ -371,7 +344,6 @@
       const g3 = parseFloat(document.getElementById('prod-g-3').value)||0; 
       const g4 = parseFloat(document.getElementById('prod-g-4').value)||0;
       const purga = parseFloat(document.getElementById('prod-purga').value)||0;
-
       const tImp = parseFloat(document.getElementById('prod-tempo-imp').value)||0;
       const tMo = parseFloat(document.getElementById('prod-tempo-mo').value)||0;
       const ext = parseFloat(document.getElementById('prod-extras').value)||0;
@@ -396,29 +368,23 @@
       calcAtual = { custo: total, preco: venda, lucro, imp: tImp, g1, g2, g3, g4, purga };
     }
 
-    // Ações Cloud
     function salvarMaterial() {
       let id = document.getElementById('mat-id').value;
       let nome = document.getElementById('mat-nome').value, det = document.getElementById('mat-detalhe').value, 
           prc = parseFloat(document.getElementById('mat-preco').value), est = parseFloat(document.getElementById('mat-estoque').value);
-      if(!nome||isNaN(prc)) return alert("Preencha o tipo e o preço corretamente.");
+      if(!nome||isNaN(prc)) return alert("Preencha o tipo e o preço.");
 
-      const matData = { nome, detalhe: det, preco: prc, estoque: est };
       const docId = id ? id : 'm_' + Date.now();
-
-      db.collection('materiais').doc(docId).set(matData).then(() => {
+      db.collection('materiais').doc(docId).set({ nome, detalhe: det, preco: prc, estoque: est }).then(() => {
         cancelarEdicaoMat();
-        alert("Material salvo na nuvem!");
-      });
+        alert("Material salvo na nuvem com sucesso!");
+      }).catch(err => alert("Erro ao salvar: " + err.message));
     }
 
     function reporEstoque(id) {
       let m = materiais.find(x => x.id === id);
       if(m) {
-        let novoEstoque = m.estoque + 1000;
-        db.collection('materiais').doc(id).update({ estoque: novoEstoque }).then(() => {
-          alert(`Adicionado 1kg ao estoque de ${m.nome}.`);
-        });
+        db.collection('materiais').doc(id).update({ estoque: m.estoque + 1000 });
       }
     }
 
@@ -502,30 +468,20 @@
     }
 
     function salvarPedido() {
-      let cli = document.getElementById('crm-cliente').value, 
-          val = document.getElementById('crm-item').value,
-          cont = document.getElementById('crm-contato').value,
-          end = document.getElementById('crm-endereco').value,
-          obs = document.getElementById('crm-obs').value;
-          
-      if(!cli||!val) return alert("Preencha pelo menos o Nome e o Produto!");
+      let cli = document.getElementById('crm-cliente').value, val = document.getElementById('crm-item').value;
+      if(!cli||!val) return alert("Preencha o cliente e o item!");
       let [tipo, id] = val.split('_'); 
       let ref = tipo==='p' ? produtos.find(x=>x.id==id) : kits.find(x=>x.id==id);
       
       db.collection('pedidos').add({
-        cliente: cli, contato: cont, endereco: end, obs: obs,
+        cliente: cli, contato: document.getElementById('crm-contato').value,
+        endereco: document.getElementById('crm-endereco').value, obs: document.getElementById('crm-obs').value,
         tipo, refId: id, itemNome: ref.nome, preco: ref.preco, status: 'Orçamento'
-      }).then(() => {
-        alert("Pedido lançado!");
-        document.getElementById('crm-cliente').value='';
-        document.getElementById('crm-contato').value='';
-        document.getElementById('crm-endereco').value='';
-        document.getElementById('crm-obs').value='';
-      });
+      }).then(() => { alert("Pedido lançado!"); });
     }
 
     function produzirPedido(id) {
-      if(!confirm("Finalizar impressão? Isso vai deduzir os filamentos do estoque na nuvem!")) return;
+      if(!confirm("Dar baixa no estoque e concluir?")) return;
       let ped = pedidos.find(x=>x.id==id);
       if(!ped) return;
 
@@ -534,10 +490,7 @@
         let k = kits.find(x=>x.id==ped.refId); 
         if(k) k.itens.forEach(i => deduzirProdCloud(i.id, i.qtd)); 
       }
-
-      db.collection('pedidos').doc(id).update({ status: 'Produzido' }).then(() => {
-        alert("Pedido atualizado e estoque baixado!");
-      });
+      db.collection('pedidos').doc(id).update({ status: 'Produzido' });
     }
 
     function deduzirProdCloud(pid, mult) {
@@ -552,8 +505,7 @@
       if(!mid || qtd<=0) return; 
       let m = materiais.find(x=>x.id===mid); 
       if(m) {
-        let novoEst = Math.max(0, m.estoque - qtd);
-        db.collection('materiais').doc(mid).update({ estoque: novoEst; });
+        db.collection('materiais').doc(mid).update({ estoque: Math.max(0, m.estoque - qtd) });
       }
     }
 
@@ -565,17 +517,11 @@
       cfg.risco = parseFloat(document.getElementById('cfg-risco').value); 
       cfg.taxas = parseFloat(document.getElementById('cfg-taxas').value);
 
-      db.collection('configuracoes').doc('geral').set(cfg).then(() => {
-        alert("Custos operacionais salvos na nuvem!");
-        calcular();
-      });
+      db.collection('configuracoes').doc('geral').set(cfg).then(() => { alert("Custos salvos!"); });
     }
 
     function excluirCloud(col, id) {
-      if(!confirm("Deseja realmente excluir?")) return;
-      db.collection(col).doc(id).delete().then(() => {
-        alert("Excluído com sucesso!");
-      });
+      if(confirm("Deseja excluir?")) db.collection(col).doc(id).delete();
     }
   </script>
 </body>
