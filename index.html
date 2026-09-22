@@ -8,6 +8,7 @@
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 
   <style>
     :root {
@@ -95,7 +96,17 @@
   </style>
 </head>
 <body>
-
+<!-- TELA DE LOGIN (Bloqueia o acesso inicial) -->
+<div id="auth-screen" style="display:flex; justify-content:center; align-items:center; height:100vh; background:var(--bg);">
+  <div class="card" style="width: 100%; max-width: 400px; text-align: center;">
+    <h2 style="margin-bottom: 1rem;">🔒 Acesso Restrito</h2>
+    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Faça login para aceder ao sistema.</p>
+    <div class="form-group"><input type="email" id="login-email" placeholder="O seu e-mail"></div>
+    <div class="form-group"><input type="password" id="login-senha" placeholder="Palavra-passe"></div>
+    <button class="btn" onclick="fazerLogin()" style="width: 100%; margin-top: 0.5rem;">Entrar</button>
+    <p id="login-erro" style="color: var(--danger); font-size: 0.8rem; margin-top: 0.5rem;"></p>
+  </div>
+</div>
   <header>
     <div>
       <h1>3D Custo, Cadastro e Orçamento</h1>
@@ -281,7 +292,32 @@
     let produtos = []; let kits = []; let pedidos = [];
     let calcAtual = {};
 
-    window.onload = () => { carregarDadosCloud(); };
+    window.onload = () => {
+      // Observador de Estado: O Firebase verifica se você está logado
+      firebase.auth().onAuthStateChanged((user) => {
+        if (user) {
+          // Utilizador logado: Esconde a tela de login e mostra o sistema
+          document.getElementById('auth-screen').style.display = 'none';
+          document.getElementById('app-content').style.display = 'block';
+          carregarDadosCloud(); // Carrega os dados da nuvem normalmente
+        } else {
+          // Ninguém logado: Mostra a tela de login e esconde o sistema
+          document.getElementById('auth-screen').style.display = 'flex';
+          document.getElementById('app-content').style.display = 'none';
+        }
+      });
+    };
+
+    // Adicione esta função junto com as suas outras funções do script:
+    function fazerLogin() {
+      let email = document.getElementById('login-email').value;
+      let senha = document.getElementById('login-senha').value;
+      
+      firebase.auth().signInWithEmailAndPassword(email, senha)
+        .catch((error) => {
+          document.getElementById('login-erro').innerText = "Erro: E-mail ou palavra-passe incorretos.";
+        });
+    }
 
     function toggleTheme() { document.body.setAttribute('data-theme', document.body.getAttribute('data-theme')==='light'?'dark':'light'); }
     function switchTab(t) { document.querySelectorAll('.tab-content, nav button').forEach(e => e.classList.remove('active')); document.getElementById('tab-'+t).classList.add('active'); event.target.classList.add('active'); }
@@ -818,6 +854,7 @@
       }; 
       r.readAsText(e.target.files[0]); 
     }
+    </div>
   </script>
 </body>
 </html>
