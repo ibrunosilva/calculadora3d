@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>3D Cost Pro - Precificação de Impressão 3D</title>
+  <title>3D Custo, Cadastro e Orçamento - Precificação de Impressão 3D</title>
   <style>
     :root {
       --bg: #0f172a;
@@ -140,6 +140,18 @@
       }
     }
 
+    .grid-4 {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    @media (min-width: 640px) {
+      .grid-4 {
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+      }
+    }
+
     .form-group {
       display: flex;
       flex-direction: column;
@@ -225,7 +237,6 @@
       margin-top: 0.5rem;
     }
 
-    /* Gráficos Visuais de Custos */
     .chart-container {
       margin-top: 1rem;
       padding: 0.5rem;
@@ -294,7 +305,6 @@
       color: var(--primary);
     }
 
-    /* Modal / Estilo de Impressão de Orçamento */
     @media print {
       body * { visibility: hidden; }
       #print-area, #print-area * { visibility: visible; }
@@ -314,8 +324,8 @@
 
   <header>
     <div>
-      <h1>3D Cost Pro</h1>
-      <p>Calculadora & Orçamentos - Bambu Lab A1 / AMS</p>
+      <h1>3D Custo, Cadastro e Orçamento</h1>
+      <p>Calculadora & Precificação - Bambu Lab A1 / AMS Lite (4 Cores)</p>
     </div>
     <button class="theme-toggle" onclick="toggleTheme()">☀️ / 🌙</button>
   </header>
@@ -344,29 +354,53 @@
         </div>
       </div>
 
-      <!-- SEÇÃO AMS / MATERIAIS -->
+      <!-- SEÇÃO AMS LITE (4 FILAMENTOS) -->
       <div style="border: 1px dashed var(--card-border); padding: 0.8rem; border-radius: 8px; margin-bottom: 1rem;">
-        <span style="font-size: 0.85rem; font-weight: bold; color: var(--accent);">Configuração de Materiais & AMS Lite</span>
+        <span style="font-size: 0.85rem; font-weight: bold; color: var(--accent);">Configuração do AMS Lite (Até 4 Filamentos simultâneos)</span>
+        
         <div class="grid-2" style="margin-top: 0.5rem;">
+          <!-- Filamento 1 -->
           <div class="form-group">
-            <label>Material Principal</label>
+            <label>Filamento 1 (Cor Principal)</label>
             <select id="prod-material-1" onchange="calcular()"></select>
           </div>
           <div class="form-group">
-            <label>Consumo Filamento Principal (g)</label>
+            <label>Consumo Filamento 1 (g)</label>
             <input type="number" id="prod-gramas-1" value="100" oninput="calcular()">
           </div>
+
+          <!-- Filamento 2 -->
           <div class="form-group">
-            <label>Material Secundário (Multicor)</label>
+            <label>Filamento 2</label>
             <select id="prod-material-2" onchange="calcular()"></select>
           </div>
           <div class="form-group">
-            <label>Consumo Filamento Secundário (g)</label>
+            <label>Consumo Filamento 2 (g)</label>
             <input type="number" id="prod-gramas-2" value="0" oninput="calcular()">
+          </div>
+
+          <!-- Filamento 3 -->
+          <div class="form-group">
+            <label>Filamento 3</label>
+            <select id="prod-material-3" onchange="calcular()"></select>
+          </div>
+          <div class="form-group">
+            <label>Consumo Filamento 3 (g)</label>
+            <input type="number" id="prod-gramas-3" value="0" oninput="calcular()">
+          </div>
+
+          <!-- Filamento 4 -->
+          <div class="form-group">
+            <label>Filamento 4</label>
+            <select id="prod-material-4" onchange="calcular()"></select>
+          </div>
+          <div class="form-group">
+            <label>Consumo Filamento 4 (g)</label>
+            <input type="number" id="prod-gramas-4" value="0" oninput="calcular()">
           </div>
         </div>
 
-        <div class="form-group">
+        <div class="form-group" style="margin-top: 0.5rem;">
           <label>Desperdício AMS / Purga e Torre de Troca (g)</label>
           <input type="number" id="prod-purga-gramas" value="15" oninput="calcular()" placeholder="Ex: 15g de purga">
         </div>
@@ -421,7 +455,7 @@
         </div>
       </div>
 
-      <!-- BOTÕES DE AÇÃO / ATENDIMENTO AO CLIENTE -->
+      <!-- BOTÕES DE AÇÃO -->
       <div class="btn-group">
         <button class="btn" onclick="salvarProduto()">Salvar Produto</button>
         <button class="btn btn-whatsapp" onclick="enviarWhatsApp()">Enviar Orçamento WhatsApp</button>
@@ -444,13 +478,21 @@
     <div class="card">
       <h2>Gerenciar Materiais / Filamentos</h2>
       <input type="hidden" id="mat-id">
-      <div class="grid-2">
+      <div class="grid-4">
         <div class="form-group">
-          <label>Nome do Material</label>
+          <label>Material (Tipo)</label>
           <input type="text" id="mat-nome" placeholder="Ex: PLA, PETG, ABS">
         </div>
         <div class="form-group">
-          <label>Preço por Kg (R$)</label>
+          <label>Marca</label>
+          <input type="text" id="mat-marca" placeholder="Ex: Voolt3D, Esun">
+        </div>
+        <div class="form-group">
+          <label>Cor</label>
+          <input type="text" id="mat-cor" placeholder="Ex: Vermelho, Preto">
+        </div>
+        <div class="form-group">
+          <label>Preço / Kg (R$)</label>
           <input type="number" step="0.01" id="mat-preco" placeholder="100.00">
         </div>
       </div>
@@ -516,7 +558,10 @@
 
   <script>
     let config = { energiaHora: 0.35, maquinaValor: 4500, maquinaHoras: 5000, manutencaoPct: 10, moHora: 25, taxasPct: 10 };
-    let materiais = [ { id: 'pla', nome: 'PLA', precoKg: 100 }, { id: 'petg', nome: 'PETG', precoKg: 110 } ];
+    let materiais = [ 
+      { id: 'pla_voolt_red', nome: 'PLA', marca: 'Voolt3D', cor: 'Vermelho', precoKg: 90 }, 
+      { id: 'petg_esun_blue', nome: 'PETG', marca: 'eSun', cor: 'Azul', precoKg: 110 } 
+    ];
     let produtos = [];
     let fotoTempBase64 = "";
 
@@ -548,13 +593,22 @@
       const prod = localStorage.getItem('3dcost_produtos'); if (prod) produtos = JSON.parse(prod);
     }
 
+    function formatarNomeMat(m) {
+      let detalhes = [];
+      if (m.marca) detalhes.push(m.marca);
+      if (m.cor) detalhes.push(m.cor);
+      const strDetalhes = detalhes.length > 0 ? ` (${detalhes.join(' - ')})` : '';
+      return `${m.nome}${strDetalhes} - R$ ${m.precoKg.toFixed(2)}/kg`;
+    }
+
     function preencherSelectMateriais() {
-      const s1 = document.getElementById('prod-material-1');
-      const s2 = document.getElementById('prod-material-2');
-      const opts = `<option value="">-- Nenhum / Desativado --</option>` + materiais.map(m => `<option value="${m.id}">${m.nome} (R$ ${m.precoKg.toFixed(2)}/kg)</option>`).join('');
-      
-      s1.innerHTML = materiais.map(m => `<option value="${m.id}">${m.nome} (R$ ${m.precoKg.toFixed(2)}/kg)</option>`).join('');
-      s2.innerHTML = opts;
+      const optsOpocional = `<option value="">-- Nenhum / Desativado --</option>` + materiais.map(m => `<option value="${m.id}">${formatarNomeMat(m)}</option>`).join('');
+      const optsPrincipal = materiais.map(m => `<option value="${m.id}">${formatarNomeMat(m)}</option>`).join('');
+
+      document.getElementById('prod-material-1').innerHTML = optsPrincipal;
+      document.getElementById('prod-material-2').innerHTML = optsOpocional;
+      document.getElementById('prod-material-3').innerHTML = optsOpocional;
+      document.getElementById('prod-material-4').innerHTML = optsOpocional;
     }
 
     function carregarFoto(e) {
@@ -569,9 +623,13 @@
     function calcular() {
       const m1 = materiais.find(m => m.id === document.getElementById('prod-material-1').value) || materiais[0] || { precoKg: 0 };
       const m2 = materiais.find(m => m.id === document.getElementById('prod-material-2').value) || { precoKg: 0 };
+      const m3 = materiais.find(m => m.id === document.getElementById('prod-material-3').value) || { precoKg: 0 };
+      const m4 = materiais.find(m => m.id === document.getElementById('prod-material-4').value) || { precoKg: 0 };
 
       const g1 = parseFloat(document.getElementById('prod-gramas-1').value) || 0;
       const g2 = parseFloat(document.getElementById('prod-gramas-2').value) || 0;
+      const g3 = parseFloat(document.getElementById('prod-gramas-3').value) || 0;
+      const g4 = parseFloat(document.getElementById('prod-gramas-4').value) || 0;
       const gPurga = parseFloat(document.getElementById('prod-purga-gramas').value) || 0;
 
       const tempoImp = parseFloat(document.getElementById('prod-tempo-imp').value) || 0;
@@ -580,8 +638,12 @@
       const componentes = parseFloat(document.getElementById('prod-componentes').value) || 0;
       const margem = parseFloat(document.getElementById('prod-margem').value) || 0;
 
-      // Custo Filamentos + Purga (Atribuído proporcionalmente ao M1)
-      const custoFilamento = ((g1 + gPurga) / 1000) * m1.precoKg + (g2 / 1000) * m2.precoKg;
+      const custoFilamento = 
+        ((g1 + gPurga) / 1000) * m1.precoKg + 
+        (g2 / 1000) * m2.precoKg + 
+        (g3 / 1000) * m3.precoKg + 
+        (g4 / 1000) * m4.precoKg;
+
       const custoEnergia = tempoImp * config.energiaHora;
       const custoDepreciacao = tempoImp * (config.maquinaValor / config.maquinaHoras);
       const custoManutencao = custoFilamento * (config.manutencaoPct / 100);
@@ -595,7 +657,6 @@
       const lucro = custoTotal * (margem / 100);
       const precoVenda = custoTotal + lucro;
 
-      // Atualizar Valores na Tela
       document.getElementById('res-filamento').innerText = fmt(custoFilamento);
       document.getElementById('res-energia').innerText = fmt(custoEnergia);
       document.getElementById('res-depreciacao').innerText = fmt(custoDepreciacao);
@@ -677,6 +738,10 @@
         g1: parseFloat(document.getElementById('prod-gramas-1').value) || 0,
         m2: document.getElementById('prod-material-2').value,
         g2: parseFloat(document.getElementById('prod-gramas-2').value) || 0,
+        m3: document.getElementById('prod-material-3').value,
+        g3: parseFloat(document.getElementById('prod-gramas-3').value) || 0,
+        m4: document.getElementById('prod-material-4').value,
+        g4: parseFloat(document.getElementById('prod-gramas-4').value) || 0,
         purga: parseFloat(document.getElementById('prod-purga-gramas').value) || 0,
         tempoImp: parseFloat(document.getElementById('prod-tempo-imp').value) || 0,
         tempoMo: parseFloat(document.getElementById('prod-tempo-mo').value) || 0,
@@ -732,7 +797,11 @@
       if (p.m1) document.getElementById('prod-material-1').value = p.m1;
       document.getElementById('prod-gramas-1').value = p.g1;
       if (p.m2) document.getElementById('prod-material-2').value = p.m2;
-      document.getElementById('prod-gramas-2').value = p.g2;
+      document.getElementById('prod-gramas-2').value = p.g2 || 0;
+      if (p.m3) document.getElementById('prod-material-3').value = p.m3;
+      document.getElementById('prod-gramas-3').value = p.g3 || 0;
+      if (p.m4) document.getElementById('prod-material-4').value = p.m4;
+      document.getElementById('prod-gramas-4').value = p.g4 || 0;
       document.getElementById('prod-purga-gramas').value = p.purga || 0;
       document.getElementById('prod-tempo-imp').value = p.tempoImp;
       document.getElementById('prod-tempo-mo').value = p.tempoMo;
@@ -760,6 +829,8 @@
       fotoTempBase64 = "";
       document.getElementById('prod-gramas-1').value = 100;
       document.getElementById('prod-gramas-2').value = 0;
+      document.getElementById('prod-gramas-3').value = 0;
+      document.getElementById('prod-gramas-4').value = 0;
       document.getElementById('prod-purga-gramas').value = 15;
       document.getElementById('prod-tempo-imp').value = 3.5;
       document.getElementById('prod-tempo-mo').value = 0.5;
@@ -772,15 +843,25 @@
 
     function renderizarListaMateriais() {
       const container = document.getElementById('lista-materiais');
-      container.innerHTML = materiais.map(m => `
-        <div class="material-item">
-          <div><h3>${m.nome}</h3><p>${fmt(m.precoKg)} / kg</p></div>
-          <div>
-            <button class="btn btn-outline" style="padding:0.3rem 0.5rem;" onclick="prepararEdicaoMaterial('${m.id}')">Editar</button>
-            <button class="btn btn-danger" style="padding:0.3rem 0.5rem;" onclick="excluirMaterial('${m.id}')">X</button>
+      container.innerHTML = materiais.map(m => {
+        let detalhes = [];
+        if (m.marca) detalhes.push(m.marca);
+        if (m.cor) detalhes.push(m.cor);
+        const txtDetalhes = detalhes.length > 0 ? `(${detalhes.join(' - ')})` : '';
+
+        return `
+          <div class="material-item">
+            <div>
+              <h3>${m.nome} <span style="font-size:0.8rem; color: var(--text-muted);">${txtDetalhes}</span></h3>
+              <p>${fmt(m.precoKg)} / kg</p>
+            </div>
+            <div>
+              <button class="btn btn-outline" style="padding:0.3rem 0.5rem;" onclick="prepararEdicaoMaterial('${m.id}')">Editar</button>
+              <button class="btn btn-danger" style="padding:0.3rem 0.5rem;" onclick="excluirMaterial('${m.id}')">X</button>
+            </div>
           </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
     function prepararEdicaoMaterial(id) {
@@ -788,6 +869,8 @@
       if (!m) return;
       document.getElementById('mat-id').value = m.id;
       document.getElementById('mat-nome').value = m.nome;
+      document.getElementById('mat-marca').value = m.marca || '';
+      document.getElementById('mat-cor').value = m.cor || '';
       document.getElementById('mat-preco').value = m.precoKg;
       document.getElementById('btn-salvar-mat').innerText = 'Atualizar Material';
       document.getElementById('btn-cancelar-mat').style.display = 'inline-block';
@@ -796,6 +879,8 @@
     function limparFormMaterial() {
       document.getElementById('mat-id').value = '';
       document.getElementById('mat-nome').value = '';
+      document.getElementById('mat-marca').value = '';
+      document.getElementById('mat-cor').value = '';
       document.getElementById('mat-preco').value = '';
       document.getElementById('btn-salvar-mat').innerText = 'Salvar Material';
       document.getElementById('btn-cancelar-mat').style.display = 'none';
@@ -804,15 +889,22 @@
     function adicionarOuAtualizarMaterial() {
       const id = document.getElementById('mat-id').value;
       const nome = document.getElementById('mat-nome').value.trim();
+      const marca = document.getElementById('mat-marca').value.trim();
+      const cor = document.getElementById('mat-cor').value.trim();
       const preco = parseFloat(document.getElementById('mat-preco').value);
 
       if (!nome || isNaN(preco) || preco <= 0) { alert('Informe dados válidos.'); return; }
 
       if (id) {
         const idx = materiais.findIndex(m => m.id === id);
-        if (idx !== -1) { materiais[idx].nome = nome; materiais[idx].precoKg = preco; }
+        if (idx !== -1) { 
+          materiais[idx].nome = nome; 
+          materiais[idx].marca = marca; 
+          materiais[idx].cor = cor; 
+          materiais[idx].precoKg = preco; 
+        }
       } else {
-        materiais.push({ id: 'mat_' + Date.now(), nome: nome, precoKg: preco });
+        materiais.push({ id: 'mat_' + Date.now(), nome: nome, marca: marca, cor: cor, precoKg: preco });
       }
 
       localStorage.setItem('3dcost_materiais', JSON.stringify(materiais));
@@ -860,7 +952,7 @@
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ config, materiais, produtos }, null, 2));
       const anchor = document.createElement('a');
       anchor.setAttribute("href", dataStr);
-      anchor.setAttribute("download", `backup_3dcost_${new Date().toISOString().slice(0,10)}.json`);
+      anchor.setAttribute("download", `backup_3dcusto_${new Date().toISOString().slice(0,10)}.json`);
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
