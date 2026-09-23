@@ -3,949 +3,863 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Calculadora de Custos - Impressão 3D</title>
+  <title>CRM - TriadeMaker 3D</title>
+  
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+
   <style>
     :root {
-      --bg: #0f172a;
-      --card-bg: #1e293b;
-      --card-border: #334155;
-      --primary: #10b981;
-      --primary-hover: #059669;
-      --text: #f8fafc;
-      --text-muted: #94a3b8;
-      --danger: #ef4444;
-      --danger-hover: #dc2626;
-      --accent: #3b82f6;
+      --bg: #0f172a; --card-bg: #1e293b; --card-border: #334155;
+      --primary: #10b981; --primary-hover: #059669;
+      --text: #f8fafc; --text-muted: #94a3b8;
+      --danger: #ef4444; --danger-hover: #dc2626;
+      --accent: #3b82f6; --warning: #f59e0b;
+      --input-bg: #0f172a;
     }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    [data-theme="light"] {
+      --bg: #f8fafc; --card-bg: #ffffff; --card-border: #e2e8f0;
+      --primary: #10b981; --primary-hover: #059669;
+      --text: #0f172a; --text-muted: #64748b;
+      --danger: #ef4444; --danger-hover: #dc2626;
+      --accent: #2563eb; --warning: #d97706;
+      --input-bg: #f1f5f9;
     }
-
-    body {
-      background-color: var(--bg);
-      color: var(--text);
-      padding: 1rem;
-      max-width: 1000px;
-      margin: 0 auto;
-      padding-bottom: 80px;
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); padding: 1rem; max-width: 1000px; margin: 0 auto; padding-bottom: 80px; transition: 0.3s; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    header h1 { font-size: 1.5rem; color: var(--primary); }
+    header p { font-size: 0.85rem; color: var(--text-muted); }
+    .theme-toggle { background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text); padding: 0.5rem 0.8rem; border-radius: 8px; cursor: pointer; }
+    
+    nav { display: flex; gap: 0.5rem; background: var(--card-bg); padding: 0.5rem; border-radius: 12px; margin-bottom: 1.5rem; border: 1px solid var(--card-border); flex-wrap: wrap; }
+    nav button { flex: 1; background: transparent; border: none; color: var(--text-muted); padding: 0.75rem; font-weight: bold; border-radius: 8px; cursor: pointer; min-width: 120px; }
+    nav button.active { background: var(--primary); color: #fff; }
+    
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.25rem; }
+    .card h2 { font-size: 1.1rem; margin-bottom: 1rem; color: var(--primary); border-bottom: 1px solid var(--card-border); padding-bottom: 0.5rem; }
+    
+    .grid-2 { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+    .grid-3 { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+    .grid-4 { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+    @media (min-width: 640px) { 
+      .grid-2 { grid-template-columns: 1fr 1fr; } 
+      .grid-3 { grid-template-columns: 2fr 1fr 1fr; } 
+      .grid-4 { grid-template-columns: 1fr 1fr 1fr 1fr; } 
     }
+    
+    .form-group { display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 0.75rem; }
+    .form-group label { font-size: 0.85rem; color: var(--text-muted); }
+    .form-group input, .form-group select { background: var(--input-bg); border: 1px solid var(--card-border); color: var(--text); padding: 0.6rem; border-radius: 6px; font-size: 0.95rem; }
+    
+    .btn { background: var(--primary); color: #fff; border: none; padding: 0.75rem 1.25rem; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; display: inline-flex; justify-content: center; align-items: center; gap: 0.5rem; }
+    .btn:hover { background: var(--primary-hover); }
+    .btn-danger { background: var(--danger); }
+    .btn-warning { background: var(--warning); color: #fff; }
+    .btn-outline { background: transparent; border: 1px solid var(--card-border); color: var(--text); }
+    .btn-whatsapp { background: #25D366; color: #fff; border: 1px solid #1ebc57; }
+    .btn-whatsapp:hover { background: #1ebc57; }
+    .btn-group { display: flex; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap; }
+    
+    .results-panel { background: var(--input-bg); border: 1px solid var(--card-border); border-radius: 8px; padding: 1rem; margin-top: 1rem; }
+    .result-row { display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px dashed var(--card-border); font-size: 0.9rem; }
+    .result-row.highlight { font-size: 1.1rem; font-weight: bold; color: var(--primary); border-top: 1px solid var(--card-border); padding-top: 0.75rem; margin-top: 0.5rem; }
+    
+    .list-container { display: flex; flex-direction: column; gap: 0.75rem; }
+    .list-item { display: flex; justify-content: space-between; align-items: center; background: var(--input-bg); border: 1px solid var(--card-border); padding: 0.85rem 1rem; border-radius: 8px; gap: 1rem; flex-wrap: wrap; }
+    .item-info { flex: 1; min-width: 200px; }
+    .item-info h3 { font-size: 1rem; margin-bottom: 0.2rem; display: flex; align-items: center; gap: 0.5rem;}
+    .item-info p { font-size: 0.8rem; color: var(--text-muted); }
+    
+    .badge { padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+    .badge-gray { background: rgba(148, 163, 184, 0.2); color: var(--text-muted); }
+    .badge-blue { background: rgba(59, 130, 246, 0.2); color: var(--accent); }
+    .badge-green { background: rgba(16, 185, 129, 0.2); color: var(--primary); }
+    .badge-red { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+    .badge-orange { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+    .badge-default { background: rgba(16, 185, 129, 0.2); color: var(--primary); } 
 
-    header {
-      text-align: center;
-      margin-bottom: 1.5rem;
-    }
+    .kit-selector-row { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; border-bottom: 1px solid var(--card-border); }
+    .kit-selector-row input { width: 60px; text-align: center; }
+    
+    .select-status { font-size: 0.85rem; padding: 0.4rem; border-radius: 6px; border: 1px solid var(--card-border); background: var(--input-bg); color: var(--text); font-weight: bold; outline: none; cursor: pointer; }
 
-    header h1 {
-      font-size: 1.5rem;
-      color: var(--primary);
-    }
-
-    header p {
-      font-size: 0.875rem;
-      color: var(--text-muted);
-    }
-
-    nav {
-      display: flex;
-      gap: 0.5rem;
-      background: var(--card-bg);
-      padding: 0.5rem;
-      border-radius: 12px;
-      margin-bottom: 1.5rem;
-      border: 1px solid var(--card-border);
-    }
-
-    nav button {
-      flex: 1;
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
-      padding: 0.75rem;
-      font-weight: bold;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    nav button.active {
-      background: var(--primary);
-      color: #fff;
-    }
-
-    .tab-content {
-      display: none;
-    }
-
-    .tab-content.active {
-      display: block;
-    }
-
-    .card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 1.25rem;
-      margin-bottom: 1.25rem;
-    }
-
-    .card h2 {
-      font-size: 1.1rem;
-      margin-bottom: 1rem;
-      color: var(--primary);
-      border-bottom: 1px solid var(--card-border);
-      padding-bottom: 0.5rem;
-    }
-
-    .grid-2 {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 1rem;
-    }
-
-    @media (min-width: 640px) {
-      .grid-2 {
-        grid-template-columns: 1fr 1fr;
-      }
-    }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-      margin-bottom: 0.75rem;
-    }
-
-    .form-group label {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-    }
-
-    .form-group input, .form-group select {
-      background: #0f172a;
-      border: 1px solid var(--card-border);
-      color: var(--text);
-      padding: 0.6rem;
-      border-radius: 6px;
-      font-size: 0.95rem;
-    }
-
-    .form-group input:focus, .form-group select:focus {
-      outline: none;
-      border-color: var(--primary);
-    }
-
-    .btn {
-      background: var(--primary);
-      color: #fff;
-      border: none;
-      padding: 0.75rem 1.25rem;
-      border-radius: 8px;
-      font-weight: bold;
-      cursor: pointer;
-      width: 100%;
-      transition: background 0.2s;
-    }
-
-    .btn:hover {
-      background: var(--primary-hover);
-    }
-
-    .btn-danger {
-      background: var(--danger);
-    }
-
-    .btn-danger:hover {
-      background: var(--danger-hover);
-    }
-
-    .btn-outline {
-      background: transparent;
-      border: 1px solid var(--card-border);
-      color: var(--text);
-    }
-
-    .btn-group {
-      display: flex;
-      gap: 0.5rem;
-      margin-top: 1rem;
-    }
-
-    .results-panel {
-      background: #0f172a;
-      border: 1px solid var(--card-border);
-      border-radius: 8px;
-      padding: 1rem;
-      margin-top: 1rem;
-    }
-
-    .result-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 0.4rem 0;
-      border-bottom: 1px dashed var(--card-border);
-      font-size: 0.9rem;
-    }
-
-    .result-row:last-child {
-      border-bottom: none;
-    }
-
-    .result-row.highlight {
-      font-size: 1.1rem;
-      font-weight: bold;
-      color: var(--primary);
-      border-top: 1px solid var(--card-border);
-      padding-top: 0.75rem;
-      margin-top: 0.5rem;
-    }
-
-    .product-list, .material-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-    }
-
-    .product-item, .material-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #0f172a;
-      border: 1px solid var(--card-border);
-      padding: 0.85rem 1rem;
-      border-radius: 8px;
-    }
-
-    .product-info h3, .material-info h3 {
-      font-size: 1rem;
-    }
-
-    .product-info p, .material-info p {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-    }
-
-    .product-actions, .material-actions {
-      display: flex;
-      gap: 0.4rem;
-    }
-
-    .product-actions button, .material-actions button {
-      padding: 0.4rem 0.6rem;
-      font-size: 0.75rem;
-      border-radius: 4px;
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 0.2rem 0.5rem;
-      border-radius: 4px;
-      font-size: 0.75rem;
-      font-weight: bold;
-      background: rgba(16, 185, 129, 0.2);
-      color: var(--primary);
+    @media print { 
+      body * { visibility: hidden; } 
+      #print-area, #print-area * { visibility: visible; } 
+      #print-area { position: absolute; left: 0; top: 0; width: 100%; color: #000; background: #fff; padding: 2rem; display: block !important; } 
     }
   </style>
 </head>
 <body>
 
-  <header>
-    <h1>3D Cost Pro</h1>
-    <p>Calculadora de Custos & Precificação - Impressão 3D</p>
-  </header>
+  <!-- TELA DE LOGIN (Bloqueia o acesso inicial) -->
+  <div id="auth-screen" style="display:flex; justify-content:center; align-items:center; height:100vh; background:var(--bg); position:fixed; top:0; left:0; width:100%; z-index:9999;">
+    <div class="card" style="width: 100%; max-width: 400px; text-align: center;">
+      <h2 style="margin-bottom: 1rem;">🔒 Acesso Restrito</h2>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Faça login para acessar ao sistema.</p>
+      <div class="form-group"><input type="email" id="login-email" placeholder="O seu e-mail"></div>
+      <div class="form-group"><input type="password" id="login-senha" placeholder="Senha"></div>
+      <button class="btn" onclick="fazerLogin()" style="width: 100%; margin-top: 0.5rem;">Entrar</button>
+      <p id="login-erro" style="color: var(--danger); font-size: 0.8rem; margin-top: 0.5rem;"></p>
+    </div>
+  </div>
 
-  <nav>
-    <button class="active" onclick="switchTab('calc')">Calculadora</button>
-    <button onclick="switchTab('produtos')">Produtos Salvos</button>
-    <button onclick="switchTab('config')">Configurações</button>
-  </nav>
+  <!-- CONTEÚDO PRINCIPAL DO SISTEMA (Fica oculto até autenticar) -->
+  <div id="app-content" style="display:none;">
 
-  <!-- ABA CALCULADORA -->
-  <div id="tab-calc" class="tab-content active">
-    <div class="card">
-      <h2 id="form-title">Calcular Peça</h2>
-      <input type="hidden" id="prod-id">
-      
-      <div class="form-group">
-        <label>Nome do Produto/Peça</label>
-        <input type="text" id="prod-nome" placeholder="Ex: Vaso Decorativo Geometrico">
+    <header>
+      <div>
+        <h1>CRM - TriadeMaker 3D</h1>
+        <p>Calculadora, CRM & Estoque</p>
+      </div>
+      <button class="theme-toggle" onclick="toggleTheme()">☀️/🌙</button>
+    </header>
+
+    <nav>
+      <button class="active" onclick="switchTab('calc')">Calculadora</button>
+      <button onclick="switchTab('produtos')">Produtos</button>
+      <button onclick="switchTab('kits')">Combos/Kits</button>
+      <button onclick="switchTab('crm')">Pedidos (CRM)</button>
+      <button onclick="switchTab('config')">Configuração</button>
+    </nav>
+
+    <!-- ABA CALCULADORA -->
+    <div id="tab-calc" class="tab-content active">
+      <div class="card">
+        <h2 id="form-title">Calcular Peça</h2>
+        <input type="hidden" id="prod-id">
+        <div class="grid-2">
+          <div class="form-group"><label>Nome da Peça / Produto</label><input type="text" id="prod-nome"></div>
+        </div>
+        <div style="border: 1px dashed var(--card-border); padding: 0.8rem; border-radius: 8px; margin-bottom: 1rem;">
+          <span style="font-size: 0.85rem; font-weight: bold; color: var(--accent);">AMS Lite (Até 4 Filamentos)</span>
+          <div class="grid-2" style="margin-top: 0.5rem;">
+            <div class="form-group"><label>Filamento 1</label><select id="prod-mat-1" onchange="calcular()"></select></div>
+            <div class="form-group"><label>Consumo 1 (g)</label><input type="number" id="prod-g-1" value="100" oninput="calcular()"></div>
+            <div class="form-group"><label>Filamento 2</label><select id="prod-mat-2" onchange="calcular()"></select></div>
+            <div class="form-group"><label>Consumo 2 (g)</label><input type="number" id="prod-g-2" value="0" oninput="calcular()"></div>
+            <div class="form-group"><label>Filamento 3</label><select id="prod-mat-3" onchange="calcular()"></select></div>
+            <div class="form-group"><label>Consumo 3 (g)</label><input type="number" id="prod-g-3" value="0" oninput="calcular()"></div>
+            <div class="form-group"><label>Filamento 4</label><select id="prod-mat-4" onchange="calcular()"></select></div>
+            <div class="form-group"><label>Consumo 4 (g)</label><input type="number" id="prod-g-4" value="0" oninput="calcular()"></div>
+          </div>
+          <div class="form-group"><label>Desperdício Purga AMS (g)</label><input type="number" id="prod-purga" value="15" oninput="calcular()"></div>
+        </div>
+        <div class="grid-2">
+          <div class="form-group"><label>Tempo Impressão (Horas)</label><input type="number" step="0.1" id="prod-tempo-imp" value="3.5" oninput="calcular()"></div>
+          <div class="form-group"><label>Tempo Mão de Obra (Horas)</label><input type="number" step="0.1" id="prod-tempo-mo" value="0.5" oninput="calcular()"></div>
+          <div class="form-group"><label>Embalagem & Extras (R$)</label><input type="number" step="0.01" id="prod-extras" value="2.50" oninput="calcular()"></div>
+          <div class="form-group"><label>Margem de Lucro (%)</label><input type="number" id="prod-margem" value="100" oninput="calcular()"></div>
+        </div>
+        <div class="results-panel">
+          <div class="result-row"><span>Filamentos + Purga:</span> <span id="res-filamento">R$ 0,00</span></div>
+          <div class="result-row"><span>Energia Elétrica:</span> <span id="res-energia">R$ 0,00</span></div>
+          <div class="result-row"><span>Depreciação:</span> <span id="res-depreciacao">R$ 0,00</span></div>
+          <div class="result-row"><span>Mão de Obra:</span> <span id="res-mo">R$ 0,00</span></div>
+          <div class="result-row"><span>Risco/Falha Estimada:</span> <span id="res-risco">R$ 0,00</span></div>
+          <div class="result-row"><span>Impostos MEI:</span> <span id="res-taxas">R$ 0,00</span></div>
+          <div class="result-row highlight"><span>Custo Total:</span> <span id="res-custo">R$ 0,00</span></div>
+          <div class="result-row highlight" style="color: var(--primary);"><span>Preço Sugerido:</span> <span id="res-venda">R$ 0,00</span></div>
+          <div class="result-row"><span>Lucro Real:</span> <span id="res-lucro" style="color: #4ade80; font-weight: bold;">R$ 0,00</span></div>
+        </div>
+        <div class="btn-group">
+          <button class="btn" onclick="salvarProduto()">Salvar Produto</button>
+          <button class="btn btn-outline" onclick="gerarPDFAvulso()">🖨️ Imprimir Avulso</button>
+          <button class="btn btn-outline" onclick="limparCalc()">Limpar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ABA PRODUTOS -->
+    <div id="tab-produtos" class="tab-content">
+      <div class="card"><h2>Produtos Salvos</h2><div id="lista-produtos" class="list-container"></div></div>
+    </div>
+
+    <!-- ABA KITS/COMBOS -->
+    <div id="tab-kits" class="tab-content">
+      <div class="card">
+        <h2>Criar Combo / Kit</h2>
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">Selecione a quantidade de cada produto salvo para formar um combo.</p>
+        <div class="form-group"><label>Nome do Combo</label><input type="text" id="kit-nome" placeholder="Ex: Kit Enfeites de Natal"></div>
+        <div id="kit-selecao-produtos" style="background:var(--input-bg); border:1px solid var(--card-border); border-radius:8px; padding:0.5rem; margin-bottom:1rem;"></div>
+        <button class="btn" onclick="salvarKit()">Salvar Combo</button>
+      </div>
+      <div class="card"><h2>Combos Salvos</h2><div id="lista-kits" class="list-container"></div></div>
+    </div>
+
+    <!-- ABA CRM / PEDIDOS -->
+    <div id="tab-crm" class="tab-content">
+      <div class="card">
+        <h2>Novo Pedido / Orçamento</h2>
+        <div class="grid-2">
+          <div class="form-group"><label>Nome do Cliente *</label><input type="text" id="crm-cliente" placeholder="Ex: Maria da Silva"></div>
+          <div class="form-group"><label>CPF</label><input type="text" id="crm-cpf" placeholder="Ex: 000.000.000-00"></div>
+        </div>
+        <div class="grid-2">
+          <div class="form-group"><label>Contato (WhatsApp / Email)</label><input type="text" id="crm-contato" placeholder="Ex: 81999999999"></div>
+          <div class="form-group"><label>Endereço (Rua, Número, Bairro)</label><input type="text" id="crm-endereco" placeholder="Ex: Rua das Flores, 123 - Boa Viagem"></div>
+        </div>
+        <div class="grid-3">
+          <div class="form-group"><label>Cidade</label><input type="text" id="crm-cidade" placeholder="Ex: Recife"></div>
+          <div class="form-group"><label>Estado (UF)</label><input type="text" id="crm-estado" placeholder="Ex: PE"></div>
+          <div class="form-group"><label>Produto ou Kit *</label><select id="crm-item"></select></div>
+        </div>
+        <div class="form-group"><label>Observações (Opcional)</label><input type="text" id="crm-obs" placeholder="Ex: Entregar à tarde, embalar para presente..."></div>
+        <button class="btn" onclick="salvarPedido()" style="margin-top: 0.5rem;">Lançar Pedido (Orçamento)</button>
       </div>
 
-      <div class="grid-2">
-        <div class="form-group">
-          <label>Material Utilizado</label>
-          <select id="prod-material" onchange="calcular()"></select>
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+          <h2 style="margin-bottom:0; border-bottom:none; padding-bottom:0;">Controle de Pedidos & Fluxo</h2>
+          <input type="text" id="input-busca" placeholder="🔍 Pesquisar por Nome, CPF ou Tel..." oninput="filtrarPedidos()" style="padding:0.4rem 0.6rem; font-size:0.85rem; border-radius:6px; border:1px solid var(--card-border); background:var(--input-bg); color:var(--text); width:260px;">
         </div>
+        <div id="lista-pedidos" class="list-container"></div>
+      </div>
+    </div>
 
-        <div class="form-group">
-          <label>Consumo de Filamento (g)</label>
-          <input type="number" id="prod-gramas" value="100" oninput="calcular()">
+    <!-- ABA CONFIGURAÇÕES -->
+    <div id="tab-config" class="tab-content">
+      <div class="card">
+        <h2>Estoque de Materiais</h2>
+        <input type="hidden" id="mat-id">
+        <div class="grid-4">
+          <div class="form-group"><label>Tipo (PLA/PETG)</label><input type="text" id="mat-nome"></div>
+          <div class="form-group"><label>Marca / Cor</label><input type="text" id="mat-detalhe"></div>
+          <div class="form-group"><label>Preço / Kg (R$)</label><input type="number" step="0.01" id="mat-preco"></div>
+          <div class="form-group"><label>Estoque (g)</label><input type="number" id="mat-estoque" value="1000"></div>
         </div>
-
-        <div class="form-group">
-          <label>Tempo de Impressão (Horas)</label>
-          <input type="number" step="0.1" id="prod-tempo-imp" value="3.5" oninput="calcular()">
+        <div class="btn-group">
+          <button class="btn" id="btn-mat" onclick="salvarMaterial()">Salvar Material</button>
+          <button class="btn btn-outline" id="btn-cancel-mat" style="display:none;" onclick="cancelarEdicaoMat()">Cancelar</button>
         </div>
-
-        <div class="form-group">
-          <label>Tempo de Mão de Obra (Horas)</label>
-          <input type="number" step="0.1" id="prod-tempo-mo" value="0.5" oninput="calcular()">
+        <div id="lista-materiais" class="list-container" style="margin-top:1rem;"></div>
+      </div>
+      <div class="card">
+        <h2>Custos Operacionais</h2>
+        <div class="grid-2">
+          <div class="form-group"><label>Energia (R$/h)</label><input type="number" step="0.01" id="cfg-energia" value="0.35"></div>
+          <div class="form-group"><label>Valor Máquina (R$)</label><input type="number" step="0.01" id="cfg-maquina" value="4500.00"></div>
+          <div class="form-group"><label>Vida Útil (Horas)</label><input type="number" id="cfg-horas" value="5000"></div>
+          <div class="form-group"><label>Mão de Obra (R$/h)</label><input type="number" step="0.01" id="cfg-mo" value="25.00"></div>
+          <div class="form-group"><label>Taxa de Risco/Falha (%)</label><input type="number" id="cfg-risco" value="5"></div>
+          <div class="form-group"><label>Impostos MEI (%)</label><input type="number" id="cfg-taxas" value="10"></div>
         </div>
-
-        <div class="form-group">
-          <label>Acessório / Embalagem Padrão</label>
-          <select id="prod-acessorio" onchange="calcular()"></select>
-        </div>
-
-        <div class="form-group">
-          <label>Quantidade do Acessório</label>
-          <input type="number" id="prod-acc-qtd" value="1" oninput="calcular()">
-        </div>
-
-        <div class="form-group">
-          <label>Markup (Multiplicador, ex: 1.5, 2.0)</label>
-          <input type="number" step="0.1" id="prod-markup" value="2.0" oninput="calcular()">
-        </div>
-
-        <div class="form-group" style="grid-column: 1 / -1;">
-          <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-            <input type="checkbox" id="prod-incluir-taxas" checked onchange="calcular()" style="width: 1.2rem; height: 1.2rem;">
-            Incluir Imposto e Taxa de Pagamento no Preço Final
-          </label>
+        <button class="btn" onclick="salvarConfig()">Salvar Custos</button>
+      </div>
+      <div class="card">
+        <h2>Backup</h2>
+        <div class="btn-group">
+          <button class="btn btn-outline" onclick="exportar()">Exportar Backup</button>
+          <button class="btn btn-outline" onclick="document.getElementById('import-file').click()">Importar Backup</button>
+          <input type="file" id="import-file" style="display:none;" onchange="importar(event)">
         </div>
       </div>
+    </div>
 
-      <div class="results-panel">
-        <div class="result-row"><span>Filamento (<span id="res-mat-nome">PLA</span>):</span> <span id="res-filamento">R$ 0,00</span></div>
-        <div class="result-row"><span>Energia:</span> <span id="res-energia">R$ 0,00</span></div>
-        <div class="result-row"><span>Depreciação Máquina:</span> <span id="res-depreciacao">R$ 0,00</span></div>
-        <div class="result-row"><span>Mão de Obra:</span> <span id="res-mo">R$ 0,00</span></div>
-        <div class="result-row"><span>Acessórios + Embalagem:</span> <span id="res-extras">R$ 0,00</span></div>
-        <div class="result-row"><span>Falhas/Risco:</span> <span id="res-manutencao">R$ 0,00</span></div>
-        <div class="result-row" style="font-weight: bold; color: var(--accent);"><span>Subtotal Base (Custo Real):</span> <span id="res-subtotal">R$ 0,00</span></div>
-        <div class="result-row"><span>Impostos & Taxas Pagas:</span> <span id="res-taxas">R$ 0,00</span></div>
+    <!-- ÁREA DE IMPRESSÃO (ORÇAMENTO CLIENTE) -->
+    <div id="print-area" style="display:none;">
+      <div style="font-family: sans-serif; color: #000; padding: 1rem;">
+        <h1 style="color:#10b981; border-bottom:2px solid #ccc; padding-bottom:0.5rem; margin-bottom:1rem;">Orçamento de Impressão 3D</h1>
+        <p><strong>Cliente:</strong> <span id="p-cliente"></span></p>
+        <p><strong>CPF:</strong> <span id="p-cpf"></span></p>
+        <p><strong>Contato:</strong> <span id="p-contato"></span></p>
+        <p><strong>Endereço:</strong> <span id="p-endereco"></span></p><br>
         
-        <div class="result-row highlight"><span>Custo Total:</span> <span id="res-custo-total">R$ 0,00</span></div>
-        <div class="result-row highlight" style="color: var(--primary);"><span>Preço de Venda Sugerido:</span> <span id="res-preco-venda">R$ 0,00</span></div>
-        <div class="result-row"><span>Lucro Líquido Real:</span> <span id="res-lucro" style="color: #4ade80; font-weight: bold;">R$ 0,00</span></div>
-      </div>
-
-      <div class="btn-group">
-        <button class="btn" onclick="salvarProduto()">Salvar Produto</button>
-        <button class="btn btn-outline" onclick="limparFormulario()">Limpar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ABA PRODUTOS -->
-  <div id="tab-produtos" class="tab-content">
-    <div class="card">
-      <h2>Produtos Cadastrados</h2>
-      <div id="lista-produtos" class="product-list">
-        <!-- Inserido dinamicamente -->
-      </div>
-    </div>
-  </div>
-
-  <!-- ABA CONFIGURAÇÕES -->
-  <div id="tab-config" class="tab-content">
-    
-    <div class="card">
-      <h2>Gerenciar Materiais / Filamentos</h2>
-      <input type="hidden" id="mat-id">
-      <div class="grid-2">
-        <div class="form-group">
-          <label>Nome do Material</label>
-          <input type="text" id="mat-nome" placeholder="Ex: PLA, PETG, ABS">
-        </div>
-        <div class="form-group">
-          <label>Preço por Kg (R$)</label>
-          <input type="number" step="0.01" id="mat-preco" placeholder="100.00">
-        </div>
-      </div>
-      <div class="btn-group">
-        <button class="btn" id="btn-salvar-mat" onclick="adicionarOuAtualizarMaterial()">Cadastrar Material</button>
-        <button class="btn btn-outline" id="btn-cancelar-mat" onclick="limparFormMaterial()" style="display: none;">Cancelar</button>
-      </div>
-      <div id="lista-materiais" class="material-list" style="margin-top: 1rem;">
-        <!-- Inserido dinamicamente -->
+        <p><strong>Produto / Kit:</strong> <span id="p-nome"></span></p>
+        <p><strong>Tempo Estimado de Produção:</strong> <span id="p-tempo"></span> horas</p><br>
+        
+        <h2 style="font-size: 1.3rem; color: #111;">Valor Total: <span id="p-preco" style="color:#10b981;"></span></h2><br>
+        <p style="font-size: 0.8rem; color:#556;">Validade do orçamento: 7 dias.</p>
       </div>
     </div>
 
-    <!-- NOVO: Gerenciar Acessórios e Embalagens Padrão -->
-    <div class="card">
-      <h2>Gerenciar Acessórios & Embalagens</h2>
-      <input type="hidden" id="acc-id">
-      <div class="grid-2">
-        <div class="form-group">
-          <label>Nome do Item</label>
-          <input type="text" id="acc-nome" placeholder="Ex: Caixa Kraft, Ímã de Neodímio">
-        </div>
-        <div class="form-group">
-          <label>Custo Unitário (R$)</label>
-          <input type="number" step="0.01" id="acc-preco" placeholder="2.50">
-        </div>
-      </div>
-      <div class="btn-group">
-        <button class="btn" id="btn-salvar-acc" onclick="adicionarOuAtualizarAcessorio()">Cadastrar Item</button>
-        <button class="btn btn-outline" id="btn-cancelar-acc" onclick="limparFormAcessorio()" style="display: none;">Cancelar</button>
-      </div>
-      <div id="lista-acessorios" class="material-list" style="margin-top: 1rem;"></div>
-    </div>
-
-    <div class="card">
-      <h2>Custos de Operação & Energia</h2>
-      <div class="grid-2">
-        <div class="form-group">
-          <label>Potência Média da Impressora (Watts)</label>
-          <input type="number" id="cfg-potencia" value="110">
-        </div>
-        <div class="form-group">
-          <label>Custo por KWh (R$)</label>
-          <input type="number" step="0.01" id="cfg-kwh" value="0.65">
-        </div>
-        <div class="form-group">
-          <label>Valor da Máquina (R$)</label>
-          <input type="number" step="0.01" id="cfg-maquina-valor" value="4500.00">
-        </div>
-        <div class="form-group">
-          <label>Vida Útil Estimada (Horas)</label>
-          <input type="number" id="cfg-maquina-horas" value="5000">
-        </div>
-        <div class="form-group">
-          <label>Taxa de Falhas / Risco (%)</label>
-          <input type="number" id="cfg-falha-pct" value="5">
-        </div>
-        <div class="form-group">
-          <label>Valor da Mão de Obra (R$/hora)</label>
-          <input type="number" step="0.01" id="cfg-mo-hora" value="25.00">
-        </div>
-        <div class="form-group">
-          <label>Imposto (%)</label>
-          <input type="number" step="0.1" id="cfg-imposto-pct" value="10">
-        </div>
-        <div class="form-group">
-          <label>Taxa de Pagamento / Maquininha (%)</label>
-          <input type="number" step="0.1" id="cfg-taxapg-pct" value="3.5">
-        </div>
-      </div>
-      <button class="btn" onclick="salvarConfiguracoes()" style="margin-top: 1rem;">Salvar Custos Operacionais</button>
-    </div>
-
-    <div class="card">
-      <h2>Backup dos Dados</h2>
-      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
-        Exporte ou importe seus produtos, materiais, acessórios e configurações.
-      </p>
-      <div class="btn-group">
-        <button class="btn btn-outline" onclick="exportarBackup()">Exportar Backup (JSON)</button>
-        <button class="btn btn-outline" onclick="document.getElementById('import-file').click()">Importar Backup</button>
-        <input type="file" id="import-file" style="display: none;" accept=".json" onchange="importarBackup(event)">
-      </div>
-    </div>
-  </div>
+  </div> <!-- FIM DA DIV app-content -->
 
   <script>
-    // ESTADO PADRÃO
-    let config = {
-      potencia: 110,
-      kwh: 0.65,
-      maquinaValor: 4500,
-      maquinaHoras: 5000,
-      falhaPct: 5,
-      moHora: 25,
-      impostoPct: 10,
-      taxaPgPct: 3.5
+    // CONFIGURAÇÃO DO FIREBASE
+    const firebaseConfig = {
+      apiKey: "AIzaSyCHsKj0Y0B538kbxv3uyXscbFJ5o5JX48w",
+      authDomain: "custo3d-3d649.firebaseapp.com",
+      projectId: "custo3d-3d649",
+      storageBucket: "custo3d-3d649.firebasestorage.app",
+      messagingSenderId: "1063139278364",
+      appId: "1:1063139278364:web:d47e81b9afcc88458569d9"
     };
 
-    let materiais = [
-      { id: 'pla', nome: 'PLA', precoKg: 100 },
-      { id: 'petg', nome: 'PETG', precoKg: 110 }
-    ];
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-    let acessorios = [
-      { id: 'acc_1', nome: 'Caixa Padrão', preco: 2.50 },
-      { id: 'acc_2', nome: 'Ímã de Neodímio', preco: 0.50 }
-    ];
+    let cfg = { energia: 0.35, maqVal: 4500, maqHrs: 5000, mo: 25, risco: 5, taxas: 10 };
+    let materiais = [{ id: 'm1', nome: 'PLA', detalhe: 'Voolt3D Vermelho', preco: 90, estoque: 1000 }];
+    let produtos = []; let kits = []; let pedidos = [];
+    let calcAtual = {};
 
-    let produtos = [];
-
-    // INICIALIZAÇÃO
-    window.onload = function() {
-      carregarDados();
-      preencherSelectMateriais();
-      renderizarListaMateriais();
-      preencherSelectAcessorios();
-      renderizarListaAcessorios();
-      preencherFormConfig();
-      calcular();
-      renderizarProdutos();
+    window.onload = () => {
+      // Observador de Estado: O Firebase verifica se você está logado
+      firebase.auth().onAuthStateChanged((user) => {
+        if (user) {
+          // Utilizador logado: Esconde a tela de login e mostra o sistema
+          document.getElementById('auth-screen').style.display = 'none';
+          document.getElementById('app-content').style.display = 'block';
+          carregarDadosCloud(); // Carrega os dados da nuvem normalmente
+        } else {
+          // Ninguém logado: Mostra a tela de login e esconde o sistema
+          document.getElementById('auth-screen').style.display = 'flex';
+          document.getElementById('app-content').style.display = 'none';
+        }
+      });
     };
 
-    function switchTab(tabId) {
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('nav button').forEach(el => el.classList.remove('active'));
+    // Função de Login
+    function fazerLogin() {
+      let email = document.getElementById('login-email').value;
+      let senha = document.getElementById('login-senha').value;
       
-      document.getElementById('tab-' + tabId).classList.add('active');
-      event.target.classList.add('active');
+      firebase.auth().signInWithEmailAndPassword(email, senha)
+        .catch((error) => {
+          document.getElementById('login-erro').innerText = "Erro: E-mail ou senha incorretos.";
+        });
     }
 
-    function carregarDados() {
-      const cfgSalva = localStorage.getItem('3dcost_config');
-      if (cfgSalva) config = JSON.parse(cfgSalva);
+    function toggleTheme() { document.body.setAttribute('data-theme', document.body.getAttribute('data-theme')==='light'?'dark':'light'); }
+    function switchTab(t) { document.querySelectorAll('.tab-content, nav button').forEach(e => e.classList.remove('active')); document.getElementById('tab-'+t).classList.add('active'); event.target.classList.add('active'); }
+    function fmt(v) { return (v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
+    function fmtDate(ms) { let d = new Date(ms); return d.toLocaleDateString('pt-BR'); }
 
-      const matSalvos = localStorage.getItem('3dcost_materiais');
-      if (matSalvos) materiais = JSON.parse(matSalvos);
+    // CARREGAR DADOS EM TEMPO REAL DA NUVEM (FIREBASE)
+    function carregarDadosCloud() {
+      // Carregar Configurações
+      db.collection('configuracoes').doc('geral').get().then(doc => {
+        if(doc.exists) cfg = doc.data();
+        uiInit();
+      }).catch(() => uiInit());
 
-      const accSalvos = localStorage.getItem('3dcost_acessorios');
-      if (accSalvos) acessorios = JSON.parse(accSalvos);
-
-      const prodsSalvos = localStorage.getItem('3dcost_produtos');
-      if (prodsSalvos) produtos = JSON.parse(prodsSalvos);
-    }
-
-    // MATERIAIS LOGIC
-    function preencherSelectMateriais() {
-      const select = document.getElementById('prod-material');
-      const valAtual = select.value;
-      select.innerHTML = materiais.map(m => `<option value="${m.id}">${m.nome} (R$ ${m.precoKg.toFixed(2)}/kg)</option>`).join('');
-      if (valAtual && materiais.some(m => m.id === valAtual)) {
-        select.value = valAtual;
-      }
-    }
-
-    function renderizarListaMateriais() {
-      const container = document.getElementById('lista-materiais');
-      if (materiais.length === 0) {
-        container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">Nenhum material cadastrado.</p>';
-        return;
-      }
-      container.innerHTML = materiais.map(m => `
-        <div class="material-item">
-          <div class="material-info">
-            <h3>${m.nome}</h3>
-            <p>Preço: ${fmt(m.precoKg)} / kg</p>
-          </div>
-          <div class="material-actions">
-            <button class="btn btn-outline" onclick="prepararEdicaoMaterial('${m.id}')">Editar</button>
-            <button class="btn btn-danger" onclick="excluirMaterial('${m.id}')">X</button>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    function prepararEdicaoMaterial(id) {
-      const m = materiais.find(item => item.id === id);
-      if (!m) return;
-      document.getElementById('mat-id').value = m.id;
-      document.getElementById('mat-nome').value = m.nome;
-      document.getElementById('mat-preco').value = m.precoKg;
-      document.getElementById('btn-salvar-mat').innerText = 'Atualizar Material';
-      document.getElementById('btn-cancelar-mat').style.display = 'inline-block';
-    }
-
-    function limparFormMaterial() {
-      document.getElementById('mat-id').value = '';
-      document.getElementById('mat-nome').value = '';
-      document.getElementById('mat-preco').value = '';
-      document.getElementById('btn-salvar-mat').innerText = 'Cadastrar Material';
-      document.getElementById('btn-cancelar-mat').style.display = 'none';
-    }
-
-    function adicionarOuAtualizarMaterial() {
-      const id = document.getElementById('mat-id').value;
-      const nome = document.getElementById('mat-nome').value.trim();
-      const preco = parseFloat(document.getElementById('mat-preco').value);
-
-      if (!nome || isNaN(preco) || preco <= 0) {
-        alert('Informe um nome válido e um preço maior que zero.');
-        return;
-      }
-
-      if (id) {
-        const idx = materiais.findIndex(m => m.id === id);
-        if (idx !== -1) {
-          materiais[idx].nome = nome;
-          materiais[idx].precoKg = preco;
+      // Sincronizar Materiais
+      db.collection('materiais').onSnapshot(snapshot => {
+        materiais = [];
+        snapshot.forEach(doc => materiais.push({ id: doc.id, ...doc.data() }));
+        if(materiais.length === 0) {
+          // Criar material padrão inicial se estiver vazio
+          db.collection('materiais').doc('m1').set({ nome: 'PLA', detalhe: 'Voolt3D Vermelho', preco: 90, estoque: 1000 });
+        } else {
+          atualizarSelectsEListas();
         }
-      } else {
-        materiais.push({ id: 'mat_' + Date.now(), nome: nome, precoKg: preco });
-      }
+      });
 
-      localStorage.setItem('3dcost_materiais', JSON.stringify(materiais));
-      limparFormMaterial();
-      preencherSelectMateriais();
-      renderizarListaMateriais();
+      // Sincronizar Produtos
+      db.collection('produtos').onSnapshot(snapshot => {
+        produtos = [];
+        snapshot.forEach(doc => produtos.push({ id: doc.id, ...doc.data() }));
+        renderizarProdutos();
+        atualizarSelectCRM();
+        renderizarKitSelector();
+      });
+
+      // Sincronizar Kits/Combos
+      db.collection('kits').onSnapshot(snapshot => {
+        kits = [];
+        snapshot.forEach(doc => kits.push({ id: doc.id, ...doc.data() }));
+        renderizarKits();
+        atualizarSelectCRM();
+      });
+
+      // Sincronizar Pedidos/CRM
+      db.collection('pedidos').onSnapshot(snapshot => {
+        pedidos = [];
+        snapshot.forEach(doc => {
+          let p = { id: doc.id, ...doc.data() };
+          if(!p.data) p.data = Date.now();
+          if(p.status === 'Produzido') { p.status = 'Enviado'; p.estoqueDeduzido = true; }
+          if(p.estoqueDeduzido === undefined) p.estoqueDeduzido = false;
+          pedidos.push(p);
+        });
+        renderizarPedidos(pedidos);
+      });
+    }
+
+    function atualizarSelectsEListas() {
+      const opts = `<option value="">-- Nenhum --</option>` + materiais.map(m => `<option value="${m.id}">${m.nome} ${m.detalhe} (R$${m.preco})</option>`).join('');
+      [1,2,3,4].forEach(i => {
+        let el = document.getElementById(`prod-mat-${i}`);
+        if(el) el.innerHTML = opts;
+      });
+      renderizarMateriais();
       calcular();
     }
 
-    function excluirMaterial(id) {
-      if (materiais.length <= 1) {
-        alert('Você precisa ter pelo menos um material cadastrado.');
-        return;
-      }
-      if (confirm('Tem certeza que deseja excluir este material?')) {
-        materiais = materiais.filter(m => m.id !== id);
-        localStorage.setItem('3dcost_materiais', JSON.stringify(materiais));
-        preencherSelectMateriais();
-        renderizarListaMateriais();
-        calcular();
-      }
+    function salvarDBCloud(colecao, id, dados, callback) {
+      db.collection(colecao).doc(id.toString()).set(dados).then(() => {
+        if(callback) callback();
+      }).catch(err => alert("Erro ao salvar na nuvem: " + err.message));
     }
 
-    // ACESSÓRIOS LOGIC
-    function preencherSelectAcessorios() {
-      const select = document.getElementById('prod-acessorio');
-      const valAtual = select.value;
-      select.innerHTML = '<option value="">Nenhum</option>' + acessorios.map(a => `<option value="${a.id}">${a.nome} (R$ ${a.preco.toFixed(2)})</option>`).join('');
-      if (valAtual && acessorios.some(a => a.id === valAtual)) {
-        select.value = valAtual;
-      }
+    function uiInit() {
+      document.getElementById('cfg-energia').value = cfg.energia; document.getElementById('cfg-maquina').value = cfg.maqVal;
+      document.getElementById('cfg-horas').value = cfg.maqHrs; document.getElementById('cfg-mo').value = cfg.mo;
+      document.getElementById('cfg-risco').value = cfg.risco; document.getElementById('cfg-taxas').value = cfg.taxas;
+      
+      atualizarSelectsEListas();
+      atualizarSelectCRM();
+      renderizarKitSelector();
+      calcular();
     }
 
-    function renderizarListaAcessorios() {
-      const container = document.getElementById('lista-acessorios');
-      if (acessorios.length === 0) {
-        container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">Nenhum acessório cadastrado.</p>';
-        return;
-      }
-      container.innerHTML = acessorios.map(a => `
-        <div class="material-item">
-          <div class="material-info">
-            <h3>${a.nome}</h3>
-            <p>Custo: ${fmt(a.preco)}</p>
-          </div>
-          <div class="material-actions">
-            <button class="btn btn-outline" onclick="prepararEdicaoAcessorio('${a.id}')">Editar</button>
-            <button class="btn btn-danger" onclick="excluirAcessorio('${a.id}')">X</button>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    function adicionarOuAtualizarAcessorio() {
-      const id = document.getElementById('acc-id').value;
-      const nome = document.getElementById('acc-nome').value.trim();
-      const preco = parseFloat(document.getElementById('acc-preco').value);
-
-      if (!nome || isNaN(preco) || preco < 0) {
-        alert('Informe um nome válido e um preço.');
-        return;
-      }
-
-      if (id) {
-        const idx = acessorios.findIndex(a => a.id === id);
-        if (idx !== -1) {
-          acessorios[idx].nome = nome;
-          acessorios[idx].preco = preco;
+    function verificarStatusAutomatico() {
+      let alterou = false;
+      const seteDias = 7 * 24 * 60 * 60 * 1000;
+      const agora = Date.now();
+      pedidos.forEach(p => {
+        if(p.status === 'Orçamento' && p.data && (agora - p.data > seteDias)) {
+          p.status = 'Sem Retorno';
+          db.collection('pedidos').doc(p.id.toString()).update({ status: 'Sem Retorno' });
+          alterou = true;
         }
-      } else {
-        acessorios.push({ id: 'acc_' + Date.now(), nome, preco });
-      }
-
-      localStorage.setItem('3dcost_acessorios', JSON.stringify(acessorios));
-      limparFormAcessorio();
-      preencherSelectAcessorios();
-      renderizarListaAcessorios();
-      calcular();
+      });
     }
 
-    function prepararEdicaoAcessorio(id) {
-      const a = acessorios.find(item => item.id === id);
-      if (!a) return;
-      document.getElementById('acc-id').value = a.id;
-      document.getElementById('acc-nome').value = a.nome;
-      document.getElementById('acc-preco').value = a.preco;
-      document.getElementById('btn-salvar-acc').innerText = 'Atualizar Item';
-      document.getElementById('btn-cancelar-acc').style.display = 'inline-block';
-    }
-
-    function limparFormAcessorio() {
-      document.getElementById('acc-id').value = '';
-      document.getElementById('acc-nome').value = '';
-      document.getElementById('acc-preco').value = '';
-      document.getElementById('btn-salvar-acc').innerText = 'Cadastrar Item';
-      document.getElementById('btn-cancelar-acc').style.display = 'none';
-    }
-
-    function excluirAcessorio(id) {
-      if (confirm('Deseja excluir este acessório?')) {
-        acessorios = acessorios.filter(a => a.id !== id);
-        localStorage.setItem('3dcost_acessorios', JSON.stringify(acessorios));
-        preencherSelectAcessorios();
-        renderizarListaAcessorios();
-        calcular();
-      }
-    }
-
-    // CONFIGURAÇÕES LOGIC
-    function preencherFormConfig() {
-      document.getElementById('cfg-potencia').value = config.potencia;
-      document.getElementById('cfg-kwh').value = config.kwh;
-      document.getElementById('cfg-maquina-valor').value = config.maquinaValor;
-      document.getElementById('cfg-maquina-horas').value = config.maquinaHoras;
-      document.getElementById('cfg-falha-pct').value = config.falhaPct;
-      document.getElementById('cfg-mo-hora').value = config.moHora;
-      document.getElementById('cfg-imposto-pct').value = config.impostoPct;
-      document.getElementById('cfg-taxapg-pct').value = config.taxaPgPct;
-    }
-
-    function salvarConfiguracoes() {
-      config = {
-        potencia: parseFloat(document.getElementById('cfg-potencia').value) || 0,
-        kwh: parseFloat(document.getElementById('cfg-kwh').value) || 0,
-        maquinaValor: parseFloat(document.getElementById('cfg-maquina-valor').value) || 0,
-        maquinaHoras: parseFloat(document.getElementById('cfg-maquina-horas').value) || 1,
-        falhaPct: parseFloat(document.getElementById('cfg-falha-pct').value) || 0,
-        moHora: parseFloat(document.getElementById('cfg-mo-hora').value) || 0,
-        impostoPct: parseFloat(document.getElementById('cfg-imposto-pct').value) || 0,
-        taxaPgPct: parseFloat(document.getElementById('cfg-taxapg-pct').value) || 0
-      };
-
-      localStorage.setItem('3dcost_config', JSON.stringify(config));
-      alert('Configurações salvas com sucesso!');
-      calcular();
-    }
-
-    // CALCULO
-    function calcular() {
-      const matId = document.getElementById('prod-material').value;
-      const materialSel = materiais.find(m => m.id === matId) || materiais[0] || { nome: 'N/A', precoKg: 0 };
-      
-      const gramas = parseFloat(document.getElementById('prod-gramas').value) || 0;
-      const tempoImp = parseFloat(document.getElementById('prod-tempo-imp').value) || 0;
-      const tempoMo = parseFloat(document.getElementById('prod-tempo-mo').value) || 0;
-      
-      const accId = document.getElementById('prod-acessorio').value;
-      const accQtd = parseFloat(document.getElementById('prod-acc-qtd').value) || 1;
-      const accSel = acessorios.find(a => a.id === accId);
-      const custoAcessorio = accSel ? (accSel.preco * accQtd) : 0;
-
-      const markup = parseFloat(document.getElementById('prod-markup').value) || 1.0;
-      const incluirTaxas = document.getElementById('prod-incluir-taxas').checked;
-
-      // Custos Diretos Base
-      const custoFilamento = (gramas / 1000) * materialSel.precoKg;
-      const custoEnergia = tempoImp * (config.potencia / 1000) * config.kwh;
-      const custoDepreciacao = tempoImp * (config.maquinaValor / config.maquinaHoras);
-      const custoMo = tempoMo * config.moHora;
-
-      const subtotalDireto = custoFilamento + custoEnergia + custoDepreciacao + custoMo + custoAcessorio;
-      
-      // Risco / Falha
-      const custoFalha = subtotalDireto * (config.falhaPct / 100);
-      const custoTotalBase = subtotalDireto + custoFalha;
-
-      // Aplicação do Markup
-      let precoComMarkup = custoTotalBase * markup;
-
-      // Cálculo das taxas
-      let precoVenda = precoComMarkup;
-      let valorImposto = 0;
-      let valorTaxaPg = 0;
-
-      const taxaTotalPct = config.impostoPct + config.taxaPgPct;
-
-      if (incluirTaxas && taxaTotalPct < 100) {
-        precoVenda = precoComMarkup / (1 - (taxaTotalPct / 100));
-      }
-
-      valorImposto = precoVenda * (config.impostoPct / 100);
-      valorTaxaPg = precoVenda * (config.taxaPgPct / 100);
-      
-      const lucro = precoVenda - custoTotalBase - valorImposto - valorTaxaPg;
-      const custoTotalReal = custoTotalBase + valorImposto + valorTaxaPg;
-
-      // Atualizar interface
-      document.getElementById('res-mat-nome').innerText = materialSel.nome;
-      document.getElementById('res-filamento').innerText = fmt(custoFilamento);
-      document.getElementById('res-energia').innerText = fmt(custoEnergia);
-      document.getElementById('res-depreciacao').innerText = fmt(custoDepreciacao);
-      document.getElementById('res-mo').innerText = fmt(custoMo);
-      document.getElementById('res-extras').innerText = fmt(custoAcessorio);
-      document.getElementById('res-manutencao').innerText = fmt(custoFalha) + ` (${config.falhaPct}%)`;
-      
-      document.getElementById('res-subtotal').innerText = fmt(custoTotalBase);
-      document.getElementById('res-taxas').innerText = fmt(valorImposto + valorTaxaPg);
-      
-      document.getElementById('res-custo-total').innerText = fmt(custoTotalReal);
-      document.getElementById('res-preco-venda').innerText = fmt(precoVenda);
-      document.getElementById('res-lucro').innerText = fmt(lucro);
-
-      return { custoTotal: custoTotalReal, precoVenda, lucro, materialNome: materialSel.nome };
-    }
-
-    function fmt(val) {
-      return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    }
-
-    // PRODUTOS LOGIC
-    function salvarProduto() {
-      const nome = document.getElementById('prod-nome').value.trim();
-      if (!nome) {
-        alert('Por favor, informe o nome do produto.');
-        return;
-      }
-
-      const id = document.getElementById('prod-id').value;
-      const res = calcular();
-
-      const prodData = {
-        id: id ? parseInt(id) : Date.now(),
-        nome: nome,
-        materialId: document.getElementById('prod-material').value,
-        materialNome: res.materialNome,
-        gramas: parseFloat(document.getElementById('prod-gramas').value) || 0,
-        tempoImp: parseFloat(document.getElementById('prod-tempo-imp').value) || 0,
-        tempoMo: parseFloat(document.getElementById('prod-tempo-mo').value) || 0,
-        acessorioId: document.getElementById('prod-acessorio').value,
-        accQtd: parseFloat(document.getElementById('prod-acc-qtd').value) || 1,
-        markup: parseFloat(document.getElementById('prod-markup').value) || 2.0,
-        incluirTaxas: document.getElementById('prod-incluir-taxas').checked,
-        custoTotal: res.custoTotal,
-        precoVenda: res.precoVenda,
-        lucro: res.lucro
-      };
-
-      if (id) {
-        const index = produtos.findIndex(p => p.id === parseInt(id));
-        if (index !== -1) produtos[index] = prodData;
-      } else {
-        produtos.push(prodData);
-      }
-
-      localStorage.setItem('3dcost_produtos', JSON.stringify(produtos));
-      alert('Produto salvo com sucesso!');
-      limparFormulario();
-      renderizarProdutos();
+    function renderizarMateriais() {
+      let container = document.getElementById('lista-materiais');
+      if(!container) return;
+      container.innerHTML = materiais.map(m => {
+        let estClass = m.estoque <= 200 ? 'badge-danger' : 'badge-default';
+        let alerta = m.estoque <= 200 ? `<br><span style="color:var(--danger); font-size:0.75rem;">⚠️ Estoque Crítico!</span>` : '';
+        return `<div class="list-item">
+                  <div class="item-info">
+                    <h3>${m.nome} <span style="font-size:0.8rem">${m.detalhe}</span></h3>
+                    <p>${fmt(m.preco)}/kg | <span class="badge ${estClass}">Estoque: ${m.estoque}g</span>${alerta}</p>
+                  </div>
+                  <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                    <button class="btn btn-outline" style="padding:0.3rem; border-color:var(--primary); color:var(--primary);" onclick="reporEstoque('${m.id}')">+ 1Kg</button>
+                    <button class="btn btn-outline" style="padding:0.3rem" onclick="editarMaterial('${m.id}')">Editar</button>
+                    <button class="btn btn-danger" style="padding:0.3rem" onclick="excluirCloud('materiais','${m.id}')">X</button>
+                  </div>
+                </div>`;
+      }).join('');
     }
 
     function renderizarProdutos() {
-      const container = document.getElementById('lista-produtos');
-      if (produtos.length === 0) {
-        container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">Nenhum produto cadastrado ainda.</p>';
+      let container = document.getElementById('lista-produtos');
+      if(!container) return;
+      container.innerHTML = produtos.map(p => `<div class="list-item"><div class="item-info"><h3>${p.nome}</h3><p>Venda: <strong>${fmt(p.preco)}</strong> | Custo: ${fmt(p.custo)}</p></div><div><button class="btn btn-outline" style="padding:0.3rem" onclick="editarProduto('${p.id}')">Editar</button> <button class="btn btn-danger" style="padding:0.3rem" onclick="excluirCloud('produtos','${p.id}')">X</button></div></div>`).join('');
+    }
+
+    function renderizarKits() {
+      let container = document.getElementById('lista-kits');
+      if(!container) return;
+      container.innerHTML = kits.map(k => `<div class="list-item"><div class="item-info"><h3>${k.nome}</h3><p>Venda: <strong>${fmt(k.preco)}</strong> | Custo: ${fmt(k.custo)}</p></div><div><button class="btn btn-danger" style="padding:0.3rem" onclick="excluirCloud('kits','${k.id}')">X</button></div></div>`).join('');
+    }
+
+    function atualizarSelectCRM() {
+      let el = document.getElementById('crm-item');
+      if(el) {
+        el.innerHTML = `<optgroup label="Produtos">`+produtos.map(p=>`<option value="p_${p.id}">${p.nome}</option>`).join('')+`</optgroup><optgroup label="Kits">`+kits.map(k=>`<option value="k_${k.id}">${k.nome}</option>`).join('')+`</optgroup>`;
+      }
+    }
+
+    function renderizarKitSelector() {
+      let el = document.getElementById('kit-selecao-produtos');
+      if(el) {
+        el.innerHTML = produtos.map(p=>`<div class="kit-selector-row"><span>${p.nome} (${fmt(p.preco)})</span><input type="number" id="kq_${p.id}" value="0" min="0"></div>`).join('');
+      }
+    }
+
+    function renderizarPedidos(lista) {
+      verificarStatusAutomatico(); 
+      const container = document.getElementById('lista-pedidos');
+      if(!container) return;
+      
+      if(lista.length === 0) {
+        container.innerHTML = `<p style="color:var(--text-muted); font-size:0.9rem;">Nenhum pedido encontrado.</p>`;
         return;
       }
 
-      container.innerHTML = produtos.map(p => `
-        <div class="product-item">
-          <div class="product-info">
-            <h3>${p.nome} <span style="font-size:0.75rem; color: var(--accent);">(${p.materialNome || 'N/A'})</span></h3>
-            <p>Custo: ${fmt(p.custoTotal)} | Venda: <strong style="color: var(--primary);">${fmt(p.precoVenda)}</strong></p>
-            <span class="badge">Lucro: ${fmt(p.lucro)} (Markup: ${p.markup}x)</span>
-          </div>
-          <div class="product-actions">
-            <button class="btn btn-outline" onclick="editarProduto(${p.id})">Editar</button>
-            <button class="btn btn-outline" onclick="duplicarProduto(${p.id})">Duplicar</button>
-            <button class="btn btn-danger" onclick="excluirProduto(${p.id})">X</button>
-          </div>
-        </div>
-      `).join('');
+      container.innerHTML = lista.map(p => {
+        let badgeClass = 'badge-gray';
+        if(p.status === 'Em Preparo') badgeClass = 'badge-blue';
+        if(p.status === 'Enviado') badgeClass = 'badge-green';
+        if(p.status === 'Recusado') badgeClass = 'badge-red';
+        if(p.status === 'Sem Retorno') badgeClass = 'badge-orange';
+
+        let detalhes = '';
+        if(p.cpf) detalhes += `📄 CPF: ${p.cpf} &nbsp;`;
+        if(p.contato) detalhes += `📞 ${p.contato} &nbsp;`;
+        if(p.endereco) detalhes += `<br>📍 ${p.endereco}${p.cidade||p.estado?' - '+[p.cidade,p.estado].filter(Boolean).join('/'):''}`;
+        if(p.obs) detalhes += `<br>📝 <i>Obs: ${p.obs}</i>`;
+
+        return `<div class="list-item" style="border-left: 4px solid var(--card-border); ${p.status==='Em Preparo'?'border-color:var(--accent);':''} ${p.status==='Enviado'?'border-color:var(--primary);':''} ${p.status==='Recusado'?'border-color:var(--danger);':''}">
+                  <div class="item-info">
+                    <h3>
+                      ${p.cliente} 
+                      <span class="badge ${badgeClass}" style="font-size:0.65rem;">${p.status}</span>
+                    </h3>
+                    <p style="font-size:0.75rem; margin-bottom:0.3rem;">Data: ${fmtDate(p.data)}</p>
+                    <p style="margin-bottom: 0.3rem; font-size:0.85rem;">${p.itemNome} | <strong style="color:var(--primary);">${fmt(p.preco)}</strong></p>
+                    <p style="font-size:0.75rem;">${detalhes}</p>
+                    
+                    <div style="margin-top: 0.5rem; display: flex; gap: 0.3rem;">
+                      <button class="btn btn-outline" style="padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="gerarPDF('${p.id}')">🖨️ PDF</button>
+                      <button class="btn btn-whatsapp" style="padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="enviarWhatsPedido('${p.id}')">💬 Whats</button>
+                    </div>
+                  </div>
+                  <div style="display:flex; flex-direction:column; gap:0.5rem; align-items:flex-end;">
+                    <select class="select-status" onchange="mudarStatusPedido('${p.id}', this.value)">
+                      <option value="Orçamento" ${p.status==='Orçamento'?'selected':''}>⏳ Orçamento</option>
+                      <option value="Em Preparo" ${p.status==='Em Preparo'?'selected':''}>🛠️ Em Preparo</option>
+                      <option value="Enviado" ${p.status==='Enviado'?'selected':''}>✅ Enviado</option>
+                      <option value="Recusado" ${p.status==='Recusado'?'selected':''}>❌ Recusado</option>
+                      <option value="Sem Retorno" ${p.status==='Sem Retorno'?'selected':''}>⚠️ Sem Retorno</option>
+                    </select>
+                    <button class="btn btn-danger" style="padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="excluirCloud('pedidos','${p.id}')">Excluir</button>
+                  </div>
+                </div>`;
+      }).reverse().join(''); 
     }
 
-    function editarProduto(id) {
-      const p = produtos.find(item => item.id === id);
-      if (!p) return;
+    function filtrarPedidos() {
+      let termo = document.getElementById('input-busca').value.toLowerCase().trim();
+      if(!termo) { renderizarPedidos(pedidos); return; }
+      let filtrados = pedidos.filter(p => 
+        (p.cliente && p.cliente.toLowerCase().includes(termo)) ||
+        (p.cpf && p.cpf.toLowerCase().includes(termo)) ||
+        (p.contato && p.contato.toLowerCase().includes(termo))
+      );
+      renderizarPedidos(filtrados);
+    }
 
-      document.getElementById('prod-id').value = p.id;
-      document.getElementById('prod-nome').value = p.nome;
-      if (p.materialId) document.getElementById('prod-material').value = p.materialId;
-      document.getElementById('prod-gramas').value = p.gramas;
-      document.getElementById('prod-tempo-imp').value = p.tempoImp;
-      document.getElementById('prod-tempo-mo').value = p.tempoMo;
+    function mudarStatusPedido(id, novoStatus) {
+      let ped = pedidos.find(x => x.id == id);
+      if(!ped) return;
+
+      const requerDeducao = (novoStatus === 'Em Preparo' || novoStatus === 'Enviado');
       
-      if (p.acessorioId !== undefined) document.getElementById('prod-acessorio').value = p.acessorioId;
-      document.getElementById('prod-acc-qtd').value = p.accQtd || 1;
-      document.getElementById('prod-markup').value = p.markup || 2.0;
-      document.getElementById('prod-incluir-taxas').checked = p.incluirTaxas !== undefined ? p.incluirTaxas : true;
+      if (requerDeducao && !ped.estoqueDeduzido) {
+        if(confirm(`Mudar para "${novoStatus}" irá subtrair automaticamente o plástico do seu estoque na nuvem. Confirmar?`)) {
+          movimentarEstoquePedidoCloud(ped, -1); 
+          ped.estoqueDeduzido = true;
+        } else {
+          uiInit(); return; 
+        }
+      } 
+      else if (!requerDeducao && ped.estoqueDeduzido) {
+        if(confirm(`Mudar para "${novoStatus}" irá DEVOLVER os materiais deste pedido para o seu estoque na nuvem. Confirmar?`)) {
+          movimentarEstoquePedidoCloud(ped, 1); 
+          ped.estoqueDeduzido = false;
+        } else {
+          uiInit(); return;
+        }
+      }
 
-      document.getElementById('form-title').innerText = "Editar Produto";
-      switchTab('calc');
-      calcular();
+      ped.status = novoStatus;
+      db.collection('pedidos').doc(id.toString()).update({ status: novoStatus, estoqueDeduzido: ped.estoqueDeduzido });
     }
 
-    function duplicarProduto(id) {
-      const p = produtos.find(item => item.id === id);
-      if (!p) return;
-
-      const novoProd = { ...p, id: Date.now(), nome: p.nome + ' (Cópia)' };
-      produtos.push(novoProd);
-      localStorage.setItem('3dcost_produtos', JSON.stringify(produtos));
-      renderizarProdutos();
+    function movimentarEstoquePedidoCloud(ped, multiplicador) {
+      if(ped.tipo === 'p') { 
+        alterarProdEstoqueCloud(ped.refId, 1 * multiplicador); 
+      } else { 
+        let k = kits.find(x=>x.id == ped.refId); 
+        if(k && k.itens) k.itens.forEach(i => alterarProdEstoqueCloud(i.id, i.qtd * multiplicador)); 
+      }
+    }
+    
+    function alterarProdEstoqueCloud(pid, mult) {
+      let p = produtos.find(x => x.id == pid); if(!p) return;
+      alterarEstoqueCloud(p.m1, (p.g1+p.purga)*mult); 
+      alterarEstoqueCloud(p.m2, p.g2*mult);
+      alterarEstoqueCloud(p.m3, p.g3*mult); 
+      alterarEstoqueCloud(p.m4, p.g4*mult);
     }
 
-    function excluirProduto(id) {
-      if (confirm('Tem certeza que deseja excluir este produto?')) {
-        produtos = produtos.filter(p => p.id !== id);
-        localStorage.setItem('3dcost_produtos', JSON.stringify(produtos));
-        renderizarProdutos();
+    function alterarEstoqueCloud(mid, val) {
+      if(!mid || val===0) return; 
+      let m = materiais.find(x => x.id === mid); 
+      if(m) {
+        let novoEstoque = Math.max(0, m.estoque + val);
+        db.collection('materiais').doc(mid.toString()).update({ estoque: novoEstoque });
       }
     }
 
-    function limparFormulario() {
-      document.getElementById('prod-id').value = '';
-      document.getElementById('prod-nome').value = '';
-      document.getElementById('prod-gramas').value = 100;
-      document.getElementById('prod-tempo-imp').value = 3.5;
-      document.getElementById('prod-tempo-mo').value = 0.5;
-      document.getElementById('prod-acessorio').value = '';
-      document.getElementById('prod-acc-qtd').value = 1;
-      document.getElementById('prod-markup').value = 2.0;
-      document.getElementById('prod-incluir-taxas').checked = true;
-      document.getElementById('form-title').innerText = "Calcular Peça";
-      calcular();
+    function calcular() {
+      const getMat = id => materiais.find(m => m.id === document.getElementById(id).value) || {preco:0};
+      const g1 = parseFloat(document.getElementById('prod-g-1').value)||0; const g2 = parseFloat(document.getElementById('prod-g-2').value)||0;
+      const g3 = parseFloat(document.getElementById('prod-g-3').value)||0; const g4 = parseFloat(document.getElementById('prod-g-4').value)||0;
+      const purga = parseFloat(document.getElementById('prod-purga').value)||0;
+
+      const tImp = parseFloat(document.getElementById('prod-tempo-imp').value)||0;
+      const tMo = parseFloat(document.getElementById('prod-tempo-mo').value)||0;
+      const ext = parseFloat(document.getElementById('prod-extras').value)||0;
+      const mg = parseFloat(document.getElementById('prod-margem').value)||0;
+
+      const cFil = ((g1+purga)/1000)*getMat('prod-mat-1').preco + (g2/1000)*getMat('prod-mat-2').preco + (g3/1000)*getMat('prod-mat-3').preco + (g4/1000)*getMat('prod-mat-4').preco;
+      const cEn = tImp * cfg.energia; const cDep = tImp * (cfg.maqVal/cfg.maqHrs); const cMo = tMo * cfg.mo;
+      const sub = cFil + cEn + cDep + cMo + ext;
+      const cRis = sub * (cfg.risco/100); const cTax = (sub+cRis) * (cfg.taxas/100);
+      const total = sub + cRis + cTax; const lucro = total * (mg/100); const venda = total + lucro;
+
+      document.getElementById('res-filamento').innerText = fmt(cFil); document.getElementById('res-energia').innerText = fmt(cEn);
+      document.getElementById('res-depreciacao').innerText = fmt(cDep); document.getElementById('res-mo').innerText = fmt(cMo);
+      document.getElementById('res-risco').innerText = fmt(cRis); document.getElementById('res-taxas').innerText = fmt(cTax);
+      document.getElementById('res-custo').innerText = fmt(total); document.getElementById('res-venda').innerText = fmt(venda);
+      document.getElementById('res-lucro').innerText = fmt(lucro);
+
+      calcAtual = { custo: total, preco: venda, lucro: lucro, imp: tImp, g1, g2, g3, g4, purga };
     }
 
-    // BACKUP LOGIC
-    function exportarBackup() {
-      const data = { config, materiais, acessorios, produtos };
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", `backup_3dcost_${new Date().toISOString().slice(0,10)}.json`);
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
+    function reporEstoque(id) {
+      let m = materiais.find(x => x.id === id);
+      if(m) {
+        let novoEstoque = m.estoque + 1000;
+        db.collection('materiais').doc(id.toString()).update({ estoque: novoEstoque }).then(() => {
+          alert(`Sucesso! Adicionado 1kg ao estoque de ${m.nome} (${m.detalhe}). Estoque atual: ${novoEstoque}g.`);
+        });
+      }
     }
 
-    function importarBackup(event) {
-      const file = event.target.files[0];
-      if (!file) return;
+    function editarMaterial(id) {
+      let m = materiais.find(x => x.id === id);
+      if(!m) return;
+      document.getElementById('mat-id').value = m.id;
+      document.getElementById('mat-nome').value = m.nome;
+      document.getElementById('mat-detalhe').value = m.detalhe;
+      document.getElementById('mat-preco').value = m.preco;
+      document.getElementById('mat-estoque').value = m.estoque;
+      
+      document.getElementById('btn-mat').innerText = "Atualizar Material";
+      document.getElementById('btn-cancel-mat').style.display = "inline-flex";
+    }
 
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        try {
-          const importedData = JSON.parse(e.target.result);
-          if (importedData.config && importedData.produtos) {
-            config = importedData.config;
-            produtos = importedData.produtos;
-            if (importedData.materiais) materiais = importedData.materiais;
-            if (importedData.acessorios) acessorios = importedData.acessorios;
-            
-            localStorage.setItem('3dcost_config', JSON.stringify(config));
-            localStorage.setItem('3dcost_materiais', JSON.stringify(materiais));
-            localStorage.setItem('3dcost_acessorios', JSON.stringify(acessorios));
-            localStorage.setItem('3dcost_produtos', JSON.stringify(produtos));
-            
-            preencherSelectMateriais();
-            renderizarListaMateriais();
-            preencherSelectAcessorios();
-            renderizarListaAcessorios();
-            preencherFormConfig();
-            renderizarProdutos();
-            calcular();
-            alert('Backup importado com sucesso!');
-          } else {
-            alert('Arquivo de backup inválido.');
-          }
-        } catch (err) {
-          alert('Erro ao ler o arquivo de backup.');
-        }
+    function cancelarEdicaoMat() {
+      document.getElementById('mat-id').value = '';
+      document.getElementById('mat-nome').value = '';
+      document.getElementById('mat-detalhe').value = '';
+      document.getElementById('mat-preco').value = '';
+      document.getElementById('mat-estoque').value = '1000';
+      
+      document.getElementById('btn-mat').innerText = "Salvar Material";
+      document.getElementById('btn-cancel-mat').style.display = "none";
+    }
+
+    function salvarMaterial() {
+      let id = document.getElementById('mat-id').value;
+      let nome = document.getElementById('mat-nome').value, det = document.getElementById('mat-detalhe').value, 
+          prc = parseFloat(document.getElementById('mat-preco').value), est = parseFloat(document.getElementById('mat-estoque').value);
+      if(!nome||isNaN(prc)) return alert("Preencha o tipo e o preço corretamente.");
+
+      let docId = id ? id : 'm_' + Date.now();
+      let matData = { nome, detalhe: det, preco: prc, estoque: est };
+
+      db.collection('materiais').doc(docId).set(matData).then(() => {
+        cancelarEdicaoMat();
+        alert("Material salvo na nuvem com sucesso!");
+      });
+    }
+
+    function salvarProduto() {
+      let nome = document.getElementById('prod-nome').value; if(!nome) return alert("Nome!");
+      let id = document.getElementById('prod-id').value;
+      let docId = id ? id : 'p_' + Date.now();
+      
+      let p = { 
+        id: docId, nome, custo: calcAtual.custo, preco: calcAtual.preco, imp: calcAtual.imp, 
+        m1: document.getElementById('prod-mat-1').value, g1: calcAtual.g1,
+        m2: document.getElementById('prod-mat-2').value, g2: calcAtual.g2,
+        m3: document.getElementById('prod-mat-3').value, g3: calcAtual.g3,
+        m4: document.getElementById('prod-mat-4').value, g4: calcAtual.g4, purga: calcAtual.purga 
       };
-      reader.readAsText(file);
+      
+      db.collection('produtos').doc(docId.toString()).set(p).then(() => {
+        alert("Produto Salvo na nuvem!"); 
+        limparCalc();
+      });
+    }
+    
+    function limparCalc() { 
+      document.getElementById('prod-nome').value=''; 
+      document.getElementById('prod-id').value=''; 
+      document.getElementById('prod-g-1').value=100;
+      document.getElementById('form-title').innerText = "Calcular Peça";
+      calcular(); 
+    }
+    
+    function editarProduto(id) { 
+      let p = produtos.find(x => x.id == id);
+      if(!p) return;
+      document.getElementById('prod-id').value = p.id;
+      document.getElementById('prod-nome').value = p.nome;
+      if (p.m1) document.getElementById('prod-mat-1').value = p.m1; document.getElementById('prod-g-1').value = p.g1;
+      if (p.m2) document.getElementById('prod-mat-2').value = p.m2; document.getElementById('prod-g-2').value = p.g2 || 0;
+      if (p.m3) document.getElementById('prod-mat-3').value = p.m3; document.getElementById('prod-g-3').value = p.g3 || 0;
+      if (p.m4) document.getElementById('prod-mat-4').value = p.m4; document.getElementById('prod-g-4').value = p.g4 || 0;
+      document.getElementById('prod-purga').value = p.purga || 0;
+      
+      document.getElementById('form-title').innerText = "Editar Produto";
+      switchTab('calc'); calcular();
+    }
+
+    function salvarKit() {
+      let nome = document.getElementById('kit-nome').value; if(!nome) return alert("Nome!");
+      let itens = [], c = 0, p = 0;
+      produtos.forEach(prod => {
+        let qField = document.getElementById('kq_'+prod.id);
+        let q = qField ? parseInt(qField.value)||0 : 0;
+        if(q>0) { itens.push({id:prod.id, qtd:q}); c += prod.custo*q; p += prod.preco*q; }
+      });
+      if(itens.length===0) return alert("Selecione quantidades!");
+      
+      let kitId = 'k_' + Date.now();
+      db.collection('kits').doc(kitId).set({ id: kitId, nome, itens, custo: c, preco: p }).then(() => {
+        alert("Combo salvo na nuvem!");
+        document.getElementById('kit-nome').value='';
+      });
+    }
+
+    function salvarPedido() {
+      let cli = document.getElementById('crm-cliente').value, 
+          val = document.getElementById('crm-item').value,
+          cpf = document.getElementById('crm-cpf').value,
+          cont = document.getElementById('crm-contato').value,
+          end = document.getElementById('crm-endereco').value,
+          cid = document.getElementById('crm-cidade').value,
+          est = document.getElementById('crm-estado').value,
+          obs = document.getElementById('crm-obs').value;
+          
+      if(!cli||!val) return alert("Preencha pelo menos o Nome do Cliente e o Produto!");
+      let [tipo, id] = val.split('_'); 
+      let ref = tipo==='p' ? produtos.find(x=>x.id == id) : kits.find(x=>x.id == id);
+      if(!ref) return alert("Erro: Item selecionado não encontrado.");
+
+      let pedId = 'ped_' + Date.now();
+      let novoPedido = { 
+        id: pedId, 
+        data: Date.now(),
+        cliente: cli, 
+        cpf: cpf,
+        contato: cont,
+        endereco: end,
+        cidade: cid,
+        estado: est,
+        obs: obs,
+        tipo, 
+        refId: id, 
+        itemNome: ref.nome, 
+        preco: ref.preco, 
+        status: 'Orçamento', 
+        estoqueDeduzido: false 
+      };
+      
+      db.collection('pedidos').doc(pedId).set(novoPedido).then(() => {
+        document.getElementById('crm-cliente').value='';
+        document.getElementById('crm-cpf').value='';
+        document.getElementById('crm-contato').value='';
+        document.getElementById('crm-endereco').value='';
+        document.getElementById('crm-cidade').value='';
+        document.getElementById('crm-estado').value='';
+        document.getElementById('crm-obs').value='';
+        alert("Orçamento lançado na nuvem com sucesso!");
+      });
+    }
+
+    function gerarPDF(pedId) {
+      let ped = pedidos.find(x => x.id == pedId);
+      if(!ped) return;
+      
+      let ref = ped.tipo === 'p' ? produtos.find(x=>x.id == ped.refId) : null;
+      let tempo = ref ? ref.imp : "Variável"; 
+
+      document.getElementById('p-cliente').innerText = ped.cliente || '-';
+      document.getElementById('p-cpf').innerText = ped.cpf || 'Não informado';
+      document.getElementById('p-contato').innerText = ped.contato || 'Não informado';
+      document.getElementById('p-endereco').innerText = `${ped.endereco || ''} ${ped.cidade || ped.estado ? '- ' + [ped.cidade, ped.estado].filter(Boolean).join('/') : ''}`.trim() || 'Não informado';
+      
+      document.getElementById('p-nome').innerText = ped.itemNome;
+      document.getElementById('p-tempo').innerText = tempo;
+      document.getElementById('p-preco').innerText = fmt(ped.preco);
+
+      window.print();
+    }
+
+    function gerarPDFAvulso() {
+      document.getElementById('p-cliente').innerText = 'Cliente Avulso';
+      document.getElementById('p-cpf').innerText = '-';
+      document.getElementById('p-contato').innerText = '-';
+      document.getElementById('p-endereco').innerText = '-';
+      
+      document.getElementById('p-nome').innerText = document.getElementById('prod-nome').value || 'Peça Avulsa';
+      document.getElementById('p-tempo').innerText = calcAtual.imp || 0;
+      document.getElementById('p-preco').innerText = fmt(calcAtual.preco);
+
+      window.print();
+    }
+
+    function enviarWhatsPedido(id) {
+      let ped = pedidos.find(x => x.id == id);
+      if(!ped) return;
+      
+      let msg = `Olá, *${ped.cliente}*! Tudo bem?\n\nSegue o orçamento referente ao pedido: *${ped.itemNome}*.\n\n💰 *Valor Total:* ${fmt(ped.preco)}\n\nPodemos dar andamento na sua produção? Qualquer dúvida, estou à disposição!`;
+      let fone = ped.contato ? ped.contato.replace(/\D/g, '') : '';
+      
+      let url = fone.length >= 10 
+        ? `https://api.whatsapp.com/send?phone=55${fone}&text=${encodeURIComponent(msg)}` 
+        : `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
+      
+      window.open(url, '_blank');
+    }
+
+    function salvarConfig() {
+      cfg.energia = parseFloat(document.getElementById('cfg-energia').value); 
+      cfg.maqVal = parseFloat(document.getElementById('cfg-maquina').value);
+      cfg.maqHrs = parseFloat(document.getElementById('cfg-horas').value); 
+      cfg.mo = parseFloat(document.getElementById('cfg-mo').value);
+      cfg.risco = parseFloat(document.getElementById('cfg-risco').value); 
+      cfg.taxas = parseFloat(document.getElementById('cfg-taxas').value);
+
+      db.collection('configuracoes').doc('geral').set(cfg).then(() => {
+        alert("Configurações salvas na nuvem!");
+      });
+    }
+    
+    function excluirCloud(col, id) {
+      if(!confirm("Tem certeza que deseja excluir?")) return;
+      
+      if(col === 'pedidos') {
+        let p = pedidos.find(x => x.id == id);
+        if(p && p.estoqueDeduzido) {
+          if(confirm("Este pedido já teve o estoque deduzido. Deseja DEVOLVER os materiais ao estoque antes de excluir?")) {
+            movimentarEstoquePedidoCloud(p, 1);
+          }
+        }
+      }
+
+      db.collection(col).doc(id.toString()).delete().then(() => {
+        alert("Excluído com sucesso!");
+      });
+    }
+    
+    function exportar() { 
+      let data = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({cfg, materiais, produtos, kits, pedidos})); 
+      let a = document.createElement('a'); 
+      a.href = data; 
+      a.download = `backup_3d_${new Date().toISOString().slice(0,10)}.json`; 
+      a.click(); 
+    }
+
+    function importar(e) { 
+      let r = new FileReader(); 
+      r.onload = function(ev){ 
+        try {
+          let obj = JSON.parse(ev.target.result); 
+          if(obj.cfg) db.collection('configuracoes').doc('geral').set(obj.cfg);
+          alert("Backup lido! Sincronize os dados conforme necessário.");
+        } catch(err) {
+          alert("Erro ao ler o arquivo de backup.");
+        }
+      }; 
+      r.readAsText(e.target.files[0]); 
     }
   </script>
 </body>
