@@ -262,9 +262,10 @@
         <input type="hidden" id="mat-id">
         <div class="grid-4">
           <div class="form-group"><label>Código único</label><input type="text" id="mat-codigo" placeholder="Ex: PLA-01"></div>
-          <div class="form-group"><label>Tipo (PLA/PETG)</label><input type="text" id="mat-nome"></div>
-          <div class="form-group"><label>Marca / Cor</label><input type="text" id="mat-detalhe"></div>
-          <div class="form-group"><label>Preço / Kg (R$)</label><input type="number" step="0.01" id="mat-preco"></div>
+          <div class="form-group"><label>Tipo (PLA/PETG)</label><input type="text" id="mat-nome" placeholder="Ex: PLA"></div>
+          <div class="form-group"><label>Marca</label><input type="text" id="mat-marca" placeholder="Ex: Voolt3D"></div>
+          <div class="form-group"><label>Cor</label><input type="text" id="mat-cor" placeholder="Ex: Vermelho"></div>
+          <div class="form-group"><label>Preço / Kg (R$)</label><input type="number" step="0.01" id="mat-preco" placeholder="90.00"></div>
           <div class="form-group"><label>Estoque (g)</label><input type="number" id="mat-estoque" value="1000"></div>
         </div>
         <div class="btn-group">
@@ -356,7 +357,7 @@
 
     // VARIÁVEIS GLOBAIS ATUALIZADAS
     let cfg = { potencia: 110, kwh: 0.65, maqVal: 4500, maqHrs: 5000, mo: 25, risco: 5, impostoPct: 10, taxaPgPct: 3.5 };
-    let materiais = [{ id: 'm1', nome: 'PLA', detalhe: 'Voolt3D Vermelho', preco: 90, estoque: 1000 }];
+    let materiais = [{ id: 'm1', nome: 'PLA', marca: 'Voolt3D', cor: 'Vermelho', preco: 90, estoque: 1000 }];
     let acessorios = [];
     let produtos = []; let kits = []; let pedidos = [];
     let calcAtual = {};
@@ -402,7 +403,7 @@
         materiais = [];
         snapshot.forEach(doc => materiais.push({ id: doc.id, ...doc.data() }));
         if(materiais.length === 0) {
-          db.collection('materiais').doc('m1').set({ nome: 'PLA', detalhe: 'Padrão', preco: 90, estoque: 1000 });
+          db.collection('materiais').doc('m1').set({ nome: 'PLA', marca: 'Padrão', cor: '', preco: 90, estoque: 1000 });
         } else {
           atualizarSelectsEListas();
         }
@@ -444,7 +445,10 @@
 
     function atualizarSelectsEListas() {
       // Materiais
-      const opts = `<option value="">-- Nenhum --</option>` + materiais.map(m => `<option value="${m.id}">${m.codigo ? '['+m.codigo+'] ' : ''}${m.nome} ${m.detalhe} (R$${m.preco})</option>`).join('');
+      const opts = `<option value="">-- Nenhum --</option>` + materiais.map(m => {
+        let desc = m.detalhe ? m.detalhe : `${m.marca || ''} ${m.cor || ''}`.trim();
+        return `<option value="${m.id}">${m.codigo ? '['+m.codigo+'] ' : ''}${m.nome} ${desc} (R$${m.preco})</option>`;
+      }).join('');
       [1,2,3,4].forEach(i => {
         let el = document.getElementById(`prod-mat-${i}`);
         if(el) el.innerHTML = opts;
@@ -499,9 +503,10 @@
       container.innerHTML = materiais.map(m => {
         let estClass = m.estoque <= 200 ? 'badge-danger' : 'badge-default';
         let alerta = m.estoque <= 200 ? `<br><span style="color:var(--danger); font-size:0.75rem;">⚠️ Estoque Crítico!</span>` : '';
+        let desc = m.detalhe ? m.detalhe : `${m.marca || ''} ${m.cor || ''}`.trim();
         return `<div class="list-item">
                   <div class="item-info">
-                    <h3><span style="color:var(--accent); margin-right:0.5rem;">[${m.codigo || 'S/C'}]</span> ${m.nome} <span style="font-size:0.8rem">${m.detalhe}</span></h3>
+                    <h3><span style="color:var(--accent); margin-right:0.5rem;">[${m.codigo || 'S/C'}]</span> ${m.nome} <span style="font-size:0.8rem">${desc}</span></h3>
                     <p>${fmt(m.preco)}/kg | <span class="badge ${estClass}">Estoque: ${m.estoque}g</span>${alerta}</p>
                   </div>
                   <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
@@ -516,8 +521,9 @@
     function reporEstoque(id) {
       let m = materiais.find(x => x.id === id);
       if(m) {
+        let desc = m.detalhe ? m.detalhe : `${m.marca || ''} ${m.cor || ''}`.trim();
         // 1. Pergunta a quantidade comprada
-        let qtdAdicional = parseFloat(prompt(`Quantas gramas de ${m.nome} (${m.detalhe}) você está adicionando?`, "1000"));
+        let qtdAdicional = parseFloat(prompt(`Quantas gramas de ${m.nome} (${desc}) você está adicionando?`, "1000"));
         if(isNaN(qtdAdicional) || qtdAdicional <= 0) return;
         
         // 2. Pergunta o preço pago por KG
@@ -544,8 +550,19 @@
     function editarMaterial(id) {
       let m = materiais.find(x => x.id === id);
       if(!m) return;
-      document.getElementById('mat-id').value = m.id; document.getElementById('mat-codigo').value = m.codigo || ''; document.getElementById('mat-nome').value = m.nome;
-      document.getElementById('mat-detalhe').value = m.detalhe; document.getElementById('mat-preco').value = m.preco;
+      document.getElementById('mat-id').value = m.id; 
+      document.getElementById('mat-codigo').value = m.codigo || ''; 
+      document.getElementById('mat-nome').value = m.nome;
+      
+      if(m.detalhe) {
+        document.getElementById('mat-marca').value = m.detalhe;
+        document.getElementById('mat-cor').value = '';
+      } else {
+        document.getElementById('mat-marca').value = m.marca || ''; 
+        document.getElementById('mat-cor').value = m.cor || '';
+      }
+      
+      document.getElementById('mat-preco').value = m.preco;
       document.getElementById('mat-estoque').value = m.estoque;
       
       document.getElementById('btn-mat').innerText = "Atualizar Material";
@@ -553,8 +570,12 @@
     }
 
     function cancelarEdicaoMat() {
-      document.getElementById('mat-id').value = ''; document.getElementById('mat-codigo').value = ''; document.getElementById('mat-nome').value = '';
-      document.getElementById('mat-detalhe').value = ''; document.getElementById('mat-preco').value = '';
+      document.getElementById('mat-id').value = ''; 
+      document.getElementById('mat-codigo').value = ''; 
+      document.getElementById('mat-nome').value = '';
+      document.getElementById('mat-marca').value = ''; 
+      document.getElementById('mat-cor').value = ''; 
+      document.getElementById('mat-preco').value = '';
       document.getElementById('mat-estoque').value = '1000';
       
       document.getElementById('btn-mat').innerText = "Salvar Material";
@@ -564,12 +585,18 @@
     function salvarMaterial() {
       let id = document.getElementById('mat-id').value;
       let cod = document.getElementById('mat-codigo').value;
-      let nome = document.getElementById('mat-nome').value, det = document.getElementById('mat-detalhe').value, 
-          prc = parseFloat(document.getElementById('mat-preco').value), est = parseFloat(document.getElementById('mat-estoque').value);
+      let nome = document.getElementById('mat-nome').value;
+      let marca = document.getElementById('mat-marca').value;
+      let cor = document.getElementById('mat-cor').value;
+      let prc = parseFloat(document.getElementById('mat-preco').value);
+      let est = parseFloat(document.getElementById('mat-estoque').value);
+      
       if(!nome||isNaN(prc)) return alert("Preencha o tipo e o preço corretamente.");
 
       let docId = id ? id : 'm_' + Date.now();
-      db.collection('materiais').doc(docId).set({ codigo: cod, nome, detalhe: det, preco: prc, estoque: est }).then(() => {
+      
+      // Salva usando as chaves separadas (o campo detalhe é ignorado e será "migrado" no banco localmente se existia antes)
+      db.collection('materiais').doc(docId).set({ codigo: cod, nome, marca: marca, cor: cor, preco: prc, estoque: est }).then(() => {
         cancelarEdicaoMat(); alert("Material salvo!");
       });
     }
@@ -802,7 +829,7 @@
     }
 
     // ==========================================
-    // KITS & CRM & OUTROS (Sem modificações estruturais)
+    // KITS & CRM & OUTROS
     // ==========================================
     function renderizarKits() {
       let container = document.getElementById('lista-kits');
@@ -995,7 +1022,7 @@
       cfg.mo = parseFloat(document.getElementById('cfg-mo').value) || 0;
       cfg.risco = parseFloat(document.getElementById('cfg-risco').value) || 0; 
       cfg.impostoPct = parseFloat(document.getElementById('cfg-imposto').value) || 0;
-      cfg.taxaPgPct = parseFloat(document.getElementById('cfg-taxapg').value) || 0;
+      cfg.taxapgPct = parseFloat(document.getElementById('cfg-taxapg').value) || 0;
 
       db.collection('configuracoes').doc('geral').set(cfg).then(() => { alert("Custos salvos na nuvem!"); });
     }
