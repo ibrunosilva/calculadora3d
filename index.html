@@ -261,6 +261,7 @@
         <h2>Estoque de Materiais</h2>
         <input type="hidden" id="mat-id">
         <div class="grid-4">
+          <div class="form-group"><label>Código único</label><input type="text" id="mat-codigo" placeholder="Ex: PLA-01"></div>
           <div class="form-group"><label>Tipo (PLA/PETG)</label><input type="text" id="mat-nome"></div>
           <div class="form-group"><label>Marca / Cor</label><input type="text" id="mat-detalhe"></div>
           <div class="form-group"><label>Preço / Kg (R$)</label><input type="number" step="0.01" id="mat-preco"></div>
@@ -443,7 +444,7 @@
 
     function atualizarSelectsEListas() {
       // Materiais
-      const opts = `<option value="">-- Nenhum --</option>` + materiais.map(m => `<option value="${m.id}">${m.nome} ${m.detalhe} (R$${m.preco})</option>`).join('');
+      const opts = `<option value="">-- Nenhum --</option>` + materiais.map(m => `<option value="${m.id}">${m.codigo ? '['+m.codigo+'] ' : ''}${m.nome} ${m.detalhe} (R$${m.preco})</option>`).join('');
       [1,2,3,4].forEach(i => {
         let el = document.getElementById(`prod-mat-${i}`);
         if(el) el.innerHTML = opts;
@@ -500,11 +501,11 @@
         let alerta = m.estoque <= 200 ? `<br><span style="color:var(--danger); font-size:0.75rem;">⚠️ Estoque Crítico!</span>` : '';
         return `<div class="list-item">
                   <div class="item-info">
-                    <h3>${m.nome} <span style="font-size:0.8rem">${m.detalhe}</span></h3>
+                    <h3><span style="color:var(--accent); margin-right:0.5rem;">[${m.codigo || 'S/C'}]</span> ${m.nome} <span style="font-size:0.8rem">${m.detalhe}</span></h3>
                     <p>${fmt(m.preco)}/kg | <span class="badge ${estClass}">Estoque: ${m.estoque}g</span>${alerta}</p>
                   </div>
                   <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-                    <button class="btn btn-outline" style="padding:0.3rem; border-color:var(--primary); color:var(--primary);" onclick="reporEstoque('${m.id}')">+ 1Kg</button>
+                    <button class="btn btn-outline" style="padding:0.3rem; border-color:var(--primary); color:var(--primary);" onclick="reporEstoque('${m.id}')">+ Repor</button>
                     <button class="btn btn-outline" style="padding:0.3rem" onclick="editarMaterial('${m.id}')">Editar</button>
                     <button class="btn btn-danger" style="padding:0.3rem" onclick="excluirCloud('materiais','${m.id}')">X</button>
                   </div>
@@ -515,9 +516,27 @@
     function reporEstoque(id) {
       let m = materiais.find(x => x.id === id);
       if(m) {
-        let novoEstoque = m.estoque + 1000;
-        db.collection('materiais').doc(id.toString()).update({ estoque: novoEstoque }).then(() => {
-          alert(`Sucesso! Adicionado 1kg ao estoque de ${m.nome}. Estoque atual: ${novoEstoque}g.`);
+        // 1. Pergunta a quantidade comprada
+        let qtdAdicional = parseFloat(prompt(`Quantas gramas de ${m.nome} (${m.detalhe}) você está adicionando?`, "1000"));
+        if(isNaN(qtdAdicional) || qtdAdicional <= 0) return;
+        
+        // 2. Pergunta o preço pago por KG
+        let precoNovoKg = parseFloat(prompt(`Qual foi o preço pago por KG (R$) nessa nova compra?`, m.preco));
+        if(isNaN(precoNovoKg) || precoNovoKg < 0) return;
+
+        // 3. Cálculo do Preço Médio Ponderado
+        let custoAtualTotal = (m.estoque / 1000) * m.preco;
+        let custoNovoTotal = (qtdAdicional / 1000) * precoNovoKg;
+        
+        let novoEstoque = m.estoque + qtdAdicional;
+        let novoPrecoMedio = (custoAtualTotal + custoNovoTotal) / (novoEstoque / 1000);
+
+        // 4. Salva no banco de dados
+        db.collection('materiais').doc(id.toString()).update({ 
+          estoque: novoEstoque,
+          preco: novoPrecoMedio 
+        }).then(() => {
+          alert(`Sucesso! Estoque: ${novoEstoque}g | Novo Preço Médio: R$ ${novoPrecoMedio.toFixed(2)}/kg.`);
         });
       }
     }
@@ -525,7 +544,7 @@
     function editarMaterial(id) {
       let m = materiais.find(x => x.id === id);
       if(!m) return;
-      document.getElementById('mat-id').value = m.id; document.getElementById('mat-nome').value = m.nome;
+      document.getElementById('mat-id').value = m.id; document.getElementById('mat-codigo').value = m.codigo || ''; document.getElementById('mat-nome').value = m.nome;
       document.getElementById('mat-detalhe').value = m.detalhe; document.getElementById('mat-preco').value = m.preco;
       document.getElementById('mat-estoque').value = m.estoque;
       
@@ -534,7 +553,7 @@
     }
 
     function cancelarEdicaoMat() {
-      document.getElementById('mat-id').value = ''; document.getElementById('mat-nome').value = '';
+      document.getElementById('mat-id').value = ''; document.getElementById('mat-codigo').value = ''; document.getElementById('mat-nome').value = '';
       document.getElementById('mat-detalhe').value = ''; document.getElementById('mat-preco').value = '';
       document.getElementById('mat-estoque').value = '1000';
       
@@ -544,12 +563,13 @@
 
     function salvarMaterial() {
       let id = document.getElementById('mat-id').value;
+      let cod = document.getElementById('mat-codigo').value;
       let nome = document.getElementById('mat-nome').value, det = document.getElementById('mat-detalhe').value, 
           prc = parseFloat(document.getElementById('mat-preco').value), est = parseFloat(document.getElementById('mat-estoque').value);
       if(!nome||isNaN(prc)) return alert("Preencha o tipo e o preço corretamente.");
 
       let docId = id ? id : 'm_' + Date.now();
-      db.collection('materiais').doc(docId).set({ nome, detalhe: det, preco: prc, estoque: est }).then(() => {
+      db.collection('materiais').doc(docId).set({ codigo: cod, nome, detalhe: det, preco: prc, estoque: est }).then(() => {
         cancelarEdicaoMat(); alert("Material salvo!");
       });
     }
