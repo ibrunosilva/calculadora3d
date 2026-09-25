@@ -561,7 +561,13 @@ function renderizarKits() {
 
 function atualizarSelectCRM() {
   let el = document.getElementById('crm-item');
-  if(el) { el.innerHTML = `<optgroup label="Produtos">`+produtos.map(p=>`<option value="p_${p.id}">${escapeHTML(p.nome)}</option>`).join('')+`</optgroup><optgroup label="Kits">`+kits.map(k=>`<option value="k_${k.id}">${escapeHTML(k.nome)}</option>`).join('')+`</optgroup>`; }
+  if(el) { 
+    el.innerHTML = `<optgroup label="Produtos">` + 
+      produtos.map(p => `<option value="${p.id}">${escapeHTML(p.nome)}</option>`).join('') + 
+      `</optgroup><optgroup label="Kits">` + 
+      kits.map(k => `<option value="${k.id}">${escapeHTML(k.nome)}</option>`).join('') + 
+      `</optgroup>`; 
+  }
 }
 
 function renderizarKitSelector() {
@@ -696,6 +702,29 @@ function salvarPedido(btn) {
       est = document.getElementById('crm-estado').value, obs = document.getElementById('crm-obs').value;
       
   if(!cli||!val) return showToast("Preencha pelo menos o Nome do Cliente e o Produto!", "warning");
+  
+  // Correção: Pega o tipo (p ou k) da primeira letra e usa o val inteiro como ID
+  let tipo = val.split('_')[0]; 
+  let id = val; 
+  
+  let ref = tipo === 'p' ? produtos.find(x => x.id === id) : kits.find(x => x.id === id);
+  if(!ref) return showToast("Erro: Item selecionado não encontrado.", "error");
+
+  toggleLoading(btn, true);
+  let pedId = 'ped_' + Date.now();
+  let novoPedido = { 
+    id: pedId, data: Date.now(), cliente: cli, cpf: cpf, contato: cont, endereco: end, cidade: cid, estado: est, obs: obs,
+    tipo: tipo, refId: id, itemNome: ref.nome, preco: ref.preco, status: 'Orçamento', estoqueDeduzido: false 
+  };
+  
+  db.collection('pedidos').doc(pedId).set(novoPedido).then(() => {
+    toggleLoading(btn, false);
+    ['crm-cliente','crm-cpf','crm-contato','crm-endereco','crm-cidade','crm-estado','crm-obs'].forEach(id => document.getElementById(id).value='');
+    showToast("Orçamento lançado!");
+  });
+}
+      
+  if(!cli||!val) return showToast("Preencha pelo menos o Nome do Cliente e o Produto!", "warning");
   let [tipo, id] = val.split('_'); 
   let ref = tipo==='p' ? produtos.find(x=>x.id == id) : kits.find(x=>x.id == id);
   if(!ref) return showToast("Erro: Item selecionado não encontrado.", "error");
@@ -712,7 +741,6 @@ function salvarPedido(btn) {
     ['crm-cliente','crm-cpf','crm-contato','crm-endereco','crm-cidade','crm-estado','crm-obs'].forEach(id => document.getElementById(id).value='');
     showToast("Orçamento lançado!");
   });
-}
 
 function gerarPDF(pedId) {
   let ped = pedidos.find(x => x.id == pedId); if(!ped) return;
