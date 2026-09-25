@@ -147,20 +147,27 @@ body:not([data-theme="light"]) .card:hover {
     margin: 0;
     border-radius: 20px 20px 0 0;
     z-index: 9999;
-    /* Efeito Glassmorphism (Vidro Fosco) */
-    background: rgba(30, 41, 59, 0.85); /* Fundo semi-transparente Dark */
+    /* Efeito Glassmorphism */
+    background: rgba(30, 41, 59, 0.85);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border: none;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 -8px 25px rgba(0, 0, 0, 0.3);
     
-    justify-content: space-around;
-    padding: 0.6rem 0.2rem 1rem 0.2rem; /* Mais espaço inferior para o polegar */
+    /* CORREÇÃO: Permite deslizar horizontalmente */
+    justify-content: flex-start;
+    padding: 0.6rem 0.5rem 1rem 0.5rem;
     flex-wrap: nowrap;
+    overflow-x: auto; 
+    -webkit-overflow-scrolling: touch; /* Deslize suave no iOS */
   }
   
-  /* Ajuste automático do vidro fosco se você usar o Tema Claro */
+  /* Oculta a barra de rolagem visualmente, mas mantém o deslize ativo */
+  nav::-webkit-scrollbar {
+    display: none;
+  }
+  
   [data-theme="light"] nav {
     background: rgba(255, 255, 255, 0.85);
     border-top: 1px solid rgba(0, 0, 0, 0.05);
@@ -168,17 +175,20 @@ body:not([data-theme="light"]) .card:hover {
   }
 
   nav button {
+    flex: 0 0 auto; /* Impede que o botão encolha */
+    min-width: 85px; /* Largura mínima para cada ícone+texto caberem com folga */
     flex-direction: column;
     font-size: 0.7rem;
-    min-width: auto;
     padding: 0.5rem;
     gap: 0.4rem;
   }
+  
   nav button svg { width: 22px; height: 22px; }
   
-  body { padding-bottom: 110px; } /* Evita que o conteúdo fique escondido atrás do menu */
+  body { padding-bottom: 110px; } 
   #toast-container { bottom: 100px; } 
 }
+
 
 @media print { 
   body * { visibility: hidden; } 
