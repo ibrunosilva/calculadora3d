@@ -99,7 +99,12 @@ function fazerLogin(btn) {
 }
 
 function toggleTheme() { document.body.setAttribute('data-theme', document.body.getAttribute('data-theme')==='light'?'dark':'light'); }
-function switchTab(t) { document.querySelectorAll('.tab-content, nav button').forEach(e => e.classList.remove('active')); document.getElementById('tab-'+t).classList.add('active'); event.target.classList.add('active'); }
+function switchTab(t) { 
+  document.querySelectorAll('.tab-content, nav button').forEach(e => e.classList.remove('active')); 
+  document.getElementById('tab-'+t).classList.add('active'); 
+  event.currentTarget.classList.add('active'); 
+  if(t === 'dashboard') atualizarDashboard(); // Gera os gráficos na hora
+}
 function fmt(v) { return (v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
 function fmtDate(ms) { let d = new Date(ms); return d.toLocaleDateString('pt-BR'); }
 
@@ -817,3 +822,83 @@ document.getElementById('crm-contato').addEventListener('input', function (e) {
   let x = e.target.value.replace(/\D/g, '').match(/(\d{0,2})(\d{0,5})(\d{0,4})/);
   e.target.value = !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : '');
 });
+
+// ==========================================
+// DASHBOARD E GRÁFICOS (CHART.JS)
+// ==========================================
+let chartFinancas = null;
+let chartProdutos = null;
+
+Chart.defaults.color = '#94a3b8'; // Cor da fonte adaptada para modo noturno
+
+function atualizarDashboard() {
+  let pedidosConcluidos = pedidos.filter(p => p.status === 'Enviado');
+  
+  // 1. Processar Faturamento Mensal
+  let meses = {};
+  let produtosCount = {};
+
+  pedidosConcluidos.forEach(p => {
+    // Pega o mês e o ano (ex: "out/23")
+    let d = new Date(p.data);
+    let mesAno = d.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
+
+    if (!meses[mesAno]) meses[mesAno] = { receita: 0, custo: 0 };
+    meses[mesAno].receita += p.preco;
+
+    // Buscar custo original para calcular o lucro
+    let ref = p.tipo === 'p' ? produtos.find(x => x.id === p.refId) : kits.find(x => x.id === p.refId);
+    let custoItem = ref ? ref.custo : 0;
+    meses[mesAno].custo += custoItem;
+
+    // 2. Contar produtos mais vendidos
+    if (!produtosCount[p.itemNome]) produtosCount[p.itemNome] = 0;
+    produtosCount[p.itemNome]++;
+  });
+
+  // Preparar arrays para o Chart.js
+  let labelsMeses = Object.keys(meses);
+  let dadosReceita = labelsMeses.map(m => meses[m].receita);
+  let dadosLucro = labelsMeses.map(m => meses[m].receita - meses[m].custo);
+
+  let produtosOrdenados = Object.entries(produtosCount).sort((a,b) => b[1] - a[1]).slice(0, 5);
+  let labelsProd = produtosOrdenados.map(p => p[0]);
+  let dadosProd = produtosOrdenados.map(p => p[1]);
+
+  // --- RENDERIZAR GRÁFICO: FINANÇAS ---
+  if (chartFinancas) chartFinancas.destroy(); // Apaga o antigo antes de desenhar
+  let ctxFinancas = document.getElementById('chartFinancas').getContext('2d');
+  
+  chartFinancas = new Chart(ctxFinancas, {
+    type: 'bar',
+    data: {
+      labels: labelsMeses.length ? labelsMeses : ['Sem vendas ainda'],
+      datasets: [
+        { label: 'Faturamento (R$)', data: dadosReceita.length ? dadosReceita : [0], backgroundColor: '#10b981', borderRadius: 4 },
+        { label: 'Lucro Liquido (R$)', data: dadosLucro.length ? dadosLucro : [0], backgroundColor: '#3b82f6', borderRadius: 4 }
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false }
+  });
+
+  // --- RENDERIZAR GRÁFICO: PRODUTOS ---
+  if (chartProdutos) chartProdutos.destroy();
+  let ctxProd = document.getElementById('chartProdutos').getContext('2d');
+  
+  chartProdutos = new Chart(ctxProd, {
+    type: 'doughnut',
+    data: {
+      labels: labelsProd.length ? labelsProd : ['Nenhum dado'],
+      datasets: [{
+        data: dadosProd.length ? dadosProd : [1],
+        backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444'],
+        borderWidth: 0
+      }]
+    },
+    options: { 
+      responsive: true, 
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom' } }
+    }
+  });
+}
