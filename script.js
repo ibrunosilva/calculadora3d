@@ -102,7 +102,7 @@ function toggleTheme() { document.body.setAttribute('data-theme', document.body.
 function switchTab(t) { 
   document.querySelectorAll('.tab-content, nav button').forEach(e => e.classList.remove('active')); 
   document.getElementById('tab-'+t).classList.add('active'); 
-  event.currentTarget.classList.add('active'); 
+  if(event && event.currentTarget) event.currentTarget.classList.add('active'); 
   if(t === 'dashboard') atualizarDashboard(); // Gera os gráficos na hora
 }
 function fmt(v) { return (v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
@@ -703,7 +703,6 @@ function salvarPedido(btn) {
       
   if(!cli||!val) return showToast("Preencha pelo menos o Nome do Cliente e o Produto!", "warning");
   
-  // Correção: Pega o tipo (p ou k) da primeira letra e usa o val inteiro como ID
   let tipo = val.split('_')[0]; 
   let id = val; 
   
@@ -723,24 +722,6 @@ function salvarPedido(btn) {
     showToast("Orçamento lançado!");
   });
 }
-      
-  if(!cli||!val) return showToast("Preencha pelo menos o Nome do Cliente e o Produto!", "warning");
-  let [tipo, id] = val.split('_'); 
-  let ref = tipo==='p' ? produtos.find(x=>x.id == id) : kits.find(x=>x.id == id);
-  if(!ref) return showToast("Erro: Item selecionado não encontrado.", "error");
-
-  toggleLoading(btn, true);
-  let pedId = 'ped_' + Date.now();
-  let novoPedido = { 
-    id: pedId, data: Date.now(), cliente: cli, cpf: cpf, contato: cont, endereco: end, cidade: cid, estado: est, obs: obs,
-    tipo, refId: id, itemNome: ref.nome, preco: ref.preco, status: 'Orçamento', estoqueDeduzido: false 
-  };
-  
-  db.collection('pedidos').doc(pedId).set(novoPedido).then(() => {
-    toggleLoading(btn, false);
-    ['crm-cliente','crm-cpf','crm-contato','crm-endereco','crm-cidade','crm-estado','crm-obs'].forEach(id => document.getElementById(id).value='');
-    showToast("Orçamento lançado!");
-  });
 
 function gerarPDF(pedId) {
   let ped = pedidos.find(x => x.id == pedId); if(!ped) return;
@@ -857,9 +838,13 @@ document.getElementById('crm-contato').addEventListener('input', function (e) {
 let chartFinancas = null;
 let chartProdutos = null;
 
-Chart.defaults.color = '#94a3b8'; // Cor da fonte adaptada para modo noturno
+if (typeof Chart !== 'undefined') {
+  Chart.defaults.color = '#94a3b8'; // Cor da fonte adaptada para modo noturno
+}
 
 function atualizarDashboard() {
+  if (typeof Chart === 'undefined') return;
+
   let pedidosConcluidos = pedidos.filter(p => p.status === 'Enviado');
   
   // 1. Processar Faturamento Mensal
@@ -867,24 +852,20 @@ function atualizarDashboard() {
   let produtosCount = {};
 
   pedidosConcluidos.forEach(p => {
-    // Pega o mês e o ano (ex: "out/23")
     let d = new Date(p.data);
     let mesAno = d.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
 
     if (!meses[mesAno]) meses[mesAno] = { receita: 0, custo: 0 };
     meses[mesAno].receita += p.preco;
 
-    // Buscar custo original para calcular o lucro
     let ref = p.tipo === 'p' ? produtos.find(x => x.id === p.refId) : kits.find(x => x.id === p.refId);
     let custoItem = ref ? ref.custo : 0;
     meses[mesAno].custo += custoItem;
 
-    // 2. Contar produtos mais vendidos
     if (!produtosCount[p.itemNome]) produtosCount[p.itemNome] = 0;
     produtosCount[p.itemNome]++;
   });
 
-  // Preparar arrays para o Chart.js
   let labelsMeses = Object.keys(meses);
   let dadosReceita = labelsMeses.map(m => meses[m].receita);
   let dadosLucro = labelsMeses.map(m => meses[m].receita - meses[m].custo);
@@ -894,39 +875,43 @@ function atualizarDashboard() {
   let dadosProd = produtosOrdenados.map(p => p[1]);
 
   // --- RENDERIZAR GRÁFICO: FINANÇAS ---
-  if (chartFinancas) chartFinancas.destroy(); // Apaga o antigo antes de desenhar
-  let ctxFinancas = document.getElementById('chartFinancas').getContext('2d');
-  
-  chartFinancas = new Chart(ctxFinancas, {
-    type: 'bar',
-    data: {
-      labels: labelsMeses.length ? labelsMeses : ['Sem vendas ainda'],
-      datasets: [
-        { label: 'Faturamento (R$)', data: dadosReceita.length ? dadosReceita : [0], backgroundColor: '#10b981', borderRadius: 4 },
-        { label: 'Lucro Liquido (R$)', data: dadosLucro.length ? dadosLucro : [0], backgroundColor: '#3b82f6', borderRadius: 4 }
-      ]
-    },
-    options: { responsive: true, maintainAspectRatio: false }
-  });
+  if (chartFinancas) chartFinancas.destroy();
+  let canvasFin = document.getElementById('chartFinancas');
+  if (canvasFin) {
+    let ctxFinancas = canvasFin.getContext('2d');
+    chartFinancas = new Chart(ctxFinancas, {
+      type: 'bar',
+      data: {
+        labels: labelsMeses.length ? labelsMeses : ['Sem vendas ainda'],
+        datasets: [
+          { label: 'Faturamento (R$)', data: dadosReceita.length ? dadosReceita : [0], backgroundColor: '#10b981', borderRadius: 4 },
+          { label: 'Lucro Liquido (R$)', data: dadosLucro.length ? dadosLucro : [0], backgroundColor: '#3b82f6', borderRadius: 4 }
+        ]
+      },
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+  }
 
   // --- RENDERIZAR GRÁFICO: PRODUTOS ---
   if (chartProdutos) chartProdutos.destroy();
-  let ctxProd = document.getElementById('chartProdutos').getContext('2d');
-  
-  chartProdutos = new Chart(ctxProd, {
-    type: 'doughnut',
-    data: {
-      labels: labelsProd.length ? labelsProd : ['Nenhum dado'],
-      datasets: [{
-        data: dadosProd.length ? dadosProd : [1],
-        backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444'],
-        borderWidth: 0
-      }]
-    },
-    options: { 
-      responsive: true, 
-      maintainAspectRatio: false,
-      plugins: { legend: { position: 'bottom' } }
-    }
-  });
+  let canvasProd = document.getElementById('chartProdutos');
+  if (canvasProd) {
+    let ctxProd = canvasProd.getContext('2d');
+    chartProdutos = new Chart(ctxProd, {
+      type: 'doughnut',
+      data: {
+        labels: labelsProd.length ? labelsProd : ['Nenhum dado'],
+        datasets: [{
+          data: dadosProd.length ? dadosProd : [1],
+          backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444'],
+          borderWidth: 0
+        }]
+      },
+      options: { 
+        responsive: true, 
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom' } }
+      }
+    });
+  }
 }
