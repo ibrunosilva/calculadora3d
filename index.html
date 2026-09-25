@@ -143,12 +143,12 @@
           <div class="result-row"><span>Depreciação Máquina:</span> <span id="res-depreciacao">R$ 0,00</span></div>
           <div class="result-row"><span>Mão de Obra:</span> <span id="res-mo">R$ 0,00</span></div>
           <div class="result-row"><span>Acessórios + Embalagem:</span> <span id="res-extras">R$ 0,00</span></div>
-          <div class="result-row" style="font-weight: bold; color: var(--accent);"><span>Subtotal Base (Custo Real):</span> <span id="res-subtotal">R$ 0,00</span></div>
+          <div class="result-row" style="font-weight: bold; color: var(--accent);"><span>Subtotal Base (Custo Direto):</span> <span id="res-subtotal">R$ 0,00</span></div>
           <div class="result-row"><span>Impostos & Taxas Pagas:</span> <span id="res-taxas">R$ 0,00</span></div>
           
-          <div class="result-row highlight"><span>Custo Total:</span> <span id="res-custo">R$ 0,00</span></div>
+          <div class="result-row highlight"><span>Custo Total Oculto:</span> <span id="res-custo">R$ 0,00</span></div>
           <div class="result-row highlight" style="color: var(--primary);"><span>Preço Sugerido:</span> <span id="res-venda">R$ 0,00</span></div>
-          <div class="result-row"><span>Lucro Real:</span> <span id="res-lucro" style="color: #4ade80; font-weight: bold;">R$ 0,00</span></div>
+          <div class="result-row"><span>Lucro Real (Margem Líquida):</span> <span id="res-lucro" style="color: #4ade80; font-weight: bold;">R$ 0,00</span></div>
         </div>
         
         <div class="btn-group">
@@ -161,7 +161,13 @@
 
     <!-- ABA PRODUTOS -->
     <div id="tab-produtos" class="tab-content">
-      <div class="card"><h2><i data-lucide="boxes"></i> Produtos Salvos</h2><div id="lista-produtos" class="list-container"></div></div>
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+          <h2 style="margin-bottom:0; border-bottom:none; padding-bottom:0;"><i data-lucide="boxes"></i> Produtos Salvos</h2>
+          <input type="text" id="busca-produtos" placeholder="🔍 Pesquisar Produto..." oninput="filtrarProdutos()" style="padding:0.4rem 0.6rem; font-size:0.85rem; border-radius:6px; border:1px solid var(--card-border); background:var(--input-bg); color:var(--text); width:200px;">
+        </div>
+        <div id="lista-produtos" class="list-container"></div>
+      </div>
     </div>
 
     <!-- ABA KITS/COMBOS -->
@@ -171,7 +177,6 @@
         <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">Selecione os produtos e as quantidades para formar um combo.</p>
         <div class="form-group"><label>Nome do Combo</label><input type="text" id="kit-nome" placeholder="Ex: Kit Enfeites de Natal"></div>
         
-        <!-- NOVA ESTRUTURA IGUAL AOS ACESSÓRIOS -->
         <div class="form-group" style="background: var(--input-bg); padding: 1rem; border-radius: 8px; border: 1px solid var(--card-border); margin-bottom: 1rem;">
           <label style="color: var(--primary); font-weight: bold; margin-bottom: 0.5rem; font-size: 0.95rem; display:flex; align-items:center; gap:0.3rem;"><i data-lucide="box" width="18"></i> Adicionar Produtos ao Combo</label>
           <div style="display: flex; gap: 0.5rem; align-items: flex-end; flex-wrap: wrap;">
@@ -185,7 +190,6 @@
             </div>
             <button class="btn" style="padding: 0.6rem 1.2rem; margin-bottom: 0; font-size: 1.1rem;" onclick="addProdutoKit()"><i data-lucide="plus"></i></button>
           </div>
-          <!-- LISTA ONDE OS PRODUTOS ADICIONADOS VÃO APARECER -->
           <div id="lista-calc-kit-produtos" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
             <p style="font-size: 0.8rem; color: var(--text-muted);">Nenhum produto adicionado a este combo.</p>
           </div>
@@ -193,7 +197,14 @@
 
         <button class="btn" onclick="salvarKit(this)"><i data-lucide="save"></i> Salvar Combo</button>
       </div>
-      <div class="card"><h2><i data-lucide="list"></i> Combos Salvos</h2><div id="lista-kits" class="list-container"></div></div>
+      
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+          <h2 style="margin-bottom:0; border-bottom:none; padding-bottom:0;"><i data-lucide="list"></i> Combos Salvos</h2>
+          <input type="text" id="busca-kits" placeholder="🔍 Pesquisar Combo..." oninput="filtrarKits()" style="padding:0.4rem 0.6rem; font-size:0.85rem; border-radius:6px; border:1px solid var(--card-border); background:var(--input-bg); color:var(--text); width:200px;">
+        </div>
+        <div id="lista-kits" class="list-container"></div>
+      </div>
     </div>
 
     <!-- ABA CRM / PEDIDOS -->
@@ -248,7 +259,11 @@
           <button class="btn" id="btn-mat" onclick="salvarMaterial(this)"><i data-lucide="save"></i> Salvar Material</button>
           <button class="btn btn-outline" id="btn-cancel-mat" style="display:none;" onclick="cancelarEdicaoMat()">Cancelar</button>
         </div>
-        <div id="lista-materiais" class="list-container" style="margin-top:1rem;"></div>
+        
+        <div style="display:flex; justify-content:flex-end; margin-top:1.5rem; margin-bottom:0.5rem;">
+          <input type="text" id="busca-materiais" placeholder="🔍 Pesquisar Material..." oninput="filtrarMateriais()" style="padding:0.4rem 0.6rem; font-size:0.85rem; border-radius:6px; border:1px solid var(--card-border); background:var(--input-bg); color:var(--text); width:100%; max-width: 300px;">
+        </div>
+        <div id="lista-materiais" class="list-container"></div>
       </div>
 
       <!-- ACESSÓRIOS E EMBALAGENS -->

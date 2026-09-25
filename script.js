@@ -17,7 +17,7 @@ function toggleLoading(btn, isLoading, originalHtml = '') {
   } else {
     btn.disabled = false;
     btn.innerHTML = btn.dataset.original || originalHtml;
-    lucide.createIcons(); // Recarrega o ícone do botão
+    lucide.createIcons();
   }
 }
 
@@ -35,11 +35,12 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 // VARIÁVEIS GLOBAIS ATUALIZADAS
-let cfg = { potencia: 110, kwh: 0.65, maqVal: 4500, maqHrs: 5000, mo: 25, risco: 5, impostoPct: 10, taxaPgPct: 3.5 };
+let cfg = { potencia: 110, kwh: 0.65, maqVal: 4500, maqHrs: 5000, mo: 25, impostoPct: 10, taxaPgPct: 3.5 };
 let materiais = [{ id: 'm1', nome: 'PLA', marca: 'Voolt3D', cor: 'Vermelho', preco: 90, estoque: 1000 }];
 let acessorios = [];
 let produtos = []; let kits = []; let pedidos = [];
 let calcAtual = {};
+
 let calcAcessorios = [];
 let kitProdutosTemp = [];
 
@@ -70,7 +71,7 @@ window.onload = () => {
     } else {
       document.getElementById('auth-screen').style.display = 'flex';
       document.getElementById('app-content').style.display = 'none';
-      lucide.createIcons(); // Carrega os ícones na tela de login
+      lucide.createIcons();
     }
   });
 };
@@ -103,7 +104,7 @@ function switchTab(t) {
   document.querySelectorAll('.tab-content, nav button').forEach(e => e.classList.remove('active')); 
   document.getElementById('tab-'+t).classList.add('active'); 
   if(event && event.currentTarget) event.currentTarget.classList.add('active'); 
-  if(t === 'dashboard') atualizarDashboard(); // Gera os gráficos na hora
+  if(t === 'dashboard') atualizarDashboard(); 
 }
 function fmt(v) { return (v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
 function fmtDate(ms) { let d = new Date(ms); return d.toLocaleDateString('pt-BR'); }
@@ -180,9 +181,9 @@ function atualizarSelectsEListas() {
 }
 
 function uiInit() {
-  document.getElementById('cfg-potencia').value = cfg.potencia || 220;
-  document.getElementById('cfg-kwh').value = cfg.kwh || 0.85;
-  document.getElementById('cfg-maquina').value = cfg.maqVal || 4853.22;
+  document.getElementById('cfg-potencia').value = cfg.potencia || 110;
+  document.getElementById('cfg-kwh').value = cfg.kwh || 0.65;
+  document.getElementById('cfg-maquina').value = cfg.maqVal || 4500;
   document.getElementById('cfg-horas').value = cfg.maqHrs || 5000;
   document.getElementById('cfg-mo').value = cfg.mo || 25;
   document.getElementById('cfg-imposto').value = cfg.impostoPct || 10;
@@ -192,6 +193,7 @@ function uiInit() {
   atualizarSelectCRM();
   renderizarKitSelector();
   calcular();
+  
   setTimeout(() => lucide.createIcons(), 100);
 }
 
@@ -211,28 +213,6 @@ function verificarStatusAutomatico() {
 // ==========================================
 // SEÇÃO DE MATERIAIS
 // ==========================================
-function renderizarMateriais() {
-  let container = document.getElementById('lista-materiais');
-  if(!container) return;
-  container.innerHTML = materiais.map(m => {
-    let estClass = m.estoque <= 200 ? 'badge-danger' : 'badge-default';
-    let alerta = m.estoque <= 200 ? `<br><span style="color:var(--danger); font-size:0.75rem;">⚠️ Estoque Crítico!</span>` : '';
-    let desc = m.detalhe ? m.detalhe : `${m.marca || ''} ${m.cor || ''}`.trim();
-    return `<div class="list-item">
-              <div class="item-info">
-                <h3><span style="color:var(--accent); margin-right:0.5rem;">[${m.codigo || 'S/C'}]</span> ${m.nome} <span style="font-size:0.8rem">${desc}</span></h3>
-                <p><i data-lucide="coins" width="14"></i> ${fmt(m.preco)}/kg | <span class="badge ${estClass}">Estoque: ${m.estoque}g</span>${alerta}</p>
-              </div>
-              <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-                <button class="btn btn-outline" style="padding:0.3rem; border-color:var(--primary); color:var(--primary);" onclick="reporEstoque('${m.id}')">+ Repor</button>
-                <button class="btn btn-outline" style="padding:0.3rem" onclick="editarMaterial('${m.id}')">Editar</button>
-                <button class="btn btn-danger" style="padding:0.3rem" onclick="excluirCloud('materiais','${m.id}')"><i data-lucide="trash-2" width="16"></i></button>
-              </div>
-            </div>`;
-  }).join('');
-  setTimeout(() => lucide.createIcons(), 0);
-}
-
 function reporEstoque(id) {
   let m = materiais.find(x => x.id === id);
   if(m) {
@@ -381,7 +361,7 @@ function addAcessorioCalc() {
   if(acc) {
     calcAcessorios.push({ id: acc.id, nome: acc.nome, preco: acc.preco, qtd: qtd });
     document.getElementById('prod-add-qtd').value = 1; 
-    select.value = ''; // <-- FAZ O MENU VOLTAR PARA "Selecione..."
+    select.value = ''; // Limpa seletor
     renderizarAcessoriosCalc();
     calcular();
   }
@@ -413,7 +393,9 @@ function renderizarAcessoriosCalc() {
   `).join('');
 }
 
-// CÁLCULO MESTRE CORRIGIDO E PRECISO
+// ==========================================
+// CÁLCULO MESTRE (APENAS PURGA/DESPERDÍCIO EM GRAMAS)
+// ==========================================
 function calcular() {
   const getMat = id => materiais.find(m => m.id === document.getElementById(id).value) || {preco:0};
   
@@ -454,7 +436,7 @@ function calcular() {
   
   const custoTotalBase = cFilTotal + cEn + cDep + cMo + custoAcessorio;
 
-  // 3. PRECIFICAÇÃO PROFISSIONAL (Margem Líquida)
+  // 3. PRECIFICAÇÃO PROFISSIONAL (Margem Líquida)[cite: 1]
   const margemLiquida = markupMultiplicador > 1 ? (1 - (1 / markupMultiplicador)) : 0; 
   
   let precoVenda = custoTotalBase * markupMultiplicador; 
@@ -497,24 +479,9 @@ function calcular() {
   };
 }
 
-// PRODUTOS
-function renderizarProdutos() {
-  let container = document.getElementById('lista-produtos');
-  if(!container) return;
-  container.innerHTML = produtos.map(p => `
-    <div class="list-item">
-      <div class="item-info">
-        <h3><i data-lucide="box" width="16"></i> ${escapeHTML(p.nome)}</h3>
-        <p>Venda: <strong>${fmt(p.preco)}</strong> | Custo: ${fmt(p.custo)}</p>
-      </div>
-      <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
-        <button class="btn btn-outline" style="padding:0.3rem" onclick="editarProduto('${p.id}')">Editar</button>
-        <button class="btn btn-danger" style="padding:0.3rem" onclick="excluirCloud('produtos','${p.id}')"><i data-lucide="trash-2" width="16"></i></button>
-      </div>
-    </div>`).join('');
-  setTimeout(() => lucide.createIcons(), 0);
-}
-
+// ==========================================
+// CADASTRO DE PRODUTOS
+// ==========================================
 function salvarProduto(btn) {
   let nome = document.getElementById('prod-nome').value; if(!nome) return showToast("Nome do Produto!", "warning");
   let id = document.getElementById('prod-id').value;
@@ -543,8 +510,7 @@ function limparCalc() {
   document.getElementById('prod-g-1').value=100;
   document.getElementById('prod-markup').value=2.0; 
   document.getElementById('prod-incluir-taxas').checked=true;
-
-  // Limpa o menu de acessórios também ao limpar/salvar a peça
+  
   let selectAcc = document.getElementById('prod-add-acc');
   if(selectAcc) selectAcc.value = ''; 
   
@@ -578,39 +544,15 @@ function editarProduto(id) {
   
   document.getElementById('form-title').innerHTML = `<i data-lucide="edit"></i> Editar Produto`;
   switchTab('calc'); 
+  window.scrollTo({ top: 0, behavior: 'smooth' });
   renderizarAcessoriosCalc();
   calcular();
   lucide.createIcons();
 }
 
-// KITS & CRM & OUTROS
-function renderizarKits() {
-  let container = document.getElementById('lista-kits');
-  if(!container) return;
-  container.innerHTML = kits.map(k => `
-    <div class="list-item">
-      <div class="item-info">
-        <h3><i data-lucide="layers" width="16"></i> ${escapeHTML(k.nome)}</h3>
-        <p>Venda: <strong>${fmt(k.preco)}</strong> | Custo: ${fmt(k.custo)}</p>
-      </div>
-      <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
-        <button class="btn btn-danger" style="padding:0.3rem" onclick="excluirCloud('kits','${k.id}')"><i data-lucide="trash-2" width="16"></i></button>
-      </div>
-    </div>`).join('');
-  setTimeout(() => lucide.createIcons(), 0);
-}
-
-function atualizarSelectCRM() {
-  let el = document.getElementById('crm-item');
-  if(el) { 
-    el.innerHTML = `<optgroup label="Produtos">` + 
-      produtos.map(p => `<option value="${p.id}">${escapeHTML(p.nome)}</option>`).join('') + 
-      `</optgroup><optgroup label="Kits">` + 
-      kits.map(k => `<option value="${k.id}">${escapeHTML(k.nome)}</option>`).join('') + 
-      `</optgroup>`; 
-  }
-}
-
+// ==========================================
+// KITS / COMBOS
+// ==========================================
 function renderizarKitSelector() {
   let el = document.getElementById('kit-add-prod');
   if(el) { 
@@ -635,7 +577,7 @@ function addProdutoKit() {
     }
     
     document.getElementById('kit-add-qtd').value = 1; 
-    select.value = ''; // <-- ISSO FAZ O MENU VOLTAR PARA "Selecione..."
+    select.value = ''; 
     renderizarProdutosKit();
   }
 }
@@ -686,13 +628,27 @@ function salvarKit(btn) {
     showToast("Combo salvo com sucesso!"); 
     
     document.getElementById('kit-nome').value = '';
-    document.getElementById('kit-add-prod').value = ''; // <-- LIMPA O MENU AO SALVAR
+    document.getElementById('kit-add-prod').value = ''; 
     
     kitProdutosTemp = [];
     renderizarProdutosKit();
   });
 }
 
+function atualizarSelectCRM() {
+  let el = document.getElementById('crm-item');
+  if(el) { 
+    el.innerHTML = `<optgroup label="Produtos">` + 
+      produtos.map(p => `<option value="${p.id}">${escapeHTML(p.nome)}</option>`).join('') + 
+      `</optgroup><optgroup label="Kits">` + 
+      kits.map(k => `<option value="${k.id}">${escapeHTML(k.nome)}</option>`).join('') + 
+      `</optgroup>`; 
+  }
+}
+
+// ==========================================
+// PEDIDOS & CRM
+// ==========================================
 function renderizarPedidos(lista) {
   verificarStatusAutomatico(); 
   const container = document.getElementById('lista-pedidos');
@@ -881,7 +837,7 @@ function excluirCloud(col, id) {
 }
 
 // ==========================================
-// EXPORTAR PEDIDOS PARA EXCEL (CSV)
+// EXPORTAR PEDIDOS E BACKUP
 // ==========================================
 function exportarPedidosCSV() {
   if(pedidos.length === 0) return showToast("Nenhum pedido para exportar.", "warning");
@@ -970,20 +926,18 @@ let chartFinancas = null;
 let chartProdutos = null;
 
 if (typeof Chart !== 'undefined') {
-  Chart.defaults.color = '#94a3b8'; // Cor da fonte adaptada para modo noturno
+  Chart.defaults.color = '#94a3b8'; 
 }
 
 function atualizarDashboard() {
   if (typeof Chart === 'undefined') return;
 
-  // Descobre qual filtro está selecionado
   let filtroElemento = document.getElementById('filtro-dashboard');
   let periodo = filtroElemento ? filtroElemento.value : 'tudo';
   let agora = Date.now();
 
-  // Filtra os pedidos com base no status e no período selecionado
   let pedidosFiltrados = pedidos.filter(p => {
-    if (p.status !== 'Enviado') return false; // Só conta faturamento de concluídos
+    if (p.status !== 'Enviado') return false; 
     if (periodo === 'tudo') return true;
 
     let dataPed = new Date(p.data);
@@ -1022,7 +976,6 @@ function atualizarDashboard() {
   let labelsProd = produtosOrdenados.map(p => p[0]);
   let dadosProd = produtosOrdenados.map(p => p[1]);
 
-  // --- RENDERIZAR GRÁFICO: FINANÇAS ---
   if (chartFinancas) chartFinancas.destroy();
   let canvasFin = document.getElementById('chartFinancas');
   if (canvasFin) {
@@ -1040,7 +993,6 @@ function atualizarDashboard() {
     });
   }
 
-  // --- RENDERIZAR GRÁFICO: PRODUTOS ---
   if (chartProdutos) chartProdutos.destroy();
   let canvasProd = document.getElementById('chartProdutos');
   if (canvasProd) {
@@ -1062,4 +1014,95 @@ function atualizarDashboard() {
       }
     });
   }
+}
+
+// --- FILTROS E RENDERIZAÇÃO DE PRODUTOS ---
+function renderizarProdutos(lista = produtos) {
+  let container = document.getElementById('lista-produtos');
+  if(!container) return;
+  if(lista.length === 0) { container.innerHTML = '<p style="color:var(--text-muted); font-size:0.9rem;">Nenhum produto encontrado.</p>'; return; }
+  
+  container.innerHTML = lista.map(p => `
+    <div class="list-item">
+      <div class="item-info">
+        <h3><i data-lucide="box" width="16"></i> ${escapeHTML(p.nome)}</h3>
+        <p>Venda: <strong>${fmt(p.preco)}</strong> | Custo: ${fmt(p.custo)}</p>
+      </div>
+      <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
+        <button class="btn btn-outline" style="padding:0.3rem" onclick="editarProduto('${p.id}')">Editar</button>
+        <button class="btn btn-danger" style="padding:0.3rem" onclick="excluirCloud('produtos','${p.id}')"><i data-lucide="trash-2" width="16"></i></button>
+      </div>
+    </div>`).join('');
+  setTimeout(() => lucide.createIcons(), 0);
+}
+
+function filtrarProdutos() {
+  let termo = document.getElementById('busca-produtos').value.toLowerCase().trim();
+  if(!termo) { renderizarProdutos(produtos); return; }
+  let filtrados = produtos.filter(p => p.nome && p.nome.toLowerCase().includes(termo));
+  renderizarProdutos(filtrados);
+}
+
+// --- FILTROS E RENDERIZAÇÃO DE KITS ---
+function renderizarKits(lista = kits) {
+  let container = document.getElementById('lista-kits');
+  if(!container) return;
+  if(lista.length === 0) { container.innerHTML = '<p style="color:var(--text-muted); font-size:0.9rem;">Nenhum combo encontrado.</p>'; return; }
+  
+  container.innerHTML = lista.map(k => `
+    <div class="list-item">
+      <div class="item-info">
+        <h3><i data-lucide="layers" width="16"></i> ${escapeHTML(k.nome)}</h3>
+        <p>Venda: <strong>${fmt(k.preco)}</strong> | Custo: ${fmt(k.custo)}</p>
+      </div>
+      <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
+        <button class="btn btn-danger" style="padding:0.3rem" onclick="excluirCloud('kits','${k.id}')"><i data-lucide="trash-2" width="16"></i></button>
+      </div>
+    </div>`).join('');
+  setTimeout(() => lucide.createIcons(), 0);
+}
+
+function filtrarKits() {
+  let termo = document.getElementById('busca-kits').value.toLowerCase().trim();
+  if(!termo) { renderizarKits(kits); return; }
+  let filtrados = kits.filter(k => k.nome && k.nome.toLowerCase().includes(termo));
+  renderizarKits(filtrados);
+}
+
+// --- FILTROS E RENDERIZAÇÃO DE MATERIAIS (ESTOQUE) ---
+function renderizarMateriais(lista = materiais) {
+  let container = document.getElementById('lista-materiais');
+  if(!container) return;
+  if(lista.length === 0) { container.innerHTML = '<p style="color:var(--text-muted); font-size:0.9rem;">Nenhum material encontrado.</p>'; return; }
+  
+  container.innerHTML = lista.map(m => {
+    let estClass = m.estoque <= 200 ? 'badge-danger' : 'badge-default';
+    let alerta = m.estoque <= 200 ? `<br><span style="color:var(--danger); font-size:0.75rem;">⚠️ Estoque Crítico!</span>` : '';
+    let desc = m.detalhe ? m.detalhe : `${m.marca || ''} ${m.cor || ''}`.trim();
+    return `<div class="list-item">
+              <div class="item-info">
+                <h3><span style="color:var(--accent); margin-right:0.5rem;">[${m.codigo || 'S/C'}]</span> ${m.nome} <span style="font-size:0.8rem">${desc}</span></h3>
+                <p><i data-lucide="coins" width="14"></i> ${fmt(m.preco)}/kg | <span class="badge ${estClass}">Estoque: ${m.estoque}g</span>${alerta}</p>
+              </div>
+              <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
+                <button class="btn btn-outline" style="padding:0.3rem; border-color:var(--primary); color:var(--primary);" onclick="reporEstoque('${m.id}')">+ Repor</button>
+                <button class="btn btn-outline" style="padding:0.3rem" onclick="editarMaterial('${m.id}')">Editar</button>
+                <button class="btn btn-danger" style="padding:0.3rem" onclick="excluirCloud('materiais','${m.id}')"><i data-lucide="trash-2" width="16"></i></button>
+              </div>
+            </div>`;
+  }).join('');
+  setTimeout(() => lucide.createIcons(), 0);
+}
+
+function filtrarMateriais() {
+  let termo = document.getElementById('busca-materiais').value.toLowerCase().trim();
+  if(!termo) { renderizarMateriais(materiais); return; }
+  
+  let filtrados = materiais.filter(m => 
+    (m.nome && m.nome.toLowerCase().includes(termo)) || 
+    (m.marca && m.marca.toLowerCase().includes(termo)) || 
+    (m.cor && m.cor.toLowerCase().includes(termo)) ||
+    (m.codigo && m.codigo.toString().toLowerCase().includes(termo))
+  );
+  renderizarMateriais(filtrados);
 }
