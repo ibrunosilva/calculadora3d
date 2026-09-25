@@ -25,9 +25,38 @@ nav { display: flex; gap: 0.5rem; background: var(--card-bg); padding: 0.5rem; b
 nav button { flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.5rem; background: transparent; border: none; color: var(--text-muted); padding: 0.75rem; font-weight: bold; border-radius: 8px; cursor: pointer; min-width: 120px; transition: 0.2s; }
 nav button.active { background: var(--primary); color: #fff; }
 
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .tab-content { display: none; }
-.tab-content.active { display: block; }
-.card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.25rem; }
+.tab-content.active { 
+  display: block; 
+  animation: fadeIn 0.35s ease-out forwards; 
+}
+
+.card { 
+  background: var(--card-bg); 
+  border: 1px solid var(--card-border); 
+  border-radius: 12px; 
+  padding: 1.25rem; 
+  margin-bottom: 1.25rem; 
+  transition: transform 0.25s ease, box-shadow 0.25s ease; /* Prepara a animação */
+}
+
+/* O efeito de elevação */
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Sombra ajustada para o modo escuro (Dark Mode) */
+body:not([data-theme="light"]) .card:hover {
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
 .card h2 { font-size: 1.1rem; margin-bottom: 1rem; color: var(--primary); border-bottom: 1px solid var(--card-border); padding-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;}
 
 .grid-2 { 
