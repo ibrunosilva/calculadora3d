@@ -116,26 +116,39 @@ nav button.active { background: var(--primary); color: #fff; }
     left: 0;
     width: 100%;
     margin: 0;
-    border-radius: 16px 16px 0 0;
+    border-radius: 20px 20px 0 0;
     z-index: 9999;
-    box-shadow: 0 -4px 15px rgba(0,0,0,0.25);
-    justify-content: space-around;
-    padding: 0.5rem 0.2rem;
-    flex-wrap: nowrap;
-    background: var(--card-bg);
+    /* Efeito Glassmorphism (Vidro Fosco) */
+    background: rgba(30, 41, 59, 0.85); /* Fundo semi-transparente Dark */
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border: none;
-    border-top: 1px solid var(--card-border);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 -8px 25px rgba(0, 0, 0, 0.3);
+    
+    justify-content: space-around;
+    padding: 0.6rem 0.2rem 1rem 0.2rem; /* Mais espaço inferior para o polegar */
+    flex-wrap: nowrap;
   }
+  
+  /* Ajuste automático do vidro fosco se você usar o Tema Claro */
+  [data-theme="light"] nav {
+    background: rgba(255, 255, 255, 0.85);
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: 0 -8px 25px rgba(0, 0, 0, 0.1);
+  }
+
   nav button {
     flex-direction: column;
-    font-size: 0.65rem;
+    font-size: 0.7rem;
     min-width: auto;
-    padding: 0.4rem;
-    gap: 0.3rem;
+    padding: 0.5rem;
+    gap: 0.4rem;
   }
-  nav button svg { width: 20px; height: 20px; }
-  body { padding-bottom: 100px; } 
-  #toast-container { bottom: 90px; } 
+  nav button svg { width: 22px; height: 22px; }
+  
+  body { padding-bottom: 110px; } /* Evita que o conteúdo fique escondido atrás do menu */
+  #toast-container { bottom: 100px; } 
 }
 
 @media print { 
