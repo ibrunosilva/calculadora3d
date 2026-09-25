@@ -30,14 +30,29 @@ nav button.active { background: var(--primary); color: #fff; }
 .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.25rem; }
 .card h2 { font-size: 1.1rem; margin-bottom: 1rem; color: var(--primary); border-bottom: 1px solid var(--card-border); padding-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;}
 
-.grid-2 { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+.grid-2 { 
+  display: grid; 
+  grid-template-columns: 1fr; 
+  gap: 1rem; 
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
 .grid-3 { display: grid; grid-template-columns: 1fr; gap: 1rem; }
 .grid-4 { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+
 @media (min-width: 640px) { 
   .grid-2 { grid-template-columns: 1fr 1fr; } 
   .grid-3 { grid-template-columns: 2fr 1fr 1fr; } 
   .grid-4 { grid-template-columns: 1fr 1fr 1fr 1fr; } 
 }
+
+/* Garante que nenhum input, select ou card ultrapasse a largura da tela no mobile */
+.card, .form-group, .form-group input, .form-group select {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
 
 .form-group { display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 0.75rem; }
 .form-group label { font-size: 0.85rem; color: var(--text-muted); }
