@@ -93,6 +93,43 @@
       #print-area, #print-area * { visibility: visible; } 
       #print-area { position: absolute; left: 0; top: 0; width: 100%; color: #000; background: #fff; padding: 2rem; display: block !important; } 
     }
+
+    /* ========================================== */
+    /* TOAST NOTIFICATIONS (NOTIFICAÇÕES VISUAIS) */
+    /* ========================================== */
+    #toast-container {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 10000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .toast {
+      background-color: var(--card-bg);
+      color: var(--text);
+      border-left: 4px solid var(--primary);
+      padding: 12px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      font-size: 0.9rem;
+      font-weight: 500;
+      opacity: 0;
+      transform: translateX(100%);
+      animation: slideIn 0.3s forwards, fadeOut 0.3s forwards 2.7s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .toast.error { border-left-color: var(--danger); }
+    .toast.warning { border-left-color: var(--warning); }
+    @keyframes slideIn {
+      to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes fadeOut {
+      to { opacity: 0; }
+    }
   </style>
 </head>
 <body>
@@ -341,6 +378,8 @@
 
   </div> <!-- FIM DA DIV app-content -->
 
+  <div id="toast-container"></div>
+
   <script>
     // CONFIGURAÇÃO DO FIREBASE
     const firebaseConfig = {
@@ -364,6 +403,24 @@
     
     // LISTA DE ACESSÓRIOS DO PRODUTO ATUAL NA CALCULADORA
     let calcAcessorios = [];
+
+    // FUNÇÃO DE NOTIFICAÇÃO TOAST
+    function showToast(mensagem, tipo = 'success') {
+      const container = document.getElementById('toast-container');
+      if (!container) return;
+      
+      const toast = document.createElement('div');
+      toast.className = `toast ${tipo}`;
+      
+      let icone = '✅';
+      if (tipo === 'error') icone = '❌';
+      if (tipo === 'warning') icone = '⚠️';
+      
+      toast.innerHTML = `<span>${icone}</span> <span>${mensagem}</span>`;
+      container.appendChild(toast);
+      
+      setTimeout(() => toast.remove(), 3000);
+    }
 
     window.onload = () => {
       firebase.auth().onAuthStateChanged((user) => {
@@ -542,7 +599,7 @@
           estoque: novoEstoque,
           preco: novoPrecoMedio 
         }).then(() => {
-          alert(`Sucesso! Estoque: ${novoEstoque}g | Novo Preço Médio: R$ ${novoPrecoMedio.toFixed(2)}/kg.`);
+          showToast(`Sucesso! Estoque: ${novoEstoque}g | Novo Preço Médio: R$ ${novoPrecoMedio.toFixed(2)}/kg.`);
         });
       }
     }
@@ -591,13 +648,13 @@
       let prc = parseFloat(document.getElementById('mat-preco').value);
       let est = parseFloat(document.getElementById('mat-estoque').value);
       
-      if(!nome||isNaN(prc)) return alert("Preencha o tipo e o preço corretamente.");
+      if(!nome||isNaN(prc)) return showToast("Preencha o tipo e o preço corretamente.", "warning");
 
       let docId = id ? id : 'm_' + Date.now();
       
       // Salva usando as chaves separadas (o campo detalhe é ignorado e será "migrado" no banco localmente se existia antes)
       db.collection('materiais').doc(docId).set({ codigo: cod, nome, marca: marca, cor: cor, preco: prc, estoque: est }).then(() => {
-        cancelarEdicaoMat(); alert("Material salvo!");
+        cancelarEdicaoMat(); showToast("Material salvo!");
       });
     }
 
@@ -644,11 +701,11 @@
     function salvarAcessorio() {
       let id = document.getElementById('acc-id').value;
       let nome = document.getElementById('acc-nome').value, prc = parseFloat(document.getElementById('acc-preco').value);
-      if(!nome || isNaN(prc)) return alert("Preencha o nome e o preço.");
+      if(!nome || isNaN(prc)) return showToast("Preencha o nome e o preço.", "warning");
 
       let docId = id ? id : 'acc_' + Date.now();
       db.collection('acessorios').doc(docId).set({ nome, preco: prc }).then(() => {
-        cancelarEdicaoAcc(); alert("Item salvo!");
+        cancelarEdicaoAcc(); showToast("Item salvo!");
       });
     }
 
@@ -658,7 +715,7 @@
     function addAcessorioCalc() {
       const select = document.getElementById('prod-add-acc');
       const qtd = parseInt(document.getElementById('prod-add-qtd').value) || 1;
-      if(!select.value) return alert("Selecione um item da lista primeiro!");
+      if(!select.value) return showToast("Selecione um item da lista primeiro!", "warning");
       
       const acc = acessorios.find(a => a.id === select.value);
       if(acc) {
@@ -771,7 +828,7 @@
     }
 
     function salvarProduto() {
-      let nome = document.getElementById('prod-nome').value; if(!nome) return alert("Nome do Produto!");
+      let nome = document.getElementById('prod-nome').value; if(!nome) return showToast("Nome do Produto!", "warning");
       let id = document.getElementById('prod-id').value;
       let docId = id ? id : 'p_' + Date.now();
       
@@ -786,7 +843,7 @@
       };
       
       db.collection('produtos').doc(docId.toString()).set(p).then(() => {
-        alert("Produto Salvo!"); limparCalc();
+        showToast("Produto Salvo!"); limparCalc();
       });
     }
     
@@ -848,18 +905,18 @@
     }
 
     function salvarKit() {
-      let nome = document.getElementById('kit-nome').value; if(!nome) return alert("Nome!");
+      let nome = document.getElementById('kit-nome').value; if(!nome) return showToast("Nome!", "warning");
       let itens = [], c = 0, p = 0;
       produtos.forEach(prod => {
         let qField = document.getElementById('kq_'+prod.id);
         let q = qField ? parseInt(qField.value)||0 : 0;
         if(q>0) { itens.push({id:prod.id, qtd:q}); c += prod.custo*q; p += prod.preco*q; }
       });
-      if(itens.length===0) return alert("Selecione quantidades!");
+      if(itens.length===0) return showToast("Selecione quantidades!", "warning");
       
       let kitId = 'k_' + Date.now();
       db.collection('kits').doc(kitId).set({ id: kitId, nome, itens, custo: c, preco: p }).then(() => {
-        alert("Combo salvo!"); document.getElementById('kit-nome').value='';
+        showToast("Combo salvo!"); document.getElementById('kit-nome').value='';
       });
     }
 
@@ -969,10 +1026,10 @@
           end = document.getElementById('crm-endereco').value, cid = document.getElementById('crm-cidade').value,
           est = document.getElementById('crm-estado').value, obs = document.getElementById('crm-obs').value;
           
-      if(!cli||!val) return alert("Preencha pelo menos o Nome do Cliente e o Produto!");
+      if(!cli||!val) return showToast("Preencha pelo menos o Nome do Cliente e o Produto!", "warning");
       let [tipo, id] = val.split('_'); 
       let ref = tipo==='p' ? produtos.find(x=>x.id == id) : kits.find(x=>x.id == id);
-      if(!ref) return alert("Erro: Item selecionado não encontrado.");
+      if(!ref) return showToast("Erro: Item selecionado não encontrado.", "error");
 
       let pedId = 'ped_' + Date.now();
       let novoPedido = { 
@@ -982,7 +1039,7 @@
       
       db.collection('pedidos').doc(pedId).set(novoPedido).then(() => {
         ['crm-cliente','crm-cpf','crm-contato','crm-endereco','crm-cidade','crm-estado','crm-obs'].forEach(id => document.getElementById(id).value='');
-        alert("Orçamento lançado!");
+        showToast("Orçamento lançado!");
       });
     }
 
@@ -1024,7 +1081,7 @@
       cfg.impostoPct = parseFloat(document.getElementById('cfg-imposto').value) || 0;
       cfg.taxapgPct = parseFloat(document.getElementById('cfg-taxapg').value) || 0;
 
-      db.collection('configuracoes').doc('geral').set(cfg).then(() => { alert("Custos salvos na nuvem!"); });
+      db.collection('configuracoes').doc('geral').set(cfg).then(() => { showToast("Custos salvos na nuvem!"); });
     }
     
     function excluirCloud(col, id) {
@@ -1037,7 +1094,7 @@
           }
         }
       }
-      db.collection(col).doc(id.toString()).delete().then(() => { alert("Excluído!"); });
+      db.collection(col).doc(id.toString()).delete().then(() => { showToast("Excluído!"); });
     }
     
     function exportar() { 
@@ -1051,8 +1108,8 @@
         try {
           let obj = JSON.parse(ev.target.result); 
           if(obj.cfg) db.collection('configuracoes').doc('geral').set(obj.cfg);
-          alert("Backup lido! Sincronize os dados conforme necessário.");
-        } catch(err) { alert("Erro ao ler backup."); }
+          showToast("Backup lido! Sincronize os dados conforme necessário.");
+        } catch(err) { showToast("Erro ao ler backup.", "error"); }
       }; 
       r.readAsText(e.target.files[0]); 
     }
