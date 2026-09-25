@@ -72,8 +72,21 @@ nav button.active { background: var(--primary); color: #fff; }
 .result-row { display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px dashed var(--card-border); font-size: 0.9rem; }
 .result-row.highlight { font-size: 1.1rem; font-weight: bold; color: var(--primary); border-top: 1px solid var(--card-border); padding-top: 0.75rem; margin-top: 0.5rem; }
 
-.list-container { display: flex; flex-direction: column; gap: 0.75rem; }
-.list-item { display: flex; justify-content: space-between; align-items: center; background: var(--input-bg); border: 1px solid var(--card-border); padding: 0.85rem 1rem; border-radius: 8px; gap: 1rem; flex-wrap: wrap; }
+.list-container { display: flex; flex-direction: column; gap: 1rem; }
+.list-item { 
+  display: flex; justify-content: space-between; align-items: center; 
+  background: var(--input-bg); border: 1px solid var(--card-border); 
+  padding: 1.15rem 1.25rem; /* Mais respiro interno */
+  border-radius: 12px; /* Bordas mais suaves */
+  gap: 1.5rem; /* Mais distância entre os textos e os botões */
+  flex-wrap: wrap; 
+}
+/* Área de toque expandida para os botões dentro das listas */
+.list-item div button {
+  padding: 0.6rem 1rem !important; 
+  font-size: 0.85rem;
+}
+
 .item-info { flex: 1; min-width: 200px; }
 .item-info h3 { font-size: 1rem; margin-bottom: 0.2rem; display: flex; align-items: center; gap: 0.5rem;}
 .item-info p { font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.3rem;}
