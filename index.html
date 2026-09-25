@@ -13,6 +13,9 @@
   <!-- Biblioteca de Ícones Lucide -->
   <script src="https://unpkg.com/lucide@latest"></script>
 
+  <!-- Biblioteca de Gráficos Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <!-- SEU ARQUIVO CSS EXTERNO -->
   <link rel="stylesheet" href="style.css">
 </head>
@@ -42,12 +45,34 @@
     </header>
 
     <nav>
+      <button onclick="switchTab('dashboard')"><i data-lucide="layout-dashboard"></i> Dashboard</button>
       <button class="active" onclick="switchTab('calc')"><i data-lucide="calculator"></i> Calculadora</button>
       <button onclick="switchTab('produtos')"><i data-lucide="boxes"></i> Produtos</button>
       <button onclick="switchTab('kits')"><i data-lucide="layers"></i> Kits</button>
       <button onclick="switchTab('crm')"><i data-lucide="shopping-cart"></i> Pedidos</button>
       <button onclick="switchTab('config')"><i data-lucide="settings"></i> Config</button>
     </nav>
+
+    <!-- ABA DASHBOARD / RELATÓRIOS -->
+    <div id="tab-dashboard" class="tab-content">
+      <div class="grid-2">
+        <!-- Gráfico 1: Faturamento e Lucro -->
+        <div class="card">
+          <h2><i data-lucide="bar-chart-3"></i> Receita vs Lucro (Pedidos Concluídos)</h2>
+          <div class="chart-container">
+            <canvas id="chartFinancas"></canvas>
+          </div>
+        </div>
+        
+        <!-- Gráfico 2: Produtos mais vendidos -->
+        <div class="card">
+          <h2><i data-lucide="pie-chart"></i> Top 5 Mais Vendidos</h2>
+          <div class="chart-container">
+            <canvas id="chartProdutos"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- ABA CALCULADORA -->
     <div id="tab-calc" class="tab-content active">
