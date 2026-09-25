@@ -40,8 +40,8 @@ let materiais = [{ id: 'm1', nome: 'PLA', marca: 'Voolt3D', cor: 'Vermelho', pre
 let acessorios = [];
 let produtos = []; let kits = []; let pedidos = [];
 let calcAtual = {};
-
 let calcAcessorios = [];
+let kitProdutosTemp = [];
 
 // FUNÇÃO DE NOTIFICAÇÃO TOAST
 function showToast(mensagem, tipo = 'success') {
@@ -180,12 +180,11 @@ function atualizarSelectsEListas() {
 }
 
 function uiInit() {
-  document.getElementById('cfg-potencia').value = cfg.potencia || 110;
-  document.getElementById('cfg-kwh').value = cfg.kwh || 0.65;
-  document.getElementById('cfg-maquina').value = cfg.maqVal || 4500;
+  document.getElementById('cfg-potencia').value = cfg.potencia || 220;
+  document.getElementById('cfg-kwh').value = cfg.kwh || 0.85;
+  document.getElementById('cfg-maquina').value = cfg.maqVal || 4853.22;
   document.getElementById('cfg-horas').value = cfg.maqHrs || 5000;
   document.getElementById('cfg-mo').value = cfg.mo || 25;
-  document.getElementById('cfg-risco').value = cfg.risco || 5;
   document.getElementById('cfg-imposto').value = cfg.impostoPct || 10;
   document.getElementById('cfg-taxapg').value = cfg.taxaPgPct || 3.5;
   
@@ -193,7 +192,6 @@ function uiInit() {
   atualizarSelectCRM();
   renderizarKitSelector();
   calcular();
-  
   setTimeout(() => lucide.createIcons(), 100);
 }
 
@@ -383,6 +381,7 @@ function addAcessorioCalc() {
   if(acc) {
     calcAcessorios.push({ id: acc.id, nome: acc.nome, preco: acc.preco, qtd: qtd });
     document.getElementById('prod-add-qtd').value = 1; 
+    select.value = ''; // <-- FAZ O MENU VOLTAR PARA "Selecione..."
     renderizarAcessoriosCalc();
     calcular();
   }
@@ -414,56 +413,76 @@ function renderizarAcessoriosCalc() {
   `).join('');
 }
 
-// ==========================================
-// CÁLCULO MESTRE ATUALIZADO
-// ==========================================
+// CÁLCULO MESTRE CORRIGIDO E PRECISO
 function calcular() {
   const getMat = id => materiais.find(m => m.id === document.getElementById(id).value) || {preco:0};
-  const g1 = parseFloat(document.getElementById('prod-g-1').value)||0; const g2 = parseFloat(document.getElementById('prod-g-2').value)||0;
-  const g3 = parseFloat(document.getElementById('prod-g-3').value)||0; const g4 = parseFloat(document.getElementById('prod-g-4').value)||0;
+  
+  const g1 = parseFloat(document.getElementById('prod-g-1').value)||0; 
+  const g2 = parseFloat(document.getElementById('prod-g-2').value)||0;
+  const g3 = parseFloat(document.getElementById('prod-g-3').value)||0; 
+  const g4 = parseFloat(document.getElementById('prod-g-4').value)||0;
   const purga = parseFloat(document.getElementById('prod-purga').value)||0;
+  
   const tImp = parseFloat(document.getElementById('prod-tempo-imp').value)||0;
   const tMo = parseFloat(document.getElementById('prod-tempo-mo').value)||0;
   
   const custoAcessorio = calcAcessorios.reduce((acc, curr) => acc + (curr.preco * curr.qtd), 0);
-
-  const markup = parseFloat(document.getElementById('prod-markup').value) || 1.0;
+  const markupMultiplicador = Math.max(1, parseFloat(document.getElementById('prod-markup').value) || 1.0);
   const incluirTaxas = document.getElementById('prod-incluir-taxas').checked;
   
   const impPct = cfg.impostoPct || 10;
   const txaPct = cfg.taxaPgPct || 3.5;
-  const taxaTotalPct = impPct + txaPct;
+  const taxaTotalPct = (impPct + txaPct) / 100;
 
-  const cFil = ((g1+purga)/1000)*getMat('prod-mat-1').preco + (g2/1000)*getMat('prod-mat-2').preco + (g3/1000)*getMat('prod-mat-3').preco + (g4/1000)*getMat('prod-mat-4').preco;
+  // 1. CUSTO DE MATERIAL PONDERADO
+  const p1 = getMat('prod-mat-1').preco / 1000;
+  const p2 = getMat('prod-mat-2').preco / 1000;
+  const p3 = getMat('prod-mat-3').preco / 1000;
+  const p4 = getMat('prod-mat-4').preco / 1000;
+
+  const cFilBase = (g1 * p1) + (g2 * p2) + (g3 * p3) + (g4 * p4);
+  const gramasTotais = g1 + g2 + g3 + g4;
+  const precoMedioGrama = gramasTotais > 0 ? (cFilBase / gramasTotais) : 0;
+  
+  // O custo total de material agora é literalmente a peça + a purga informada em gramas
+  const cFilTotal = cFilBase + (purga * precoMedioGrama);
+  
+  // 2. CUSTOS OPERACIONAIS E DIRETOS
   const cEn = tImp * (cfg.potencia / 1000) * cfg.kwh; 
-  const cDep = tImp * (cfg.maqVal/cfg.maqHrs); 
+  const cDep = tImp * (cfg.maqVal / cfg.maqHrs); 
   const cMo = tMo * cfg.mo;
   
-  const sub = cFil + cEn + cDep + cMo + custoAcessorio;
+  const custoTotalBase = cFilTotal + cEn + cDep + cMo + custoAcessorio;
+
+  // 3. PRECIFICAÇÃO PROFISSIONAL (Margem Líquida)
+  const margemLiquida = markupMultiplicador > 1 ? (1 - (1 / markupMultiplicador)) : 0; 
   
-  const cRis = sub * (cfg.risco/100); 
-  const custoTotalBase = sub + cRis;
+  let precoVenda = custoTotalBase * markupMultiplicador; 
+  let valorImposto = 0; 
+  let valorTaxaPg = 0;
 
-  let precoComMarkup = custoTotalBase * markup;
-  let precoVenda = precoComMarkup;
-  let valorImposto = 0; let valorTaxaPg = 0;
-
-  if (incluirTaxas && taxaTotalPct < 100) {
-    precoVenda = precoComMarkup / (1 - (taxaTotalPct / 100));
+  if (incluirTaxas) {
+    const deducoesTotais = taxaTotalPct + margemLiquida;
+    if (deducoesTotais < 0.95) {
+        precoVenda = custoTotalBase / (1 - deducoesTotais);
+    } else {
+        precoVenda = custoTotalBase * (1 + margemLiquida) / Math.max(0.1, (1 - taxaTotalPct));
+    }
+    valorImposto = precoVenda * (impPct / 100);
+    valorTaxaPg = precoVenda * (txaPct / 100);
+  } else {
+    if(margemLiquida < 1) precoVenda = custoTotalBase / (1 - margemLiquida);
   }
-
-  valorImposto = precoVenda * (impPct / 100);
-  valorTaxaPg = precoVenda * (txaPct / 100);
   
   const lucroReal = precoVenda - custoTotalBase - valorImposto - valorTaxaPg;
   const custoTotalFinal = custoTotalBase + valorImposto + valorTaxaPg;
 
-  document.getElementById('res-filamento').innerText = fmt(cFil); 
+  // 4. ATUALIZAÇÃO DA INTERFACE
+  document.getElementById('res-filamento').innerText = fmt(cFilTotal); 
   document.getElementById('res-energia').innerText = fmt(cEn);
   document.getElementById('res-depreciacao').innerText = fmt(cDep); 
   document.getElementById('res-mo').innerText = fmt(cMo);
   document.getElementById('res-extras').innerText = fmt(custoAcessorio);
-  document.getElementById('res-risco').innerText = fmt(cRis) + ` (${cfg.risco}%)`;
   document.getElementById('res-subtotal').innerText = fmt(custoTotalBase);
   document.getElementById('res-taxas').innerText = fmt(valorImposto + valorTaxaPg);
   
@@ -473,18 +492,26 @@ function calcular() {
 
   calcAtual = { 
     custo: custoTotalFinal, preco: precoVenda, lucro: lucroReal, 
-    imp: tImp, g1, g2, g3, g4, purga, markup, incluirTaxas, 
+    imp: tImp, tImp: tImp, tMo: tMo, g1, g2, g3, g4, purga, markup: markupMultiplicador, incluirTaxas, 
     acessoriosLista: [...calcAcessorios]
   };
 }
 
-// ==========================================
 // PRODUTOS
-// ==========================================
 function renderizarProdutos() {
   let container = document.getElementById('lista-produtos');
   if(!container) return;
-  container.innerHTML = produtos.map(p => `<div class="list-item"><div class="item-info"><h3><i data-lucide="box" width="16"></i> ${escapeHTML(p.nome)}</h3><p>Venda: <strong>${fmt(p.preco)}</strong> | Custo: ${fmt(p.custo)}</p></div><div><button class="btn btn-outline" style="padding:0.3rem" onclick="editarProduto('${p.id}')">Editar</button> <button class="btn btn-danger" style="padding:0.3rem" onclick="excluirCloud('produtos','${p.id}')"><i data-lucide="trash-2" width="16"></i></button></div></div>`).join('');
+  container.innerHTML = produtos.map(p => `
+    <div class="list-item">
+      <div class="item-info">
+        <h3><i data-lucide="box" width="16"></i> ${escapeHTML(p.nome)}</h3>
+        <p>Venda: <strong>${fmt(p.preco)}</strong> | Custo: ${fmt(p.custo)}</p>
+      </div>
+      <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
+        <button class="btn btn-outline" style="padding:0.3rem" onclick="editarProduto('${p.id}')">Editar</button>
+        <button class="btn btn-danger" style="padding:0.3rem" onclick="excluirCloud('produtos','${p.id}')"><i data-lucide="trash-2" width="16"></i></button>
+      </div>
+    </div>`).join('');
   setTimeout(() => lucide.createIcons(), 0);
 }
 
@@ -511,9 +538,16 @@ function salvarProduto(btn) {
 }
 
 function limparCalc() { 
-  document.getElementById('prod-nome').value=''; document.getElementById('prod-id').value=''; 
+  document.getElementById('prod-nome').value=''; 
+  document.getElementById('prod-id').value=''; 
   document.getElementById('prod-g-1').value=100;
-  document.getElementById('prod-markup').value=2.0; document.getElementById('prod-incluir-taxas').checked=true;
+  document.getElementById('prod-markup').value=2.0; 
+  document.getElementById('prod-incluir-taxas').checked=true;
+
+  // Limpa o menu de acessórios também ao limpar/salvar a peça
+  let selectAcc = document.getElementById('prod-add-acc');
+  if(selectAcc) selectAcc.value = ''; 
+  
   document.getElementById('form-title').innerHTML = `<i data-lucide="calculator"></i> Calcular Peça`;
   
   calcAcessorios = [];
@@ -549,13 +583,20 @@ function editarProduto(id) {
   lucide.createIcons();
 }
 
-// ==========================================
 // KITS & CRM & OUTROS
-// ==========================================
 function renderizarKits() {
   let container = document.getElementById('lista-kits');
   if(!container) return;
-  container.innerHTML = kits.map(k => `<div class="list-item"><div class="item-info"><h3><i data-lucide="layers" width="16"></i> ${escapeHTML(k.nome)}</h3><p>Venda: <strong>${fmt(k.preco)}</strong> | Custo: ${fmt(k.custo)}</p></div><div><button class="btn btn-danger" style="padding:0.3rem" onclick="excluirCloud('kits','${k.id}')"><i data-lucide="trash-2" width="16"></i></button></div></div>`).join('');
+  container.innerHTML = kits.map(k => `
+    <div class="list-item">
+      <div class="item-info">
+        <h3><i data-lucide="layers" width="16"></i> ${escapeHTML(k.nome)}</h3>
+        <p>Venda: <strong>${fmt(k.preco)}</strong> | Custo: ${fmt(k.custo)}</p>
+      </div>
+      <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
+        <button class="btn btn-danger" style="padding:0.3rem" onclick="excluirCloud('kits','${k.id}')"><i data-lucide="trash-2" width="16"></i></button>
+      </div>
+    </div>`).join('');
   setTimeout(() => lucide.createIcons(), 0);
 }
 
@@ -571,25 +612,84 @@ function atualizarSelectCRM() {
 }
 
 function renderizarKitSelector() {
-  let el = document.getElementById('kit-selecao-produtos');
-  if(el) { el.innerHTML = produtos.map(p=>`<div class="kit-selector-row"><span>${escapeHTML(p.nome)} (${fmt(p.preco)})</span><input type="number" id="kq_${p.id}" value="0" min="0"></div>`).join(''); }
+  let el = document.getElementById('kit-add-prod');
+  if(el) { 
+    el.innerHTML = `<option value="">-- Selecione para Adicionar --</option>` + 
+      produtos.map(p => `<option value="${p.id}">${escapeHTML(p.nome)} (Venda: ${fmt(p.preco)})</option>`).join(''); 
+  }
+}
+
+function addProdutoKit() {
+  const select = document.getElementById('kit-add-prod');
+  const qtd = parseInt(document.getElementById('kit-add-qtd').value) || 1;
+  
+  if(!select.value) return showToast("Selecione um produto da lista primeiro!", "warning");
+  
+  const p = produtos.find(x => x.id === select.value);
+  if(p) {
+    let existente = kitProdutosTemp.find(item => item.id === p.id);
+    if(existente) {
+        existente.qtd += qtd;
+    } else {
+        kitProdutosTemp.push({ id: p.id, nome: p.nome, preco: p.preco, custo: p.custo, qtd: qtd });
+    }
+    
+    document.getElementById('kit-add-qtd').value = 1; 
+    select.value = ''; // <-- ISSO FAZ O MENU VOLTAR PARA "Selecione..."
+    renderizarProdutosKit();
+  }
+}
+
+function removerProdutoKit(index) {
+  kitProdutosTemp.splice(index, 1);
+  renderizarProdutosKit();
+}
+
+function renderizarProdutosKit() {
+  const container = document.getElementById('lista-calc-kit-produtos');
+  if(!container) return;
+  
+  if(kitProdutosTemp.length === 0) {
+    container.innerHTML = '<p style="font-size: 0.8rem; color: var(--text-muted);">Nenhum produto adicionado a este combo.</p>';
+    return;
+  }
+  
+  container.innerHTML = kitProdutosTemp.map((item, i) => `
+    <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg); padding: 0.6rem; border-radius: 6px; font-size: 0.85rem; border: 1px dashed var(--card-border);">
+      <span><strong style="color:var(--primary);">${item.qtd}x</strong> ${item.nome}</span>
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <span style="font-weight:bold;">${fmt(item.preco * item.qtd)}</span>
+        <button style="background: transparent; border: none; color: var(--danger); cursor: pointer; font-weight: bold; font-size: 1.2rem; padding: 0 0.5rem;" onclick="removerProdutoKit(${i})">×</button>
+      </div>
+    </div>
+  `).join('');
 }
 
 function salvarKit(btn) {
-  let nome = document.getElementById('kit-nome').value; if(!nome) return showToast("Nome!", "warning");
+  let nome = document.getElementById('kit-nome').value; 
+  if(!nome) return showToast("Por favor, digite o Nome do Combo!", "warning");
+  
+  if(kitProdutosTemp.length === 0) return showToast("Adicione pelo menos um produto ao combo!", "warning");
+  
   let itens = [], c = 0, p = 0;
-  produtos.forEach(prod => {
-    let qField = document.getElementById('kq_'+prod.id);
-    let q = qField ? parseInt(qField.value)||0 : 0;
-    if(q>0) { itens.push({id:prod.id, qtd:q}); c += prod.custo*q; p += prod.preco*q; }
+  
+  kitProdutosTemp.forEach(item => {
+    itens.push({ id: item.id, qtd: item.qtd }); 
+    c += (item.custo || 0) * item.qtd; 
+    p += (item.preco || 0) * item.qtd; 
   });
-  if(itens.length===0) return showToast("Selecione quantidades!", "warning");
   
   toggleLoading(btn, true);
   let kitId = 'k_' + Date.now();
   db.collection('kits').doc(kitId).set({ id: kitId, nome, itens, custo: c, preco: p }).then(() => {
     toggleLoading(btn, false);
-    showToast("Combo salvo!"); document.getElementById('kit-nome').value='';
+    showToast("Combo salvo com sucesso!"); 
+    
+    document.getElementById('kit-nome').value = '';
+    document.getElementById('kit-add-prod').value = ''; // <-- LIMPA O MENU AO SALVAR
+    
+    kitProdutosTemp = [];
+    renderizarProdutosKit();
   });
 }
 
@@ -757,7 +857,6 @@ function salvarConfig(btn) {
   cfg.maqVal = parseFloat(document.getElementById('cfg-maquina').value) || 0;
   cfg.maqHrs = parseFloat(document.getElementById('cfg-horas').value) || 1; 
   cfg.mo = parseFloat(document.getElementById('cfg-mo').value) || 0;
-  cfg.risco = parseFloat(document.getElementById('cfg-risco').value) || 0; 
   cfg.impostoPct = parseFloat(document.getElementById('cfg-imposto').value) || 0;
   cfg.taxapgPct = parseFloat(document.getElementById('cfg-taxapg').value) || 0;
 
@@ -779,6 +878,38 @@ function excluirCloud(col, id) {
     }
   }
   db.collection(col).doc(id.toString()).delete().then(() => { showToast("Excluído!"); });
+}
+
+// ==========================================
+// EXPORTAR PEDIDOS PARA EXCEL (CSV)
+// ==========================================
+function exportarPedidosCSV() {
+  if(pedidos.length === 0) return showToast("Nenhum pedido para exportar.", "warning");
+  
+  let csv = "Data,Cliente,CPF,Contato,Produto,Status,Valor Total\n";
+  
+  pedidos.forEach(p => {
+    let dataStr = fmtDate(p.data);
+    let cliente = p.cliente ? p.cliente.replace(/,/g, '') : '';
+    let cpf = p.cpf ? p.cpf.replace(/,/g, '') : '';
+    let contato = p.contato ? p.contato.replace(/,/g, '') : '';
+    let produto = p.itemNome ? p.itemNome.replace(/,/g, '') : '';
+    let valor = p.preco ? p.preco.toFixed(2) : '0.00';
+    
+    csv += `${dataStr},${cliente},${cpf},${contato},${produto},${p.status},${valor}\n`;
+  });
+  
+  let blob = new Blob(["\uFEFF"+csv], { type: 'text/csv;charset=utf-8;' }); 
+  let link = document.createElement("a");
+  let url = URL.createObjectURL(blob);
+  link.setAttribute("href", url);
+  link.setAttribute("download", `Relatorio_Vendas_3D_${new Date().toISOString().slice(0,10)}.csv`);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  
+  showToast("Planilha gerada com sucesso!");
 }
 
 function exportar() { 
@@ -845,13 +976,30 @@ if (typeof Chart !== 'undefined') {
 function atualizarDashboard() {
   if (typeof Chart === 'undefined') return;
 
-  let pedidosConcluidos = pedidos.filter(p => p.status === 'Enviado');
+  // Descobre qual filtro está selecionado
+  let filtroElemento = document.getElementById('filtro-dashboard');
+  let periodo = filtroElemento ? filtroElemento.value : 'tudo';
+  let agora = Date.now();
+
+  // Filtra os pedidos com base no status e no período selecionado
+  let pedidosFiltrados = pedidos.filter(p => {
+    if (p.status !== 'Enviado') return false; // Só conta faturamento de concluídos
+    if (periodo === 'tudo') return true;
+
+    let dataPed = new Date(p.data);
+    let trintaDias = 30 * 24 * 60 * 60 * 1000;
+    let noventaDias = 90 * 24 * 60 * 60 * 1000;
+
+    if (periodo === '30') return (agora - p.data) <= trintaDias;
+    if (periodo === '90') return (agora - p.data) <= noventaDias;
+    if (periodo === 'ano') return dataPed.getFullYear() === new Date().getFullYear();
+    return true;
+  });
   
-  // 1. Processar Faturamento Mensal
   let meses = {};
   let produtosCount = {};
 
-  pedidosConcluidos.forEach(p => {
+  pedidosFiltrados.forEach(p => {
     let d = new Date(p.data);
     let mesAno = d.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
 
@@ -882,7 +1030,7 @@ function atualizarDashboard() {
     chartFinancas = new Chart(ctxFinancas, {
       type: 'bar',
       data: {
-        labels: labelsMeses.length ? labelsMeses : ['Sem vendas ainda'],
+        labels: labelsMeses.length ? labelsMeses : ['Sem vendas'],
         datasets: [
           { label: 'Faturamento (R$)', data: dadosReceita.length ? dadosReceita : [0], backgroundColor: '#10b981', borderRadius: 4 },
           { label: 'Lucro Liquido (R$)', data: dadosLucro.length ? dadosLucro : [0], backgroundColor: '#3b82f6', borderRadius: 4 }

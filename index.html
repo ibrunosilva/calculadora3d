@@ -56,6 +56,15 @@
 
     <!-- ABA DASHBOARD / RELATÓRIOS -->
     <div id="tab-dashboard" class="tab-content">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
+        <h2 style="font-size: 1.2rem; color: var(--text);"><i data-lucide="bar-chart-2"></i> Visão Geral</h2>
+        <select id="filtro-dashboard" onchange="atualizarDashboard()" style="padding: 0.4rem; border-radius: 8px; background: var(--card-bg); color: var(--text); border: 1px solid var(--card-border); cursor: pointer; outline: none;">
+          <option value="tudo">Todo o Período</option>
+          <option value="30">Últimos 30 Dias</option>
+          <option value="90">Últimos 90 Dias</option>
+          <option value="ano">Este Ano</option>
+        </select>
+      </div>
       <div class="grid-2">
         <!-- Gráfico 1: Faturamento e Lucro -->
         <div class="card">
@@ -134,7 +143,6 @@
           <div class="result-row"><span>Depreciação Máquina:</span> <span id="res-depreciacao">R$ 0,00</span></div>
           <div class="result-row"><span>Mão de Obra:</span> <span id="res-mo">R$ 0,00</span></div>
           <div class="result-row"><span>Acessórios + Embalagem:</span> <span id="res-extras">R$ 0,00</span></div>
-          <div class="result-row"><span>Risco/Falha Estimada:</span> <span id="res-risco">R$ 0,00</span></div>
           <div class="result-row" style="font-weight: bold; color: var(--accent);"><span>Subtotal Base (Custo Real):</span> <span id="res-subtotal">R$ 0,00</span></div>
           <div class="result-row"><span>Impostos & Taxas Pagas:</span> <span id="res-taxas">R$ 0,00</span></div>
           
@@ -160,9 +168,29 @@
     <div id="tab-kits" class="tab-content">
       <div class="card">
         <h2><i data-lucide="layers"></i> Criar Combo / Kit</h2>
-        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">Selecione a quantidade de cada produto salvo para formar um combo.</p>
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">Selecione os produtos e as quantidades para formar um combo.</p>
         <div class="form-group"><label>Nome do Combo</label><input type="text" id="kit-nome" placeholder="Ex: Kit Enfeites de Natal"></div>
-        <div id="kit-selecao-produtos" style="background:var(--input-bg); border:1px solid var(--card-border); border-radius:8px; padding:0.5rem; margin-bottom:1rem;"></div>
+        
+        <!-- NOVA ESTRUTURA IGUAL AOS ACESSÓRIOS -->
+        <div class="form-group" style="background: var(--input-bg); padding: 1rem; border-radius: 8px; border: 1px solid var(--card-border); margin-bottom: 1rem;">
+          <label style="color: var(--primary); font-weight: bold; margin-bottom: 0.5rem; font-size: 0.95rem; display:flex; align-items:center; gap:0.3rem;"><i data-lucide="box" width="18"></i> Adicionar Produtos ao Combo</label>
+          <div style="display: flex; gap: 0.5rem; align-items: flex-end; flex-wrap: wrap;">
+            <div class="form-group" style="flex: 2; margin-bottom: 0; min-width: 200px;">
+              <label>Selecionar Item</label>
+              <select id="kit-add-prod"></select>
+            </div>
+            <div class="form-group" style="flex: 1; margin-bottom: 0; min-width: 80px;">
+              <label>Qtd</label>
+              <input type="number" id="kit-add-qtd" value="1" min="1">
+            </div>
+            <button class="btn" style="padding: 0.6rem 1.2rem; margin-bottom: 0; font-size: 1.1rem;" onclick="addProdutoKit()"><i data-lucide="plus"></i></button>
+          </div>
+          <!-- LISTA ONDE OS PRODUTOS ADICIONADOS VÃO APARECER -->
+          <div id="lista-calc-kit-produtos" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
+            <p style="font-size: 0.8rem; color: var(--text-muted);">Nenhum produto adicionado a este combo.</p>
+          </div>
+        </div>
+
         <button class="btn" onclick="salvarKit(this)"><i data-lucide="save"></i> Salvar Combo</button>
       </div>
       <div class="card"><h2><i data-lucide="list"></i> Combos Salvos</h2><div id="lista-kits" class="list-container"></div></div>
@@ -192,7 +220,10 @@
       <div class="card">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
           <h2 style="margin-bottom:0; border-bottom:none; padding-bottom:0;"><i data-lucide="list-todo"></i> Fluxo de Pedidos</h2>
-          <input type="text" id="input-busca" placeholder="🔍 Pesquisar por Nome, CPF ou Tel..." oninput="filtrarPedidos()" style="padding:0.4rem 0.6rem; font-size:0.85rem; border-radius:6px; border:1px solid var(--card-border); background:var(--input-bg); color:var(--text); width:260px;">
+          <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+            <input type="text" id="input-busca" placeholder="🔍 Pesquisar por Nome..." oninput="filtrarPedidos()" style="padding:0.4rem 0.6rem; font-size:0.85rem; border-radius:6px; border:1px solid var(--card-border); background:var(--input-bg); color:var(--text); width:200px;">
+            <button class="btn btn-outline" style="padding:0.4rem 0.6rem; font-size:0.85rem; color:var(--primary); border-color:var(--primary);" onclick="exportarPedidosCSV()"><i data-lucide="sheet" width="16"></i> Baixar Planilha</button>
+          </div>
         </div>
         <div id="lista-pedidos" class="list-container"></div>
       </div>
@@ -250,7 +281,6 @@
           <div class="form-group"><label>Valor Máquina (R$)</label><input type="number" step="0.01" id="cfg-maquina" value="4500.00"></div>
           <div class="form-group"><label>Vida Útil (Horas)</label><input type="number" id="cfg-horas" value="5000"></div>
           <div class="form-group"><label>Mão de Obra (R$/h)</label><input type="number" step="0.01" id="cfg-mo" value="25.00"></div>
-          <div class="form-group"><label>Taxa de Risco/Falha (%)</label><input type="number" id="cfg-risco" value="5"></div>
           <div class="form-group"><label>Imposto MEI/DAS (%)</label><input type="number" step="0.1" id="cfg-imposto" value="10"></div>
           <div class="form-group"><label>Taxa de Pagamento / Maquininha (%)</label><input type="number" step="0.1" id="cfg-taxapg" value="3.5"></div>
         </div>
