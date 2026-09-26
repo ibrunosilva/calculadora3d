@@ -475,22 +475,76 @@ function calcular() {
   const lucroReal = precoVendaFinal - custoTotalBase - valorImposto - valorTaxaPg;
   const custoTotalFinal = custoTotalBase + valorImposto + valorTaxaPg;
 
-  // 6. ATUALIZAÇÃO DA INTERFACE
-  document.getElementById('res-filamento').innerText = fmt(cFilTotal); 
-  document.getElementById('res-energia').innerText = fmt(cEn);
-  document.getElementById('res-depreciacao').innerText = fmt(cDep); 
-  document.getElementById('res-mo').innerText = fmt(cMo);
-  document.getElementById('res-extras').innerText = fmt(custoAcessorio);
-  document.getElementById('res-subtotal').innerText = fmt(custoTotalBase);
-  document.getElementById('res-taxas').innerText = fmt(valorImposto + valorTaxaPg);
+  // 6. ATUALIZAÇÃO DA INTERFACE (NOVO PAINEL PRO)
   
-  document.getElementById('res-venda-sugerido').innerText = fmt(precoSugerido);
-  document.getElementById('res-venda').innerText = fmt(precoVendaFinal);
-  document.getElementById('res-lucro').innerText = fmt(lucroReal);
+  // Cálculo do Ponto de Equilíbrio (Zero a Zero)
+  const precoMinimo = incluirTaxas && taxaTotalPct < 1 ? custoTotalBase / (1 - taxaTotalPct) : custoTotalBase;
+
+  // Atualizar KPIs Topo
+  document.getElementById('res-kpi-custo').innerText = fmt(custoTotalBase);
+  document.getElementById('res-kpi-lucro').innerText = fmt(lucroReal);
+  document.getElementById('res-kpi-minimo').innerText = fmt(precoMinimo);
+  document.getElementById('res-kpi-venda').innerText = fmt(precoVendaFinal);
+
+  // Calcula Percentagens para a Barra e Tabela
+  const safeTotal = Math.max(0.01, custoTotalBase);
+  const pMat = (cFilTotal / safeTotal) * 100;
+  const pNrg = (cEn / safeTotal) * 100;
+  const pMac = (cDep / safeTotal) * 100;
+  const pMo = (cMo / safeTotal) * 100;
+  const pExt = (custoAcessorio / safeTotal) * 100;
+
+  // Atualiza as larguras da Barra de Composição
+  document.getElementById('bar-mat').style.width = `${pMat}%`;
+  document.getElementById('bar-nrg').style.width = `${pNrg}%`;
+  document.getElementById('bar-mac').style.width = `${pMac}%`;
+  document.getElementById('bar-mo').style.width = `${pMo}%`;
+  document.getElementById('bar-ext').style.width = `${pExt}%`;
+
+  // Atualiza Valores da Legenda
+  document.getElementById('leg-mat').innerText = fmt(cFilTotal);
+  document.getElementById('leg-nrg').innerText = fmt(cEn);
+  document.getElementById('leg-mac').innerText = fmt(cDep);
+  document.getElementById('leg-mo').innerText = fmt(cMo);
+  document.getElementById('leg-ext').innerText = fmt(custoAcessorio);
+
+  // Injeta as Linhas na Tabela de Custos Detalhada
+  document.getElementById('tabela-custos-body').innerHTML = `
+    <tr>
+      <td style="padding: 0.8rem 1rem; border-bottom: 1px solid var(--card-border); color: var(--text);">Matéria-Prima (Filamento/Resina)</td>
+      <td style="padding: 0.8rem 1rem; border-bottom: 1px solid var(--card-border); text-align: right; color: var(--text);">${fmt(cFilTotal)}</td>
+      <td style="padding: 0.8rem 1rem; border-bottom: 1px solid var(--card-border); text-align: right; color: var(--text-muted);">${pMat.toFixed(1)}%</td>
+    </tr>
+    <tr>
+      <td style="padding: 0.8rem 1rem; border-bottom: 1px solid var(--card-border); color: var(--text);">Energia Elétrica</td>
+      <td style="padding: 0.8rem 1rem; border-bottom: 1px solid var(--card-border); text-align: right; color: var(--text);">${fmt(cEn)}</td>
+      <td style="padding: 0.8rem 1rem; border-bottom: 1px solid var(--card-border); text-align: right; color: var(--text-muted);">${pNrg.toFixed(1)}%</td>
+    </tr>
+    <tr>
+      <td style="padding: 0.8rem 1rem; border-bottom: 1px solid var(--card-border); color: var(--text);">Desgaste da Máquina</td>
+      <td style="padding: 0.8rem 1rem; border-bottom: 1px solid var(--card-border); text-align: right; color: var(--text);">${fmt(cDep)}</td>
+      <td style="padding: 0.8rem 1rem; border-bottom: 1px solid var(--card-border); text-align: right; color: var(--text-muted);">${pMac.toFixed(1)}%</td>
+    </tr>
+    <tr>
+      <td style="padding: 0.8rem 1rem; border-bottom: 1px solid var(--card-border); color: var(--text);">Mão de Obra Técnica</td>
+      <td style="padding: 0.8rem 1rem; border-bottom: 1px solid var(--card-border); text-align: right; color: var(--text);">${fmt(cMo)}</td>
+      <td style="padding: 0.8rem 1rem; border-bottom: 1px solid var(--card-border); text-align: right; color: var(--text-muted);">${pMo.toFixed(1)}%</td>
+    </tr>
+    <tr>
+      <td style="padding: 0.8rem 1rem; border-bottom: 1px solid var(--card-border); color: var(--text);">Embalagem & Insumos Extras</td>
+      <td style="padding: 0.8rem 1rem; border-bottom: 1px solid var(--card-border); text-align: right; color: var(--text);">${fmt(custoAcessorio)}</td>
+      <td style="padding: 0.8rem 1rem; border-bottom: 1px solid var(--card-border); text-align: right; color: var(--text-muted);">${pExt.toFixed(1)}%</td>
+    </tr>
+    <tr style="background: rgba(255,255,255,0.03);">
+      <td style="padding: 1rem; font-weight: bold; color: var(--text);">CUSTO DIRETO TOTAL</td>
+      <td style="padding: 1rem; text-align: right; font-weight: bold; color: var(--text);">${fmt(custoTotalBase)}</td>
+      <td style="padding: 1rem; text-align: right; font-weight: bold; color: var(--text);">100%</td>
+    </tr>
+  `;
 
   calcAtual = { 
     custo: custoTotalFinal, 
-    preco: precoVendaFinal, // O sistema todo usará o preço final validado
+    preco: precoVendaFinal, 
     precoManual: isNaN(precoManual) ? '' : precoManual,
     lucro: lucroReal, imp: tImp, tImp: tImp, tMo: tMo, g1, g2, g3, g4, purga, markup: markupMultiplicador, incluirTaxas, 
     acessoriosLista: [...calcAcessorios]
