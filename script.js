@@ -34,7 +34,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// VARIÁVEIS GLOBAIS ATUALIZADAS
+// VARIÁVEIS GLOBAIS
 let cfg = { potencia: 110, kwh: 0.65, maqVal: 4500, maqHrs: 5000, mo: 25, impostoPct: 10, taxaPgPct: 3.5 };
 let materiais = [{ id: 'm1', nome: 'PLA', marca: 'Voolt3D', cor: 'Vermelho', preco: 90, estoque: 1000 }];
 let acessorios = [];
@@ -157,6 +157,7 @@ function carregarDadosCloud() {
       pedidos.push(p);
     });
     renderizarPedidos(pedidos);
+    renderizarClientes(); // O CRM de Clientes baseia-se nos pedidos!
   });
 }
 
@@ -394,7 +395,7 @@ function renderizarAcessoriosCalc() {
 }
 
 // ==========================================
-// CÁLCULO MESTRE (APENAS PURGA/DESPERDÍCIO EM GRAMAS)
+// CÁLCULO MESTRE (RATEIO DE PURGA + PREÇO MANUAL)
 // ==========================================
 function calcular() {
   const getMat = id => materiais.find(m => m.id === document.getElementById(id).value) || {preco:0};
@@ -410,56 +411,71 @@ function calcular() {
   
   const custoAcessorio = calcAcessorios.reduce((acc, curr) => acc + (curr.preco * curr.qtd), 0);
   const markupMultiplicador = Math.max(1, parseFloat(document.getElementById('prod-markup').value) || 1.0);
-  const incluirTaxas = document.getElementById('prod-incluir-taxas').checked;
   
+  // Captura o preço manual se tiver sido preenchido
+  const precoManualInput = document.getElementById('prod-preco-manual').value;
+  const precoManual = parseFloat(precoManualInput);
+  
+  const incluirTaxas = document.getElementById('prod-incluir-taxas').checked;
   const impPct = cfg.impostoPct || 10;
   const txaPct = cfg.taxaPgPct || 3.5;
   const taxaTotalPct = (impPct + txaPct) / 100;
 
-  // 1. CUSTO DE MATERIAL PONDERADO
+  // 1. CUSTO DE MATERIAL BASE E RATEIO DE PURGA
   const p1 = getMat('prod-mat-1').preco / 1000;
   const p2 = getMat('prod-mat-2').preco / 1000;
   const p3 = getMat('prod-mat-3').preco / 1000;
   const p4 = getMat('prod-mat-4').preco / 1000;
 
   const cFilBase = (g1 * p1) + (g2 * p2) + (g3 * p3) + (g4 * p4);
-  const gramasTotais = g1 + g2 + g3 + g4;
-  const precoMedioGrama = gramasTotais > 0 ? (cFilBase / gramasTotais) : 0;
-  
-  // O custo total de material agora é literalmente a peça + a purga informada em gramas
-  const cFilTotal = cFilBase + (purga * precoMedioGrama);
+  let coresAtivas = 0; let somaPrecosAtivos = 0; let custoPurga = 0;
+  if (g1 > 0) { coresAtivas++; somaPrecosAtivos += p1; }
+  if (g2 > 0) { coresAtivas++; somaPrecosAtivos += p2; }
+  if (g3 > 0) { coresAtivas++; somaPrecosAtivos += p3; }
+  if (g4 > 0) { coresAtivas++; somaPrecosAtivos += p4; }
+
+  if (coresAtivas > 0 && purga > 0) {
+    const purgaPorCor = purga / coresAtivas;
+    custoPurga = purgaPorCor * somaPrecosAtivos;
+  }
+  const cFilTotal = cFilBase + custoPurga;
   
   // 2. CUSTOS OPERACIONAIS E DIRETOS
   const cEn = tImp * (cfg.potencia / 1000) * cfg.kwh; 
   const cDep = tImp * (cfg.maqVal / cfg.maqHrs); 
   const cMo = tMo * cfg.mo;
-  
   const custoTotalBase = cFilTotal + cEn + cDep + cMo + custoAcessorio;
 
-  // 3. PRECIFICAÇÃO PROFISSIONAL (Margem Líquida)[cite: 1]
+  // 3. PREÇO SUGERIDO MATEMÁTICO
   const margemLiquida = markupMultiplicador > 1 ? (1 - (1 / markupMultiplicador)) : 0; 
+  let precoSugerido = custoTotalBase * markupMultiplicador; 
   
-  let precoVenda = custoTotalBase * markupMultiplicador; 
-  let valorImposto = 0; 
-  let valorTaxaPg = 0;
-
   if (incluirTaxas) {
     const deducoesTotais = taxaTotalPct + margemLiquida;
-    if (deducoesTotais < 0.95) {
-        precoVenda = custoTotalBase / (1 - deducoesTotais);
-    } else {
-        precoVenda = custoTotalBase * (1 + margemLiquida) / Math.max(0.1, (1 - taxaTotalPct));
-    }
-    valorImposto = precoVenda * (impPct / 100);
-    valorTaxaPg = precoVenda * (txaPct / 100);
+    if (deducoesTotais < 0.95) { precoSugerido = custoTotalBase / (1 - deducoesTotais); } 
+    else { precoSugerido = custoTotalBase * (1 + margemLiquida) / Math.max(0.1, (1 - taxaTotalPct)); }
   } else {
-    if(margemLiquida < 1) precoVenda = custoTotalBase / (1 - margemLiquida);
+    if(margemLiquida < 1) precoSugerido = custoTotalBase / (1 - margemLiquida);
+  }
+
+  // 4. APLICAÇÃO DO PREÇO FINAL (Manual vs Sugerido)
+  let precoVendaFinal = precoSugerido;
+  if (!isNaN(precoManual) && precoManual > 0) {
+      precoVendaFinal = precoManual; // Substitui o sugerido pelo seu preço customizado
+  }
+
+  // 5. CÁLCULO DE TAXAS SOBRE O PREÇO FINAL PRATICADO
+  let valorImposto = 0; 
+  let valorTaxaPg = 0;
+  if(incluirTaxas) {
+      valorImposto = precoVendaFinal * (impPct / 100);
+      valorTaxaPg = precoVendaFinal * (txaPct / 100);
   }
   
-  const lucroReal = precoVenda - custoTotalBase - valorImposto - valorTaxaPg;
+  const lucroReal = precoVendaFinal - custoTotalBase - valorImposto - valorTaxaPg;
   const custoTotalFinal = custoTotalBase + valorImposto + valorTaxaPg;
 
-  // 4. ATUALIZAÇÃO DA INTERFACE
+  // 6. ATUALIZAÇÃO DA INTERFACE
   document.getElementById('res-filamento').innerText = fmt(cFilTotal); 
   document.getElementById('res-energia').innerText = fmt(cEn);
   document.getElementById('res-depreciacao').innerText = fmt(cDep); 
@@ -468,15 +484,94 @@ function calcular() {
   document.getElementById('res-subtotal').innerText = fmt(custoTotalBase);
   document.getElementById('res-taxas').innerText = fmt(valorImposto + valorTaxaPg);
   
-  document.getElementById('res-custo').innerText = fmt(custoTotalFinal); 
-  document.getElementById('res-venda').innerText = fmt(precoVenda);
+  document.getElementById('res-venda-sugerido').innerText = fmt(precoSugerido);
+  document.getElementById('res-venda').innerText = fmt(precoVendaFinal);
   document.getElementById('res-lucro').innerText = fmt(lucroReal);
 
   calcAtual = { 
-    custo: custoTotalFinal, preco: precoVenda, lucro: lucroReal, 
-    imp: tImp, tImp: tImp, tMo: tMo, g1, g2, g3, g4, purga, markup: markupMultiplicador, incluirTaxas, 
+    custo: custoTotalFinal, 
+    preco: precoVendaFinal, // O sistema todo usará o preço final validado
+    precoManual: isNaN(precoManual) ? '' : precoManual,
+    lucro: lucroReal, imp: tImp, tImp: tImp, tMo: tMo, g1, g2, g3, g4, purga, markup: markupMultiplicador, incluirTaxas, 
     acessoriosLista: [...calcAcessorios]
   };
+}
+
+// ==========================================
+// CADASTRO DE PRODUTOS
+// ==========================================
+function salvarProduto(btn) {
+  let nome = document.getElementById('prod-nome').value; if(!nome) return showToast("Nome do Produto!", "warning");
+  let id = document.getElementById('prod-id').value;
+  let docId = id ? id : 'p_' + Date.now();
+  
+  let p = { 
+    id: docId, nome, 
+    custo: calcAtual.custo, 
+    preco: calcAtual.preco, 
+    precoManual: calcAtual.precoManual, // Salva o preço que você digitou
+    imp: calcAtual.imp, lucro: calcAtual.lucro,
+    m1: document.getElementById('prod-mat-1').value, g1: calcAtual.g1,
+    m2: document.getElementById('prod-mat-2').value, g2: calcAtual.g2,
+    m3: document.getElementById('prod-mat-3').value, g3: calcAtual.g3,
+    m4: document.getElementById('prod-mat-4').value, g4: calcAtual.g4, purga: calcAtual.purga,
+    markup: calcAtual.markup, incluirTaxas: calcAtual.incluirTaxas, 
+    acessoriosLista: calcAtual.acessoriosLista
+  };
+  
+  toggleLoading(btn, true);
+  db.collection('produtos').doc(docId.toString()).set(p).then(() => {
+    toggleLoading(btn, false);
+    showToast("Produto Salvo!"); limparCalc();
+  });
+}
+
+function limparCalc() { 
+  document.getElementById('prod-nome').value=''; 
+  document.getElementById('prod-id').value=''; 
+  document.getElementById('prod-g-1').value=100;
+  document.getElementById('prod-markup').value=2.0; 
+  document.getElementById('prod-preco-manual').value=''; // Limpa o preço manual
+  document.getElementById('prod-incluir-taxas').checked=true;
+  
+  let selectAcc = document.getElementById('prod-add-acc');
+  if(selectAcc) selectAcc.value = ''; 
+  
+  document.getElementById('form-title').innerHTML = `<i data-lucide="calculator"></i> Calcular Peça`;
+  
+  calcAcessorios = [];
+  renderizarAcessoriosCalc();
+  calcular(); 
+  lucide.createIcons();
+}
+
+function editarProduto(id) { 
+  let p = produtos.find(x => x.id == id);
+  if(!p) return;
+  document.getElementById('prod-id').value = p.id;
+  document.getElementById('prod-nome').value = p.nome;
+  if (p.m1) document.getElementById('prod-mat-1').value = p.m1; document.getElementById('prod-g-1').value = p.g1;
+  if (p.m2) document.getElementById('prod-mat-2').value = p.m2; document.getElementById('prod-g-2').value = p.g2 || 0;
+  if (p.m3) document.getElementById('prod-mat-3').value = p.m3; document.getElementById('prod-g-3').value = p.g3 || 0;
+  if (p.m4) document.getElementById('prod-mat-4').value = p.m4; document.getElementById('prod-g-4').value = p.g4 || 0;
+  document.getElementById('prod-purga').value = p.purga || 0;
+  
+  document.getElementById('prod-markup').value = p.markup || 2.0;
+  document.getElementById('prod-preco-manual').value = p.precoManual || ''; // Carrega o preço manual salvo
+  document.getElementById('prod-incluir-taxas').checked = p.incluirTaxas !== undefined ? p.incluirTaxas : true;
+  
+  calcAcessorios = p.acessoriosLista ? [...p.acessoriosLista] : [];
+  if(p.acessorioId && calcAcessorios.length === 0) {
+      const oldAcc = acessorios.find(a => a.id === p.acessorioId);
+      if (oldAcc) calcAcessorios.push({ id: oldAcc.id, nome: oldAcc.nome, preco: oldAcc.preco, qtd: p.accQtd || 1 });
+  }
+  
+  document.getElementById('form-title').innerHTML = `<i data-lucide="edit"></i> Editar Produto`;
+  switchTab('calc'); 
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  renderizarAcessoriosCalc();
+  calcular();
+  lucide.createIcons();
 }
 
 // ==========================================
@@ -647,7 +742,7 @@ function atualizarSelectCRM() {
 }
 
 // ==========================================
-// PEDIDOS & CRM
+// PEDIDOS E GESTÃO DE CLIENTES
 // ==========================================
 function renderizarPedidos(lista) {
   verificarStatusAutomatico(); 
@@ -704,6 +799,112 @@ function filtrarPedidos() {
   renderizarPedidos(filtrados);
 }
 
+// AGRUPAMENTO DE CLIENTES A PARTIR DE PEDIDOS
+// AGRUPAMENTO DE CLIENTES A PARTIR DE PEDIDOS (Por CPF)
+function agruparClientes() {
+  let mapa = {};
+  pedidos.forEach(p => {
+    if(!p.cliente) return;
+    
+    let nome = p.cliente.trim();
+    // Limpa a formatação do CPF para garantir que "111.222.333-44" e "11122233344" sejam o mesmo
+    let cpfLimpo = p.cpf ? p.cpf.replace(/\D/g, '') : '';
+    
+    // Se tem CPF usa o CPF como chave única, senão usa o nome em minúsculas
+    let key = cpfLimpo ? cpfLimpo : nome.toLowerCase();
+    
+    if(!mapa[key]) {
+      mapa[key] = { idKey: key, nome: nome, contato: p.contato, cpf: p.cpf, totalGasto: 0, qtdPedidos: 0, pedidos: [], ultimo: 0 };
+    }
+    
+    // Considera para o total gasto apenas pedidos em andamento ou concluídos
+    if(p.status === 'Enviado' || p.status === 'Em Preparo') {
+      mapa[key].totalGasto += p.preco;
+    }
+    mapa[key].qtdPedidos++;
+    mapa[key].pedidos.push(p);
+    
+    // Atualiza os dados do cliente para a versão mais recente cadastrada no último pedido
+    if(p.data > mapa[key].ultimo) {
+      mapa[key].ultimo = p.data;
+      if(p.contato) mapa[key].contato = p.contato;
+      if(p.cpf) mapa[key].cpf = p.cpf; 
+      mapa[key].nome = nome; 
+    }
+  });
+  // Retorna ordenado pelos que mais gastaram
+  return Object.values(mapa).sort((a,b) => b.totalGasto - a.totalGasto); 
+}
+
+function renderizarClientes(lista = agruparClientes()) {
+  let container = document.getElementById('lista-clientes');
+  if(!container) return;
+  if(lista.length === 0) { container.innerHTML = '<p style="color:var(--text-muted); font-size:0.9rem;">Nenhum cliente registrado nos pedidos.</p>'; return; }
+  
+  container.innerHTML = lista.map(c => `
+    <div class="list-item" style="flex-direction:column; align-items:flex-start; cursor:pointer; transition: 0.2s;" onclick="verDetalhesCliente('${c.idKey}')">
+       <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+          <h3 style="font-size:1.1rem; color:var(--primary);"><i data-lucide="user"></i> ${escapeHTML(c.nome)}</h3>
+          <span class="badge badge-blue">${c.qtdPedidos} Pedidos</span>
+       </div>
+       <p style="font-size:0.85rem; color:var(--text-muted); margin-top:0.5rem;"><i data-lucide="calendar"></i> Último Pedido: ${fmtDate(c.ultimo)}</p>
+       <p style="font-size:0.95rem; font-weight:bold; margin-top:0.5rem;">Total Gasto: ${fmt(c.totalGasto)}</p>
+    </div>
+  `).join('');
+  setTimeout(() => lucide.createIcons(), 0);
+}
+
+function filtrarClientes() {
+  let termo = document.getElementById('busca-clientes').value.toLowerCase().trim();
+  let clientesAgrupados = agruparClientes();
+  if(!termo) { renderizarClientes(clientesAgrupados); return; }
+  
+  let filtrados = clientesAgrupados.filter(c => 
+    c.nome.toLowerCase().includes(termo) || 
+    (c.contato && c.contato.includes(termo)) ||
+    (c.cpf && c.cpf.replace(/\D/g, '').includes(termo.replace(/\D/g, '')))
+  );
+  renderizarClientes(filtrados);
+}
+
+function verDetalhesCliente(idKey) {
+  let c = agruparClientes().find(x => x.idKey === idKey);
+  if(!c) return;
+  
+  document.getElementById('detalhe-cliente-nome').innerHTML = `<i data-lucide="user"></i> ${escapeHTML(c.nome)}`;
+  document.getElementById('detalhe-cliente-info').innerText = `${c.contato || 'Sem Telefone Cadastrado'} | ${c.cpf || 'Sem CPF Cadastrado'}`;
+  document.getElementById('detalhe-cliente-gasto').innerText = fmt(c.totalGasto);
+  document.getElementById('detalhe-cliente-qtd').innerText = c.qtdPedidos;
+  
+  // Renderiza a lista de pedidos dentro do modal
+  document.getElementById('detalhe-cliente-pedidos').innerHTML = c.pedidos.sort((a,b)=>b.data-a.data).map(p => {
+     let badgeClass = 'badge-gray';
+     if(p.status === 'Em Preparo') badgeClass = 'badge-blue';
+     if(p.status === 'Enviado') badgeClass = 'badge-green';
+     if(p.status === 'Recusado') badgeClass = 'badge-red';
+     if(p.status === 'Sem Retorno') badgeClass = 'badge-orange';
+     
+     return `<div class="list-item" style="padding:0.8rem; flex-wrap:wrap; border:1px dashed var(--card-border);">
+       <div style="flex:1; min-width:150px;">
+         <strong style="display:block; font-size:0.95rem; margin-bottom:0.2rem;">${escapeHTML(p.itemNome)}</strong>
+         <span class="badge ${badgeClass}" style="font-size:0.7rem;">${p.status}</span>
+       </div>
+       <div style="text-align:right; font-size:0.85rem;">
+         <div style="color:var(--text-muted); margin-bottom:0.2rem;">${fmtDate(p.data)}</div>
+         <strong style="color:var(--primary); font-size:1rem;">${fmt(p.preco)}</strong>
+       </div>
+     </div>`;
+  }).join('');
+  
+  document.getElementById('modal-cliente').style.display = 'flex';
+  lucide.createIcons();
+}
+
+function fecharModalCliente() {
+  document.getElementById('modal-cliente').style.display = 'none';
+}
+
+// Continua com Funções de Pedidos (Alteração de Status, Estoque, etc)
 function mudarStatusPedido(id, novoStatus) {
   let ped = pedidos.find(x => x.id == id);
   if(!ped) return;
