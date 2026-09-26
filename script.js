@@ -297,14 +297,27 @@ function salvarProduto(btn) {
 }
 
 function limparCalc() { 
-  ['prod-nome','prod-id','prod-preco-manual'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('prod-g-1').value = 100;
-  document.getElementById('prod-markup').value = 2.0; 
-  document.getElementById('prod-incluir-taxas').checked = true;
+  ['prod-nome', 'prod-id', 'prod-preco-manual'].forEach(id => {
+    if (document.getElementById(id)) document.getElementById(id).value = '';
+  });
+
+  [1, 2, 3, 4].forEach(i => {
+    if (document.getElementById(`prod-mat-${i}`)) document.getElementById(`prod-mat-${i}`).value = '';
+    if (document.getElementById(`prod-g-${i}`)) document.getElementById(`prod-g-${i}`).value = 0;
+  });
+
+  if (document.getElementById('prod-purga')) document.getElementById('prod-purga').value = 15;
+  if (document.getElementById('prod-tempo-imp')) document.getElementById('prod-tempo-imp').value = 3.5;
+  if (document.getElementById('prod-tempo-mo')) document.getElementById('prod-tempo-mo').value = 0.5;
+  if (document.getElementById('prod-markup')) document.getElementById('prod-markup').value = 2.0; 
+  if (document.getElementById('prod-incluir-taxas')) document.getElementById('prod-incluir-taxas').checked = true;
   if (document.getElementById('prod-add-acc')) document.getElementById('prod-add-acc').value = ''; 
   
   document.getElementById('form-title').innerHTML = `<i data-lucide="calculator"></i> Calcular Peça`;
-  calcAcessorios = []; renderizarAcessoriosCalc(); calcular(); lucide.createIcons();
+  calcAcessorios = []; 
+  renderizarAcessoriosCalc(); 
+  calcular(); 
+  lucide.createIcons();
 }
 
 function editarProduto(id) { 
