@@ -11,35 +11,33 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   
-  <!-- Biblioteca de Ícones Lucide -->
+  <!-- Bibliotecas Externas -->
   <script src="https://unpkg.com/lucide@latest"></script>
-
-  <!-- Biblioteca de Gráficos Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <!-- SEU ARQUIVO CSS EXTERNO -->
+  <!-- CSS -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
   <!-- TELA DE LOGIN -->
-  <div id="auth-screen" style="display:flex; justify-content:center; align-items:center; height:100vh; background:var(--bg); position:fixed; top:0; left:0; width:100%; z-index:9999;">
-    <div class="card" style="width: 100%; max-width: 400px; text-align: center;">
-      <h2 style="margin-bottom: 1rem; justify-content: center;"><i data-lucide="lock"></i> Acesso Restrito</h2>
+  <div id="auth-screen" style="display:flex; justify-content:center; align-items:center; height:100vh; background:var(--bg); position:fixed; inset:0; z-index:9999;">
+    <div class="card text-center" style="width: 100%; max-width: 400px;">
+      <h2 class="flex-center" style="justify-content: center; margin-bottom: 1rem;"><i data-lucide="lock"></i> Acesso Restrito</h2>
       <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Faça login para acessar ao sistema.</p>
       <div class="form-group"><input type="email" id="login-email" placeholder="O seu e-mail"></div>
       <div class="form-group"><input type="password" id="login-senha" placeholder="Senha"></div>
-      <button class="btn" onclick="fazerLogin(this)" style="width: 100%; margin-top: 0.5rem;"><i data-lucide="log-in"></i> Entrar</button>
+      <button class="btn w-100 mt-1" onclick="fazerLogin(this)"><i data-lucide="log-in"></i> Entrar</button>
       <p id="login-erro" style="color: var(--danger); font-size: 0.8rem; margin-top: 0.5rem;"></p>
     </div>
   </div>
 
-  <!-- CONTEÚDO PRINCIPAL DO SISTEMA -->
+  <!-- CONTEÚDO PRINCIPAL -->
   <div id="app-content" style="display:none;">
 
     <header>
       <div>
-        <h1 style="display:flex; align-items:center; gap:0.5rem;"><i data-lucide="box"></i> CRM - TríadeMaker 3D</h1>
+        <h1 class="align-center"><i data-lucide="box"></i> CRM - TríadeMaker 3D</h1>
         <p>Calculadora, CRM & Estoque</p>
       </div>
       <button class="theme-toggle" onclick="toggleTheme()"><i data-lucide="sun-moon"></i></button>
@@ -55,11 +53,11 @@
       <button onclick="switchTab('config')"><i data-lucide="settings"></i> Config</button>
     </nav>
 
-    <!-- ABA DASHBOARD / RELATÓRIOS -->
+    <!-- ABA DASHBOARD -->
     <div id="tab-dashboard" class="tab-content">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
-        <h2 style="font-size: 1.2rem; color: var(--text);"><i data-lucide="bar-chart-2"></i> Visão Geral</h2>
-        <select id="filtro-dashboard" onchange="atualizarDashboard()" style="padding: 0.4rem; border-radius: 8px; background: var(--card-bg); color: var(--text); border: 1px solid var(--card-border); cursor: pointer; outline: none;">
+      <div class="section-header">
+        <h2 class="align-center"><i data-lucide="bar-chart-2"></i> Visão Geral</h2>
+        <select id="filtro-dashboard" class="search-input" style="width: auto;" onchange="atualizarDashboard()">
           <option value="tudo">Todo o Período</option>
           <option value="30">Últimos 30 Dias</option>
           <option value="90">Últimos 90 Dias</option>
@@ -68,16 +66,12 @@
       </div>
       <div class="grid-2">
         <div class="card">
-          <h2><i data-lucide="bar-chart-3"></i> Receita vs Lucro (Pedidos Concluídos)</h2>
-          <div class="chart-container">
-            <canvas id="chartFinancas"></canvas>
-          </div>
+          <h2><i data-lucide="bar-chart-3"></i> Receita vs Lucro</h2>
+          <div class="chart-container"><canvas id="chartFinancas"></canvas></div>
         </div>
         <div class="card">
           <h2><i data-lucide="pie-chart"></i> Top 5 Mais Vendidos</h2>
-          <div class="chart-container">
-            <canvas id="chartProdutos"></canvas>
-          </div>
+          <div class="chart-container"><canvas id="chartProdutos"></canvas></div>
         </div>
       </div>
     </div>
@@ -87,13 +81,14 @@
       <div class="card">
         <h2 id="form-title"><i data-lucide="calculator"></i> Calcular Peça</h2>
         <input type="hidden" id="prod-id">
+        
         <div class="grid-2">
           <div class="form-group"><label>Nome da Peça / Produto</label><input type="text" id="prod-nome"></div>
         </div>
         
-        <!-- BLOCO SÓLIDO: AMS E TEMPOS DE PRODUÇÃO -->
-        <div style="background: var(--input-bg); padding: 1.2rem; border-radius: 8px; border: 1px solid var(--card-border); margin-bottom: 1.5rem;">
-          <label style="color: var(--primary); font-weight: bold; margin-bottom: 0.8rem; font-size: 0.95rem; display:flex; align-items:center; gap:0.3rem;"><i data-lucide="cpu" width="18"></i> Dados de Produção (AMS Lite & Tempos)</label>
+        <!-- BLOCO SÓLIDO: DADOS DE PRODUÇÃO -->
+        <div class="panel-pro" style="padding: 1.2rem; margin-top: 1rem;">
+          <label class="align-center" style="color: var(--primary); font-weight: bold; margin-bottom: 0.8rem; font-size: 0.95rem;"><i data-lucide="cpu" width="18"></i> Dados de Produção (AMS Lite & Tempos)</label>
           
           <div class="grid-2">
             <div class="form-group"><label>Filamento 1</label><select id="prod-mat-1" onchange="calcular()"></select></div>
@@ -106,113 +101,91 @@
             <div class="form-group"><label>Consumo 4 (g)</label><input type="number" id="prod-g-4" value="0" oninput="calcular()"></div>
           </div>
           
-          <div class="form-group" style="margin-bottom: 1rem;"><label>Desperdício Purga AMS (g)</label><input type="number" id="prod-purga" value="15" oninput="calcular()"></div>
+          <div class="form-group mb-1"><label>Desperdício Purga AMS (g)</label><input type="number" id="prod-purga" value="15" oninput="calcular()"></div>
 
-          <!-- TEMPOS INTEGRADOS SEM DIVISÓRIA -->
           <div class="grid-2">
-            <div class="form-group" style="margin-bottom: 0;"><label>Tempo Impressão (Horas)</label><input type="number" step="0.1" id="prod-tempo-imp" value="3.5" oninput="calcular()"></div>
-            <div class="form-group" style="margin-bottom: 0;"><label>Tempo Mão de Obra (Horas)</label><input type="number" step="0.1" id="prod-tempo-mo" value="0.5" oninput="calcular()"></div>
+            <div class="form-group mb-0"><label>Tempo Impressão (Horas)</label><input type="number" step="0.1" id="prod-tempo-imp" value="3.5" oninput="calcular()"></div>
+            <div class="form-group mb-0"><label>Tempo Mão de Obra (Horas)</label><input type="number" step="0.1" id="prod-tempo-mo" value="0.5" oninput="calcular()"></div>
           </div>
         </div>
         
-        <!-- BLOCO ISOLADO: ACESSÓRIOS E EMBALAGEM -->
-        <div class="form-group" style="background: var(--input-bg); padding: 1.2rem; border-radius: 8px; border: 1px solid var(--card-border); margin-bottom: 1.5rem;">
-          <label style="color: var(--primary); font-weight: bold; margin-bottom: 0.8rem; font-size: 0.95rem; display:flex; align-items:center; gap:0.3rem;"><i data-lucide="package" width="18"></i> Acessórios e Embalagem</label>
-          <div style="display: flex; gap: 0.5rem; align-items: flex-end; flex-wrap: wrap;">
-            <div class="form-group" style="flex: 2; margin-bottom: 0; min-width: 200px;">
+        <!-- BLOCO SÓLIDO: ACESSÓRIOS -->
+        <div class="panel-pro" style="padding: 1.2rem; margin-top: 0;">
+          <label class="align-center" style="color: var(--primary); font-weight: bold; margin-bottom: 0.8rem; font-size: 0.95rem;"><i data-lucide="package" width="18"></i> Acessórios e Embalagem</label>
+          <div class="flex-between" style="align-items: flex-end;">
+            <div class="form-group mb-0" style="flex: 2; min-width: 200px;">
               <label>Selecionar Item</label>
               <select id="prod-add-acc"></select>
             </div>
-            <div class="form-group" style="flex: 1; margin-bottom: 0; min-width: 80px;">
+            <div class="form-group mb-0" style="flex: 1; min-width: 80px;">
               <label>Qtd</label>
               <input type="number" id="prod-add-qtd" value="1" min="1">
             </div>
-            <button class="btn" style="padding: 0.6rem 1.2rem; margin-bottom: 0; font-size: 1.1rem;" onclick="addAcessorioCalc()"><i data-lucide="plus"></i></button>
+            <button class="btn mb-0" style="padding: 0.6rem 1.2rem; font-size: 1.1rem;" onclick="addAcessorioCalc()"><i data-lucide="plus"></i></button>
           </div>
-          <div id="lista-calc-acessorios" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;"></div>
+          <div id="lista-calc-acessorios" class="list-container mt-1" style="gap: 0.5rem;"></div>
         </div>
         
-        <!-- NOVO PAINEL DE RESULTADOS PRO -->
-        <div style="background: var(--input-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 1.5rem; margin-top: 1.5rem;">
-          
-          <!-- LINHA 1: KPIs SUPERIORES -->
-          <div style="display: flex; flex-wrap: wrap; gap: 1.5rem; margin-bottom: 1.5rem; align-items: flex-end;">
-            <div style="flex: 1; min-width: 150px;">
-              <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: bold; margin-bottom: 0.3rem;">Custo Total</div>
-              <div id="res-kpi-custo" style="font-size: 1.8rem; font-weight: 900; color: var(--text);">R$ 0,00</div>
-            </div>
-            <div style="flex: 1; min-width: 150px;">
-              <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: bold; margin-bottom: 0.3rem;">Lucro Líquido Real</div>
-              <div id="res-kpi-lucro" style="font-size: 1.8rem; font-weight: 900; color: #10b981;">R$ 0,00</div>
-            </div>
-            <div style="flex: 1; min-width: 150px;">
-              <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: bold; margin-bottom: 0.3rem;">Mínimo</div>
-              <div id="res-kpi-minimo" style="font-size: 1.8rem; font-weight: 900; color: #f59e0b;">R$ 0,00</div>
-            </div>
+        <!-- PAINEL PRO: RESULTADOS E CONTROLES -->
+        <div class="panel-pro">
+          <!-- KPIs -->
+          <div class="kpi-row">
+            <div class="kpi-box"><div class="kpi-label">Custo Total</div><div id="res-kpi-custo" class="kpi-value">R$ 0,00</div></div>
+            <div class="kpi-box"><div class="kpi-label">Lucro Líquido Real</div><div id="res-kpi-lucro" class="kpi-value text-green">R$ 0,00</div></div>
+            <div class="kpi-box"><div class="kpi-label">Mínimo</div><div id="res-kpi-minimo" class="kpi-value text-orange">R$ 0,00</div></div>
           </div>
           
-          <!-- LINHA 2: PREÇO FINAL + CONTROLES -->
-          <div style="display: flex; flex-wrap: wrap; gap: 1.5rem; margin-bottom: 1.5rem; align-items: flex-end;">
-            <div style="flex: 1; min-width: 150px;">
-              <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: bold; margin-bottom: 0.3rem;">Preço Final</div>
-              <div id="res-kpi-venda" style="font-size: 1.8rem; font-weight: 900; color: #3b82f6;">R$ 0,00</div>
-            </div>
+          <!-- PREÇO E CONTROLES -->
+          <div class="kpi-row">
+            <div class="kpi-box"><div class="kpi-label">Preço Final</div><div id="res-kpi-venda" class="kpi-value text-blue">R$ 0,00</div></div>
             
-            <div style="flex: 2; min-width: 300px; display: flex; gap: 1rem; align-items: flex-end; background: rgba(0,0,0,0.15); padding: 0.8rem 1.2rem; border-radius: 8px; border: 1px dashed var(--card-border);">
+            <div class="control-box">
               <div style="flex: 1;">
-                <label style="color: var(--text-muted); font-size: 0.7rem; margin-bottom: 0.3rem; display: block; font-weight: bold; text-transform: uppercase;">Markup Sugerido</label>
-                <input type="number" step="0.1" id="prod-markup" value="2.0" oninput="calcular()" style="width: 100%; border-radius: 6px; padding: 0.5rem; border: 1px solid var(--card-border); background: var(--input-bg); color: var(--text);">
+                <label class="control-label">Markup Sugerido</label>
+                <input type="number" step="0.1" id="prod-markup" value="2.0" class="control-input" oninput="calcular()">
               </div>
               <div style="flex: 1;">
-                <label style="color: #10b981; font-weight: bold; font-size: 0.7rem; margin-bottom: 0.3rem; display: block; text-transform: uppercase;">Preço Fixo (R$)</label>
-                <input type="number" step="0.01" id="prod-preco-manual" placeholder="Opcional" oninput="calcular()" style="width: 100%; border-radius: 6px; padding: 0.5rem; border: 1px solid #10b981; background: var(--input-bg); color: var(--text); outline-color: #10b981;">
+                <label class="control-label success">Preço Fixo (R$)</label>
+                <input type="number" step="0.01" id="prod-preco-manual" placeholder="Opcional" class="control-input success" oninput="calcular()">
               </div>
-              <div style="display: flex; align-items: center; padding-bottom: 0.5rem;">
-                <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; color: var(--text-muted); font-size: 0.8rem; font-weight: bold;">
-                  <input type="checkbox" id="prod-incluir-taxas" checked onchange="calcular()" style="width: 1.1rem; height: 1.1rem; accent-color: #3b82f6;">
-                  Incluir Taxas
+              <div style="padding-bottom: 0.5rem;">
+                <label class="align-center" style="cursor: pointer; color: var(--text-muted); font-size: 0.8rem; font-weight: bold;">
+                  <input type="checkbox" id="prod-incluir-taxas" checked onchange="calcular()" style="accent-color: #3b82f6;"> Incluir Taxas
                 </label>
               </div>
             </div>
           </div>
 
-          <!-- BARRA DE COMPOSIÇÃO VISUAL -->
-          <div style="height: 10px; width: 100%; background: var(--card-border); border-radius: 999px; display: flex; overflow: hidden; margin-bottom: 1.2rem;">
-            <div id="bar-mat" style="background: #f97316; width: 0%; transition: 0.4s ease;"></div>
-            <div id="bar-nrg" style="background: #06b6d4; width: 0%; transition: 0.4s ease;"></div>
-            <div id="bar-mac" style="background: #8b5cf6; width: 0%; transition: 0.4s ease;"></div>
-            <div id="bar-mo" style="background: #eab308; width: 0%; transition: 0.4s ease;"></div>
-            <div id="bar-ext" style="background: #94a3b8; width: 0%; transition: 0.4s ease;"></div>
+          <!-- BARRA DE COMPOSIÇÃO E LEGENDA -->
+          <div class="comp-bar-container">
+            <div id="bar-mat" class="comp-bar-segment" style="background: #f97316;"></div>
+            <div id="bar-nrg" class="comp-bar-segment" style="background: #06b6d4;"></div>
+            <div id="bar-mac" class="comp-bar-segment" style="background: #8b5cf6;"></div>
+            <div id="bar-mo" class="comp-bar-segment" style="background: #eab308;"></div>
+            <div id="bar-ext" class="comp-bar-segment" style="background: #94a3b8;"></div>
           </div>
 
-          <!-- LEGENDA DA BARRA -->
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.8rem; font-size: 0.85rem; color: var(--text-muted); font-family: monospace; margin-bottom: 2rem;">
-            <div style="display:flex; align-items:center; gap:0.5rem;"><span style="width:10px;height:10px;border-radius:50%;background:#f97316;"></span> Material: <strong id="leg-mat" style="color:var(--text);">R$ 0,00</strong></div>
-            <div style="display:flex; align-items:center; gap:0.5rem;"><span style="width:10px;height:10px;border-radius:50%;background:#06b6d4;"></span> Energia: <strong id="leg-nrg" style="color:var(--text);">R$ 0,00</strong></div>
-            <div style="display:flex; align-items:center; gap:0.5rem;"><span style="width:10px;height:10px;border-radius:50%;background:#8b5cf6;"></span> Desgaste: <strong id="leg-mac" style="color:var(--text);">R$ 0,00</strong></div>
-            <div style="display:flex; align-items:center; gap:0.5rem;"><span style="width:10px;height:10px;border-radius:50%;background:#eab308;"></span> Mão Obra: <strong id="leg-mo" style="color:var(--text);">R$ 0,00</strong></div>
-            <div style="display:flex; align-items:center; gap:0.5rem;"><span style="width:10px;height:10px;border-radius:50%;background:#94a3b8;"></span> Extras: <strong id="leg-ext" style="color:var(--text);">R$ 0,00</strong></div>
+          <div class="comp-legend">
+            <div class="legend-item"><span class="legend-dot" style="background:#f97316;"></span> Material: <strong id="leg-mat" style="color:var(--text);">R$ 0,00</strong></div>
+            <div class="legend-item"><span class="legend-dot" style="background:#06b6d4;"></span> Energia: <strong id="leg-nrg" style="color:var(--text);">R$ 0,00</strong></div>
+            <div class="legend-item"><span class="legend-dot" style="background:#8b5cf6;"></span> Desgaste: <strong id="leg-mac" style="color:var(--text);">R$ 0,00</strong></div>
+            <div class="legend-item"><span class="legend-dot" style="background:#eab308;"></span> Mão Obra: <strong id="leg-mo" style="color:var(--text);">R$ 0,00</strong></div>
+            <div class="legend-item"><span class="legend-dot" style="background:#94a3b8;"></span> Extras: <strong id="leg-ext" style="color:var(--text);">R$ 0,00</strong></div>
           </div>
 
           <!-- TABELA DE CUSTOS -->
-          <div style="border: 1px solid var(--card-border); border-radius: 8px; overflow: hidden;">
-            <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; font-family: monospace; text-align: left;">
+          <div class="table-pro-container">
+            <table class="table-pro">
               <thead>
-                <tr style="background: rgba(0,0,0,0.2); color: var(--text-muted); border-bottom: 1px solid var(--card-border);">
-                  <th style="padding: 1rem; font-weight: bold; text-transform: uppercase;">Item de Custo</th>
-                  <th style="padding: 1rem; text-align: right; font-weight: bold; text-transform: uppercase;">Valor</th>
-                  <th style="padding: 1rem; text-align: right; font-weight: bold; text-transform: uppercase;">%</th>
-                </tr>
+                <tr><th>Item de Custo</th><th style="text-align: right;">Valor</th><th style="text-align: right;">%</th></tr>
               </thead>
-              <tbody id="tabela-custos-body">
-                <!-- Injetado via JS -->
-              </tbody>
+              <tbody id="tabela-custos-body"></tbody>
             </table>
           </div>
         </div>
 
-        <div class="btn-group" style="margin-top: 1.5rem;">
-          <button class="btn" style="background: #10b981;" onclick="salvarProduto(this)"><i data-lucide="save"></i> Salvar Produto</button>
+        <div class="btn-group mt-1">
+          <button class="btn" style="background: var(--primary);" onclick="salvarProduto(this)"><i data-lucide="save"></i> Salvar Produto</button>
           <button class="btn btn-outline" onclick="gerarPDFAvulso()"><i data-lucide="printer"></i> Imprimir Avulso</button>
           <button class="btn btn-outline" onclick="limparCalc()"><i data-lucide="trash-2"></i> Limpar</button>
         </div>
@@ -222,9 +195,9 @@
     <!-- ABA PRODUTOS -->
     <div id="tab-produtos" class="tab-content">
       <div class="card">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
-          <h2 style="margin-bottom:0; border-bottom:none; padding-bottom:0;"><i data-lucide="boxes"></i> Produtos Salvos</h2>
-          <input type="text" id="busca-produtos" placeholder="🔍 Pesquisar Produto..." oninput="filtrarProdutos()" style="padding:0.4rem 0.6rem; font-size:0.85rem; border-radius:6px; border:1px solid var(--card-border); background:var(--input-bg); color:var(--text); width:200px;">
+        <div class="section-header">
+          <h2 class="align-center"><i data-lucide="boxes"></i> Produtos Salvos</h2>
+          <input type="text" id="busca-produtos" class="search-input" placeholder="🔍 Pesquisar Produto..." oninput="filtrarProdutos()">
         </div>
         <div id="lista-produtos" class="list-container"></div>
       </div>
@@ -233,35 +206,32 @@
     <!-- ABA KITS/COMBOS -->
     <div id="tab-kits" class="tab-content">
       <div class="card">
-        <h2><i data-lucide="layers"></i> Criar Combo / Kit</h2>
-        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">Selecione os produtos e as quantidades para formar um combo.</p>
-        <div class="form-group"><label>Nome do Combo</label><input type="text" id="kit-nome" placeholder="Ex: Kit Enfeites de Natal"></div>
+        <h2 class="align-center"><i data-lucide="layers"></i> Criar Combo / Kit</h2>
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">Selecione os produtos para formar um combo.</p>
+        <div class="form-group"><label>Nome do Combo</label><input type="text" id="kit-nome" placeholder="Ex: Kit Enfeites"></div>
         
-        <div class="form-group" style="background: var(--input-bg); padding: 1rem; border-radius: 8px; border: 1px solid var(--card-border); margin-bottom: 1rem;">
-          <label style="color: var(--primary); font-weight: bold; margin-bottom: 0.5rem; font-size: 0.95rem; display:flex; align-items:center; gap:0.3rem;"><i data-lucide="box" width="18"></i> Adicionar Produtos ao Combo</label>
-          <div style="display: flex; gap: 0.5rem; align-items: flex-end; flex-wrap: wrap;">
-            <div class="form-group" style="flex: 2; margin-bottom: 0; min-width: 200px;">
+        <div class="panel-pro" style="padding: 1.2rem; margin-top: 1rem;">
+          <label class="align-center" style="color: var(--primary); font-weight: bold; margin-bottom: 0.8rem; font-size: 0.95rem;"><i data-lucide="box" width="18"></i> Adicionar Produtos ao Combo</label>
+          <div class="flex-between" style="align-items: flex-end;">
+            <div class="form-group mb-0" style="flex: 2; min-width: 200px;">
               <label>Selecionar Item</label>
               <select id="kit-add-prod"></select>
             </div>
-            <div class="form-group" style="flex: 1; margin-bottom: 0; min-width: 80px;">
+            <div class="form-group mb-0" style="flex: 1; min-width: 80px;">
               <label>Qtd</label>
               <input type="number" id="kit-add-qtd" value="1" min="1">
             </div>
-            <button class="btn" style="padding: 0.6rem 1.2rem; margin-bottom: 0; font-size: 1.1rem;" onclick="addProdutoKit()"><i data-lucide="plus"></i></button>
+            <button class="btn mb-0" style="padding: 0.6rem 1.2rem; font-size: 1.1rem;" onclick="addProdutoKit()"><i data-lucide="plus"></i></button>
           </div>
-          <div id="lista-calc-kit-produtos" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
-            <p style="font-size: 0.8rem; color: var(--text-muted);">Nenhum produto adicionado a este combo.</p>
-          </div>
+          <div id="lista-calc-kit-produtos" class="list-container mt-1" style="gap: 0.5rem;"></div>
         </div>
-
         <button class="btn" onclick="salvarKit(this)"><i data-lucide="save"></i> Salvar Combo</button>
       </div>
       
       <div class="card">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
-          <h2 style="margin-bottom:0; border-bottom:none; padding-bottom:0;"><i data-lucide="list"></i> Combos Salvos</h2>
-          <input type="text" id="busca-kits" placeholder="🔍 Pesquisar Combo..." oninput="filtrarKits()" style="padding:0.4rem 0.6rem; font-size:0.85rem; border-radius:6px; border:1px solid var(--card-border); background:var(--input-bg); color:var(--text); width:200px;">
+        <div class="section-header">
+          <h2 class="align-center"><i data-lucide="list"></i> Combos Salvos</h2>
+          <input type="text" id="busca-kits" class="search-input" placeholder="🔍 Pesquisar Combo..." oninput="filtrarKits()">
         </div>
         <div id="lista-kits" class="list-container"></div>
       </div>
@@ -270,29 +240,29 @@
     <!-- ABA CRM / PEDIDOS -->
     <div id="tab-crm" class="tab-content">
       <div class="card">
-        <h2><i data-lucide="file-plus-2"></i> Novo Pedido / Orçamento</h2>
+        <h2 class="align-center"><i data-lucide="file-plus-2"></i> Novo Pedido / Orçamento</h2>
         <div class="grid-2">
-          <div class="form-group"><label>Nome do Cliente *</label><input type="text" id="crm-cliente" placeholder="Ex: Maria da Silva"></div>
-          <div class="form-group"><label>CPF</label><input type="text" id="crm-cpf" placeholder="Ex: 000.000.000-00"></div>
+          <div class="form-group"><label>Nome do Cliente *</label><input type="text" id="crm-cliente"></div>
+          <div class="form-group"><label>CPF</label><input type="text" id="crm-cpf" placeholder="000.000.000-00"></div>
         </div>
         <div class="grid-2">
-          <div class="form-group"><label>Contato (WhatsApp)</label><input type="text" id="crm-contato" placeholder="Ex: (81) 99999-9999"></div>
-          <div class="form-group"><label>Endereço (Rua, Número, Bairro)</label><input type="text" id="crm-endereco" placeholder="Ex: Rua das Flores, 123 - Boa Viagem"></div>
+          <div class="form-group"><label>Contato (WhatsApp)</label><input type="text" id="crm-contato"></div>
+          <div class="form-group"><label>Endereço</label><input type="text" id="crm-endereco"></div>
         </div>
         <div class="grid-3">
-          <div class="form-group"><label>Cidade</label><input type="text" id="crm-cidade" placeholder="Ex: Recife"></div>
-          <div class="form-group"><label>Estado (UF)</label><input type="text" id="crm-estado" placeholder="Ex: PE"></div>
+          <div class="form-group"><label>Cidade</label><input type="text" id="crm-cidade"></div>
+          <div class="form-group"><label>Estado (UF)</label><input type="text" id="crm-estado"></div>
           <div class="form-group"><label>Produto ou Kit *</label><select id="crm-item"></select></div>
         </div>
-        <div class="form-group"><label>Observações (Opcional)</label><input type="text" id="crm-obs" placeholder="Ex: Entregar à tarde, embalar para presente..."></div>
-        <button class="btn" onclick="salvarPedido(this)" style="margin-top: 0.5rem;"><i data-lucide="check-circle"></i> Lançar Pedido</button>
+        <div class="form-group"><label>Observações</label><input type="text" id="crm-obs"></div>
+        <button class="btn mt-1" onclick="salvarPedido(this)"><i data-lucide="check-circle"></i> Lançar Pedido</button>
       </div>
 
       <div class="card">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
-          <h2 style="margin-bottom:0; border-bottom:none; padding-bottom:0;"><i data-lucide="list-todo"></i> Fluxo de Pedidos</h2>
-          <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-            <input type="text" id="input-busca" placeholder="🔍 Pesquisar por Nome..." oninput="filtrarPedidos()" style="padding:0.4rem 0.6rem; font-size:0.85rem; border-radius:6px; border:1px solid var(--card-border); background:var(--input-bg); color:var(--text); width:200px;">
+        <div class="section-header">
+          <h2 class="align-center"><i data-lucide="list-todo"></i> Fluxo de Pedidos</h2>
+          <div class="flex-center" style="flex-wrap: wrap;">
+            <input type="text" id="input-busca" class="search-input" placeholder="🔍 Buscar Nome..." oninput="filtrarPedidos()">
             <button class="btn btn-outline" style="padding:0.4rem 0.6rem; font-size:0.85rem; color:var(--primary); border-color:var(--primary);" onclick="exportarPedidosCSV()"><i data-lucide="sheet" width="16"></i> Baixar Planilha</button>
           </div>
         </div>
@@ -300,15 +270,15 @@
       </div>
     </div>
 
-    <!-- ABA DE CLIENTES -->
+    <!-- ABA CLIENTES -->
     <div id="tab-clientes" class="tab-content">
       <div class="card">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+        <div class="section-header">
           <div>
-            <h2 style="margin-bottom:0; border-bottom:none; padding-bottom:0;"><i data-lucide="users"></i> Carteira de Clientes</h2>
-            <p style="font-size:0.8rem; color:var(--text-muted); margin-top:0.3rem;">Análise automática baseada no seu histórico de pedidos.</p>
+            <h2 class="align-center"><i data-lucide="users"></i> Carteira de Clientes</h2>
+            <p style="font-size:0.8rem; color:var(--text-muted); margin-top:0.3rem;">Análise automática pelo histórico de pedidos.</p>
           </div>
-          <input type="text" id="busca-clientes" placeholder="🔍 Pesquisar Cliente..." oninput="filtrarClientes()" style="padding:0.4rem 0.6rem; font-size:0.85rem; border-radius:6px; border:1px solid var(--card-border); background:var(--input-bg); color:var(--text); width:200px;">
+          <input type="text" id="busca-clientes" class="search-input" placeholder="🔍 Buscar Cliente..." oninput="filtrarClientes()">
         </div>
         <div id="lista-clientes" class="grid-2"></div>
       </div>
@@ -316,122 +286,107 @@
 
     <!-- ABA CONFIGURAÇÕES -->
     <div id="tab-config" class="tab-content">
-      
-      <!-- ESTOQUE DE MATERIAIS -->
       <div class="card">
-        <h2><i data-lucide="droplet"></i> Estoque de Materiais</h2>
+        <h2 class="align-center"><i data-lucide="droplet"></i> Estoque de Materiais</h2>
         <input type="hidden" id="mat-id">
         <div class="grid-4">
-          <div class="form-group"><label>Código único</label><input type="number" id="mat-codigo" placeholder="Ex: 00000"></div>
-          <div class="form-group"><label>Tipo (PLA/PETG)</label><input type="text" id="mat-nome" placeholder="Ex: PLA"></div>
-          <div class="form-group"><label>Marca</label><input type="text" id="mat-marca" placeholder="Ex: Bambulab"></div>
-          <div class="form-group"><label>Cor</label><input type="text" id="mat-cor" placeholder="Ex: Branco"></div>
-          <div class="form-group"><label>Preço / Kg (R$)</label><input type="number" step="0.01" id="mat-preco" placeholder="90.00"></div>
+          <div class="form-group"><label>Código único</label><input type="number" id="mat-codigo"></div>
+          <div class="form-group"><label>Tipo (PLA/PETG)</label><input type="text" id="mat-nome"></div>
+          <div class="form-group"><label>Marca</label><input type="text" id="mat-marca"></div>
+          <div class="form-group"><label>Cor</label><input type="text" id="mat-cor"></div>
+          <div class="form-group"><label>Preço/Kg (R$)</label><input type="number" step="0.01" id="mat-preco"></div>
           <div class="form-group"><label>Estoque (g)</label><input type="number" id="mat-estoque" value="1000"></div>
         </div>
         <div class="btn-group">
           <button class="btn" id="btn-mat" onclick="salvarMaterial(this)"><i data-lucide="save"></i> Salvar Material</button>
           <button class="btn btn-outline" id="btn-cancel-mat" style="display:none;" onclick="cancelarEdicaoMat()">Cancelar</button>
         </div>
-        
         <div style="display:flex; justify-content:flex-end; margin-top:1.5rem; margin-bottom:0.5rem;">
-          <input type="text" id="busca-materiais" placeholder="🔍 Pesquisar Material..." oninput="filtrarMateriais()" style="padding:0.4rem 0.6rem; font-size:0.85rem; border-radius:6px; border:1px solid var(--card-border); background:var(--input-bg); color:var(--text); width:100%; max-width: 300px;">
+          <input type="text" id="busca-materiais" class="search-input" placeholder="🔍 Buscar Material..." oninput="filtrarMateriais()">
         </div>
         <div id="lista-materiais" class="list-container"></div>
       </div>
 
-      <!-- ACESSÓRIOS E EMBALAGENS -->
       <div class="card">
-        <h2><i data-lucide="package-open"></i> Acessórios & Embalagens</h2>
+        <h2 class="align-center"><i data-lucide="package-open"></i> Acessórios & Embalagens</h2>
         <input type="hidden" id="acc-id">
         <div class="grid-2">
-          <div class="form-group">
-            <label>Nome do Item</label>
-            <input type="text" id="acc-nome" placeholder="Ex: Caixa Kraft, Ímã">
-          </div>
-          <div class="form-group">
-            <label>Custo Unitário (R$)</label>
-            <input type="number" step="0.01" id="acc-preco" placeholder="2.50">
-          </div>
+          <div class="form-group"><label>Nome do Item</label><input type="text" id="acc-nome"></div>
+          <div class="form-group"><label>Custo Unitário (R$)</label><input type="number" step="0.01" id="acc-preco"></div>
         </div>
         <div class="btn-group">
           <button class="btn" id="btn-salvar-acc" onclick="salvarAcessorio(this)"><i data-lucide="plus-circle"></i> Cadastrar Item</button>
           <button class="btn btn-outline" id="btn-cancelar-acc" onclick="cancelarEdicaoAcc()" style="display: none;">Cancelar</button>
         </div>
-        <div id="lista-acessorios" class="list-container" style="margin-top: 1rem;"></div>
+        <div id="lista-acessorios" class="list-container mt-1"></div>
       </div>
 
-      <!-- CUSTOS OPERACIONAIS -->
       <div class="card">
-        <h2><i data-lucide="zap"></i> Custos de Operação & Energia</h2>
+        <h2 class="align-center"><i data-lucide="zap"></i> Custos de Operação & Energia</h2>
         <div class="grid-2">
-          <div class="form-group"><label>Potência da Impressora (Watts)</label><input type="number" id="cfg-potencia" value="110"></div>
-          <div class="form-group"><label>Custo por KWh (R$)</label><input type="number" step="0.01" id="cfg-kwh" value="0.65"></div>
-          <div class="form-group"><label>Valor Máquina (R$)</label><input type="number" step="0.01" id="cfg-maquina" value="4500.00"></div>
-          <div class="form-group"><label>Vida Útil (Horas)</label><input type="number" id="cfg-horas" value="5000"></div>
-          <div class="form-group"><label>Mão de Obra (R$/h)</label><input type="number" step="0.01" id="cfg-mo" value="25.00"></div>
-          <div class="form-group"><label>Imposto MEI/DAS (%)</label><input type="number" step="0.1" id="cfg-imposto" value="10"></div>
-          <div class="form-group"><label>Taxa de Pagamento / Maquininha (%)</label><input type="number" step="0.1" id="cfg-taxapg" value="3.5"></div>
+          <div class="form-group"><label>Potência Máquina (Watts)</label><input type="number" id="cfg-potencia"></div>
+          <div class="form-group"><label>Custo KWh (R$)</label><input type="number" step="0.01" id="cfg-kwh"></div>
+          <div class="form-group"><label>Valor Máquina (R$)</label><input type="number" step="0.01" id="cfg-maquina"></div>
+          <div class="form-group"><label>Vida Útil (Horas)</label><input type="number" id="cfg-horas"></div>
+          <div class="form-group"><label>Mão de Obra (R$/h)</label><input type="number" step="0.01" id="cfg-mo"></div>
+          <div class="form-group"><label>Imposto MEI/DAS (%)</label><input type="number" step="0.1" id="cfg-imposto"></div>
+          <div class="form-group"><label>Taxa Maquininha (%)</label><input type="number" step="0.1" id="cfg-taxapg"></div>
         </div>
-        <button class="btn" onclick="salvarConfig(this)" style="margin-top: 1rem;"><i data-lucide="save"></i> Salvar Custos</button>
+        <button class="btn mt-1" onclick="salvarConfig(this)"><i data-lucide="save"></i> Salvar Custos</button>
       </div>
 
       <div class="card">
-        <h2><i data-lucide="database"></i> Backup</h2>
+        <h2 class="align-center"><i data-lucide="database"></i> Backup</h2>
         <div class="btn-group">
-          <button class="btn btn-outline" onclick="exportar()"><i data-lucide="download"></i> Exportar Backup</button>
-          <button class="btn btn-outline" onclick="document.getElementById('import-file').click()"><i data-lucide="upload"></i> Importar Backup</button>
+          <button class="btn btn-outline" onclick="exportar()"><i data-lucide="download"></i> Exportar</button>
+          <button class="btn btn-outline" onclick="document.getElementById('import-file').click()"><i data-lucide="upload"></i> Importar</button>
           <input type="file" id="import-file" style="display:none;" onchange="importar(event)">
         </div>
       </div>
     </div>
 
-    <!-- ÁREA DE IMPRESSÃO (ORÇAMENTO CLIENTE) -->
+    <!-- ÁREA DE IMPRESSÃO -->
     <div id="print-area" style="display:none;">
       <div style="font-family: sans-serif; color: #000; padding: 1rem;">
-        <h1 style="color:#10b981; border-bottom:2px solid #ccc; padding-bottom:0.5rem; margin-bottom:1rem;">Orçamento de Impressão 3D</h1>
+        <h1 style="color:#10b981; border-bottom:2px solid #ccc; padding-bottom:0.5rem; margin-bottom:1rem;">Orçamento</h1>
         <p><strong>Cliente:</strong> <span id="p-cliente"></span></p>
         <p><strong>CPF:</strong> <span id="p-cpf"></span></p>
         <p><strong>Contato:</strong> <span id="p-contato"></span></p>
         <p><strong>Endereço:</strong> <span id="p-endereco"></span></p><br>
-        
         <p><strong>Produto / Kit:</strong> <span id="p-nome"></span></p>
-        <p><strong>Tempo Estimado de Produção:</strong> <span id="p-tempo"></span> horas</p><br>
-        
+        <p><strong>Tempo Estimado:</strong> <span id="p-tempo"></span> horas</p><br>
         <h2 style="font-size: 1.3rem; color: #111;">Valor Total: <span id="p-preco" style="color:#10b981;"></span></h2><br>
         <p style="font-size: 0.8rem; color:#556;">Validade do orçamento: 7 dias.</p>
       </div>
     </div>
 
-  </div> <!-- FIM DA DIV app-content -->
+  </div> <!-- FIM DO APP-CONTENT -->
 
-  <!-- MODAL DE DETALHES DO CLIENTE -->
+  <!-- MODAL DE CLIENTES -->
   <div id="modal-cliente" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:99999; justify-content:center; align-items:center; padding:1rem;">
     <div class="card" style="width:100%; max-width:600px; max-height:90vh; overflow-y:auto; position:relative; margin-bottom:0;">
       <button onclick="fecharModalCliente()" style="position:absolute; top:1rem; right:1.5rem; background:none; border:none; color:var(--text-muted); font-size:1.8rem; cursor:pointer;">&times;</button>
       
-      <h2 id="detalhe-cliente-nome" style="margin-bottom:0.2rem; font-size:1.5rem;"><i data-lucide="user"></i> Nome</h2>
+      <h2 id="detalhe-cliente-nome" class="align-center" style="margin-bottom:0.2rem; font-size:1.5rem;"><i data-lucide="user"></i> Nome</h2>
       <p id="detalhe-cliente-info" style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.5rem;"></p>
       
-      <div class="grid-2" style="margin-bottom:1.5rem;">
-         <div style="background:var(--input-bg); padding:1rem; border-radius:8px; border:1px solid var(--card-border); text-align:center;">
+      <div class="grid-2 mb-1">
+         <div class="panel-pro text-center" style="margin:0; padding:1rem;">
             <span style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; font-weight:bold;">Total Gasto</span>
             <div id="detalhe-cliente-gasto" style="font-size:1.6rem; font-weight:bold; color:var(--primary);">R$ 0,00</div>
          </div>
-         <div style="background:var(--input-bg); padding:1rem; border-radius:8px; border:1px solid var(--card-border); text-align:center;">
+         <div class="panel-pro text-center" style="margin:0; padding:1rem;">
             <span style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; font-weight:bold;">Pedidos Totais</span>
             <div id="detalhe-cliente-qtd" style="font-size:1.6rem; font-weight:bold; color:var(--accent);">0</div>
          </div>
       </div>
       
-      <h3 style="font-size:1rem; color:var(--primary); margin-bottom:1rem; border-bottom:1px solid var(--card-border); padding-bottom:0.5rem;"><i data-lucide="list"></i> Histórico de Compras</h3>
+      <h3 class="align-center" style="font-size:1rem; color:var(--primary); margin-bottom:1rem; border-bottom:1px solid var(--card-border); padding-bottom:0.5rem;"><i data-lucide="list"></i> Histórico de Compras</h3>
       <div id="detalhe-cliente-pedidos" class="list-container" style="gap:0.5rem;"></div>
     </div>
   </div>
 
   <div id="toast-container"></div>
-
-  <!-- SEU ARQUIVO JAVASCRIPT EXTERNO -->
   <script src="script.js"></script>
 </body>
 </html>
